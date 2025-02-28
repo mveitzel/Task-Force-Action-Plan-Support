@@ -6,7 +6,7 @@ library("viridis")
 #library("sf")
 library('terra')
 
-source("SummarizeChange_Functions.R")
+source("SummarizeChange_functions.R")
 
 ##  This code is designed for each metric's analysis to be run in a separate R
 ##  instance, uncommenting the particular metric for each run, selecting all, and 
