@@ -180,11 +180,11 @@ read.in.and.process.vectors<-function(crop.poly,rstrs,sumPly,sumPlyNm){
 
 #This function actually does the zonal calculations for raster pixels that fall within
 #the entire spatial summary area (e.g. HUC)
-zonal.calculations<-function(rsters,rwVec,prepVec){
+zonal.calculations<-function(rsters,prepVec){
 
 	 #----------- Zonal calcs for entire summary areas ------------#
 	 #this takes a long time
-	 summaryzonal.time<- system.time(zonal.stats.summarypoly<-zonal(rsters$diff,rwVec$sumPoly,fun="mean",as.polygons=TRUE,na.rm=TRUE) )
+	 summaryzonal.time<- system.time(zonal.stats.summarypoly<-zonal(rsters$diff,prepVec$sumPoly,fun="mean",as.polygons=TRUE,na.rm=TRUE) )
 	print("Zonal stats calculated for whole summary unit (raw averages)")
 	 print(summaryzonal.time/60)
 
