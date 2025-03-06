@@ -157,7 +157,7 @@ read.in.and.process.vectors<-function(crop.poly,rstrs,sumPly,sumPlyNm){
 
 	cr.poly<-vect(crop.poly)
 	#returns layers with both projected to first argument's CRS
-	crop_poly_proj<-check.crs.match(rasters$before,cr.poly)
+	crop_poly_proj<-check.crs.match(rstrs$before,cr.poly)
 	print(paste(crop.poly," read in and processed.",sep=""))
 
 
