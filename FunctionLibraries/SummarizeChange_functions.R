@@ -177,6 +177,44 @@ read.in.and.process.vectors<-function(crop.poly,rstrs,sumPly,sumPlyNm){
 
 }
 
+##########EDITED VERSION TO MAKE MORE GENERAL###############
+#When trying to process a vector for a single raster (i.e. that has not been differenced
+#and only includes one raster layer), the read.in.and.process.vectors function would
+#have an error because it was looking for a specific layer with the "rsters" call. 
+#This edited function does the same thing that read.in.and.process.vectors does
+#but calls for a single raster rather than the stack of three that results from 
+#the differencing function. You could use this version on a differenced raster
+#but the 'rstr' call would require "differenced.raster.result$before" instead of 
+#just "differenced.raster.result" which would contain "$before", "$after", and "$diff."
+
+read.in.and.process.vectors.single.raster<-function(crop.poly,rstr,sumPly,sumPlyNm){
+  
+  #Project, crop, calculate areas, and subset by date
+  
+  #-------------- State boundary for clipping ------------#
+  #               (or region, as appropriate)             #
+  
+  cr.poly<-vect(crop.poly)
+  #returns layers with both projected to first argument's CRS
+  crop_poly_proj<-check.crs.match(rstr,cr.poly)
+  print(paste(crop.poly," read in and processed.",sep=""))
+  
+  
+  #---------------- Polygons to summarize over ------------#
+  
+  summary_poly<-vect(sumPly)
+  #returns layers with both projected to first argument's CRS
+  summary_poly_proj<-check.crs.match(rstr,summary_poly)
+  summary_ID_name<-sumPlyNm
+  #crop to CA or regional boundary
+  summary_poly_proj<-crop(summary_poly_proj,crop_poly_proj)
+  #explicitly calculate the area of the HUC8
+  summary_poly_proj$huc_area_ha<-expanse(summary_poly_proj,unit="ha")
+  print(paste(sumPly," read in and processed. Summary field: ",sumPlyNm,sep=""))
+  
+  return(list(boundary=crop_poly_proj,sumPoly=summary_poly_proj))
+  
+}
 
 #This function actually does the zonal calculations for raster pixels that fall within
 #the entire spatial summary area (e.g. HUC)
