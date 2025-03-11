@@ -230,6 +230,26 @@ zonal.calculations<-function(rsters,prepVec){
 }
 
 
+#############EDITED VERSION OF ZONAL CALCULATIONS FUNCTION######################
+#This version does zonal calculations for raster pixels that fall within the specified
+#summary unit. However, rather than requiring the result from differencing rasters 
+#(which has 3 rasters - $before, $after, $diff), this only requires a single raster. 
+#You could still use this version for the differenced result, but would have to 
+#specify 'differenced.result$diff' in the 'rstr' call rather than 'differenced.result'. 
+
+zonal.calculations.single.raster<-function(rsters,prepVec){
+  
+  #----------- Zonal calcs for entire summary areas ------------#
+  #this takes a long time
+  summaryzonal.time<- system.time(zonal.stats.summarypoly<-zonal(rsters,prepVec$sumPoly,fun="mean",as.polygons=TRUE,na.rm=TRUE) )
+  print("Zonal stats calculated for whole summary unit (raw averages)")
+  print(summaryzonal.time/60)
+  
+  return(list(zonalAll=zonal.stats.summarypoly))
+}
+
+
+
 #this function assumes we want a 'current' vegetation classification
 #for a given set of years - I'm choosing the 'before year' as the 
 #one to base the classification on
