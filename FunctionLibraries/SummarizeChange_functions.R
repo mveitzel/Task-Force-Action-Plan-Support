@@ -19,6 +19,7 @@ library('terra')
 #do specify the file path as 'location', e.g. use "getwd()" to pull your current
 #location, or specify a different location
 #TODO*** add a default argument for location to just be getwd()
+#returns a single raster
 read.checkcrs.convert.and.diff.rasters<-function(location,beforename,before.filename,aftername,after.filename,metr,conv){
 
 	#read in the rasters
@@ -41,7 +42,7 @@ read.checkcrs.convert.and.diff.rasters<-function(location,beforename,before.file
 		print("No conversion factor applied")
 		delta.met<-diff.rasters(beforename, before.met,aftername,after.met, metr)
 	}
-	return(list(before=before.met,after=after.met,diff=delta.met))
+	return(delta.met)
 }
 
 #Generate CECS filenames to read in rasters
@@ -140,6 +141,7 @@ mask.rasters<-function(input.raster,mask.vector){
 	mask(input.raster,mask.vector)
 }
 
+#TODO*** once you confirm the other functions work, remove this function
 #This function reads in and processes the vector layers:
 #crop.poly is the boundary polygon of your entire analysis region,
 #whether that's the entire state, or a region, or a smaller area
@@ -216,6 +218,7 @@ read.in.and.process.vectors.single.raster<-function(crop.poly,rstr,sumPly,sumPly
   
 }
 
+#TODO*** once you confirm the other functions work, remove this function
 #This function actually does the zonal calculations for raster pixels that fall within
 #the entire spatial summary area (e.g. HUC)
 zonal.calculations<-function(rsters,prepVec){
