@@ -11,36 +11,36 @@ library('terra')
 ##########################################################
 #################### FUNCTIONS ######################
 
-#function to read in before and after rasters
+#function to read in raster1 and raster2 rasters
 #this function expects a single pair of rasters to calculate a difference between
 #if 'conv' is NA, don't multiply by any factors
-#beforename and aftername are just strings to go in print statements, etc
-#before.filename and after.filename need to be actual filenames
+#raster1name and raster2name are just strings to go in print statements, etc
+#raster1.filename and raster2.filename need to be actual filenames
 #do specify the file path as 'location', e.g. use "getwd()" to pull your current
 #location, or specify a different location
 #TODO*** add a default argument for location to just be getwd()
 #returns a single raster
-read.checkcrs.convert.and.diff.rasters<-function(location,beforename,before.filename,aftername,after.filename,metr,conv){
+read.checkcrs.convert.and.diff.rasters<-function(location,raster1name,raster1.filename,raster2name,raster2.filename,metr,conv){
 
 	#read in the rasters
-	print(paste("Reading in ",location,before.filename,sep=""))
-	before.met<-rast(paste(location,before.filename,sep=""))
-	print(paste("Reading in ",location,after.filename,sep=""))
-	after.met<-rast(paste(location,after.filename,sep=""))
+	print(paste("Reading in ",location,raster1.filename,sep=""))
+	raster1.met<-rast(paste(location,raster1.filename,sep=""))
+	print(paste("Reading in ",location,raster2.filename,sep=""))
+	raster2.met<-rast(paste(location,raster2.filename,sep=""))
 
 	#check that the Coordinate Reference System is the same
-	#or set it to the before metric (the first argument)
+	#or set it to the raster1 metric (the first argument)
 	#(note that this may not handle datum transformations)
-	after.met<-check.crs.match(before.met,after.met)
+	raster2.met<-check.crs.match(raster1.met,raster2.met)
 
 	#use a conversion factor for each raster if necessary
 	if(!is.na(conv)){
-		before.met.conv<-multiply.conversion.factor(beforename,before.met,metr,conv)
-		after.met.conv<-multiply.conversion.factor(aftername,after.met,metr,conv)
-		delta.met<-diff.rasters(beforename, before.met.conv,aftername,after.met.conv, metr)
+		raster1.met.conv<-multiply.conversion.factor(raster1name,raster1.met,metr,conv)
+		raster2.met.conv<-multiply.conversion.factor(raster2name,raster2.met,metr,conv)
+		delta.met<-diff.rasters(raster1name, raster1.met.conv,raster2name,raster2.met.conv, metr)
 	} else {
 		print("No conversion factor applied")
-		delta.met<-diff.rasters(beforename, before.met,aftername,after.met, metr)
+		delta.met<-diff.rasters(raster1name, raster1.met,raster2name,raster2.met, metr)
 	}
 	return(delta.met)
 }
@@ -65,20 +65,20 @@ multiply.conversion.factor<-function(which.rast, met.rast, metname,conv.fact){
 	return(conv.rast)
 }
 
-#function to diff two rasters - for scenario modeling, 'before' is a base
-#case and 'after' is one of the scenarios; or 'before' is an earlier time 
-#step and 'after' is a later time step.  For outcome reporting, 'before' is
-#before treatments, and 'after' is after treatments.
-#'before' is the name, and 'before.met' is the actual raster
-diff.rasters<-function(before,before.rast,after,after.rast,metric){
+#function to diff two rasters - for scenario modeling, 'raster1' is a base
+#case and 'raster2' is one of the scenarios; or 'raster1' is an earlier time 
+#step and 'raster2' is a later time step.  For outcome reporting, 'raster1' is
+#before treatments, and 'raster2' is after treatments.
+#'raster1' is the name, and 'raster1.met' is the actual raster
+diff.rasters<-function(raster1,raster1.rast,raster2,raster2.rast,metric){
 
 	#this function expects a single pair of rasters to calculate a difference between
 	#set the layer name 
-	dffname<-paste(metric,before,after,sep="__")
+	dffname<-paste(metric,raster1,raster2,sep="__")
 
 	#calculate the difference
-	print(paste("Subtracting ",after," from ",before," for ",metric),sep="")
-	delta<-after.rast-before.rast
+	print(paste("Subtracting ",raster2," from ",raster1," for ",metric),sep="")
+	delta<-raster2.rast-raster1.rast
 	names(delta)<-dffname
 
 	return(delta)
@@ -159,7 +159,7 @@ read.in.and.process.vectors<-function(crop.poly,rstrs,sumPly,sumPlyNm){
 
 	cr.poly<-vect(crop.poly)
 	#returns layers with both projected to first argument's CRS
-	crop_poly_proj<-check.crs.match(rstrs$before,cr.poly)
+	crop_poly_proj<-check.crs.match(rstrs$raster1,cr.poly)
 	print(paste(crop.poly," read in and processed.",sep=""))
 
 
@@ -167,7 +167,7 @@ read.in.and.process.vectors<-function(crop.poly,rstrs,sumPly,sumPlyNm){
 
 	summary_poly<-vect(sumPly)
 	#returns layers with both projected to first argument's CRS
-	summary_poly_proj<-check.crs.match(rstrs$before,summary_poly)
+	summary_poly_proj<-check.crs.match(rstrs$raster1,summary_poly)
 	summary_ID_name<-sumPlyNm
 	#crop to CA or regional boundary
 	summary_poly_proj<-crop(summary_poly_proj,crop_poly_proj)
@@ -186,8 +186,8 @@ read.in.and.process.vectors<-function(crop.poly,rstrs,sumPly,sumPlyNm){
 #This edited function does the same thing that read.in.and.process.vectors does
 #but calls for a single raster rather than the stack of three that results from 
 #the differencing function. You could use this version on a differenced raster
-#but the 'rstr' call would require "differenced.raster.result$before" instead of 
-#just "differenced.raster.result" which would contain "$before", "$after", and "$diff."
+#but the 'rstr' call would require "differenced.raster.result$raster1" instead of 
+#just "differenced.raster.result" which would contain "$raster1", "$raster2", and "$diff."
 
 read.in.and.process.vectors.single.raster<-function(crop.poly,rstr,sumPly,sumPlyNm){
   
@@ -236,7 +236,7 @@ zonal.calculations<-function(rsters,prepVec){
 #############EDITED VERSION OF ZONAL CALCULATIONS FUNCTION######################
 #This version does zonal calculations for raster pixels that fall within the specified
 #summary unit. However, rather than requiring the result from differencing rasters 
-#(which has 3 rasters - $before, $after, $diff), this only requires a single raster. 
+#(which has 3 rasters - $raster1, $raster2, $diff), this only requires a single raster. 
 #You could still use this version for the differenced result, but would have to 
 #specify 'differenced.result$diff' in the 'rstr' call rather than 'differenced.result'. 
 
@@ -252,13 +252,13 @@ zonal.calculations.single.raster<-function(rsters,prepVec){
 }
 
 
-
+#***TODO edit this one to take one raster of the veg classification, and a list of rasters to be masked
 #this function assumes we want a 'current' vegetation classification
 #for a given set of years - I'm choosing the 'before year' as the 
 #one to base the classification on
 #this is using SIG's crosswalk between CWHR type to a higher level
 #aggregation of forestland, shrubland, and grassland
-create.subset.masks<-function(rasts, b.yr,vintage,location){
+create.subset.masks<-function(rast1, rast.diff, b.yr,vintage,location){
 	#Mike has a CECS layer with the Fveg codes
 	CECSveg<-read.csv("CECS_Fveg_codes.csv",header=T)
 	#SIG has a crosswalk between the Fveg codes and broad veg types they summarize in tabular form
@@ -272,7 +272,7 @@ create.subset.masks<-function(rasts, b.yr,vintage,location){
 
 	#reading in Mike's layer to make sure that this is all aligned
 	eco<-rast( paste(location,"CECS_CAWide_Veg_Fveg_",b.yr,"_V",vintage,".tif",sep=""),lyrs=1)
-	eco<-check.crs.match(rasts$before,eco)
+	eco<-check.crs.match(rasts$raster1,eco)
 
 	#Now make the masks based on the codes
 	grass.only<-eco %in% grass.codes
