@@ -53,6 +53,29 @@ generate.CECS.filename<-function(metrname,yearname,datavintage){
 	return(metr.nm)
 }
 
+#Generate SIG filenames to read in rasters
+generate.SIG.filename<-function(additional.wd.folders, scenario.fldr, scenario.nm,year.nm, metric, data.typ, dte.time){
+  #generate the CECS filenames for this metric, year, and version/vintage
+  metr.nm<-paste(additional.wd.folders, "treated_",scenario.nm,"_","year","_", year.nm, "_",metric, "_", data.typ, "_", dte.time,".tif",sep="")
+  print(paste("Preparing to read in: ",metr.nm,sep=""))
+  return(metr.nm)
+}
+
+parse.SIG.filenames<-function(filenames){
+  filenames.df<-data.frame(scenario=character(),
+                           year=character(),
+                           metric=character(),
+                           filename=character(),stringsAsFactors=FALSE)
+  for(i in 1:nrow(filenames)){
+    filenames.df[i,]<-c(
+      paste("S_",sub(".*scenario_(\\d{1}).*", "\\1", filenames[i,],perl=TRUE),sep=""),
+      sub(".*year_(\\d{4}).*", "\\1", filenames[i,],perl=TRUE),
+      sub(".*year_\\d{4}_([^_]+)_.*", "\\1", filenames[i,],perl=TRUE),
+      filenames[i,])
+  }
+  return(filenames.df)
+}
+
 #use the conversion factor (multiplicative) -- some CECS and other
 #metrics are in different units than are typically reported
 #or are multiplied by a factor of 100 or 1000 in order to be
