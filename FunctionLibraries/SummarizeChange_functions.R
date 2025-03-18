@@ -82,9 +82,16 @@ parse.SIG.filenames<-function(filenames){
 #stored as integers.  Look up the documentation to check what 
 #the conversion should be
 #expects a single rastrer
+#if you specify NA for the conversion factor, then the function just
+#returns the original raster
 multiply.conversion.factor<-function(which.rast, met.rast, metname,conv.fact){
-	print(paste("Converting raster, multiplying (",which.rast,") ",metname, " by",conv.fact),sep="")
-	conv.rast<-met.rast*conv.fact
+	if(!is.na(conv.fact)){
+		print(paste("Converting raster, multiplying (",which.rast,") ",metname, " by",conv.fact),sep="")
+		conv.rast<-met.rast*conv.fact
+	} else {
+		print("No conversion factor specified.")
+		conv.rast<-met.rast
+	}
 	return(conv.rast)
 }
 
