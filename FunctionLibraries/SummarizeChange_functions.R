@@ -81,7 +81,9 @@ diff.rasters<-function(raster1,raster1.rast,raster2,raster2.rast,metric){
 
 	#this function expects a single pair of rasters to calculate a difference between
 	#set the layer name 
-	dffname<-paste(metric,raster1,raster2,sep="__")
+	#commenting out the more complex layer name and keeping them the same for each calculation
+	#dffname<-paste(metric,raster1,raster2,sep="__")
+	dffname<-"diff"
 
 	#calculate the difference
 	print(paste("Subtracting ",raster2," from ",raster1," for ",metric),sep="")
@@ -109,29 +111,29 @@ check.crs.match<-function(dat1,dat2){
 
 
 #Make the histogram plots
-plot.results<-function(dt.dff,ttlestrng,xlbl,metnm,af.yr,bf.yr,sum.area,sumIDnm,lnd.clss,dffnm,dttme,reg){
+plot.results<-function(dt.dff,ttlestrng,xlbl,metnm,af.yr,bf.yr,sum.area,sumIDnm,lnd.clss,dttme,reg){
 	dt.dff.shp<-dt.dff
 	dt.dff<-as.data.frame(dt.dff)
 	
 	ttlestrng<-paste(reg,"\n",metnm, " ",af.yr,"-",bf.yr," for ",sum.area," \nwithin each ",sumIDnm,
-		"\n",lnd.clss," (mean ",round(mean(dt.dff[,dffnm],na.rm=TRUE),2), ")", sep="")		
+		"\n",lnd.clss," (mean ",round(mean(dt.dff[,"diff"],na.rm=TRUE),2), ")", sep="")		
 	
 	print(ttlestrng)
-	plt<-ggplot(dt.dff,aes(x=dt.dff[,dffnm]))+
+	plt<-ggplot(dt.dff,aes(x=dt.dff[,"diff"]))+
 		geom_histogram()+
 		geom_vline(xintercept = 0)+
-		geom_vline(xintercept = mean(dt.dff[,dffnm],na.rm=TRUE), color = "blue", linewidth=1.5)+
+		geom_vline(xintercept = mean(dt.dff[,"diff"],na.rm=TRUE), color = "blue", linewidth=1.5)+
 		ggtitle(ttlestrng)+
 		theme(text=element_text(size=10))+
 		xlab(xlbl)
 	plt
-	hstnm<-paste(reg,dffnm,sumIDnm,lnd.clss,dttme,sum.area,".png",sep="_")
+	hstnm<-paste(reg,"diff",sumIDnm,lnd.clss,dttme,sum.area,".png",sep="_")
 	ggsave(hstnm, units="in", width=4,height=2)
 
 	#----- Make a map version of the whole area zonal calcs ------#
 	if(sum.area=="SummaryUnit" && lnd.clss=="AllEcosystems"){
-		png(paste(reg,dffnm,sumIDnm,lnd.clss,dttme,"map.png",sep="_"),width=5.5,height=6, units="in",res=150)
-		plot(dt.dff.shp,dffnm,map.pal("viridis",10),main=ttlestrng)
+		png(paste(reg,"diff",sumIDnm,lnd.clss,dttme,"map.png",sep="_"),width=5.5,height=6, units="in",res=150)
+		plot(dt.dff.shp,"diff",map.pal("viridis",10),main=ttlestrng)
 		dev.off()
 	}
 }
