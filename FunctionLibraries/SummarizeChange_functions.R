@@ -105,8 +105,9 @@ diff.rasters<-function(raster1,raster1.rast,raster2,raster2.rast,metric){
 	#this function expects a single pair of rasters to calculate a difference between
 	#set the layer name 
 	#commenting out the more complex layer name and keeping them the same for each calculation
-	#dffname<-paste(metric,raster1,raster2,sep="__")
-	dffname<-"diff"
+	dffname<-paste(metric,raster1,raster2,sep="__")
+	#***actually nevermind we want there to be a name
+#	dffname<-"diff"
 
 	#calculate the difference
 	print(paste("Subtracting ",raster2," from ",raster1," for ",metric),sep="")
@@ -271,16 +272,18 @@ zonal.calculations<-function(rsters,prepVec){
 #(which has 3 rasters - $raster1, $raster2, $diff), this only requires a single raster. 
 #You could still use this version for the differenced result, but would have to 
 #specify 'differenced.result$diff' in the 'rstr' call rather than 'differenced.result'. 
-
-zonal.calculations.single.raster<-function(rsters,prepVec){
+#outputs a single SpatVector with zonal results
+zonal.calculations.single.raster<-function(rster,prepVec){
   
   #----------- Zonal calcs for entire summary areas ------------#
   #this takes a long time
-  summaryzonal.time<- system.time(zonal.stats.summarypoly<-zonal(rsters,prepVec$sumPoly,fun="mean",as.polygons=TRUE,na.rm=TRUE) )
-  print("Zonal stats calculated for whole summary unit (raw averages)")
+  ###***TODO MV add in the print statement the name of the vector, which means adding an argument 
+  ### specifying what the huc level is
+  summaryzonal.time<- system.time(zonal.stats.summarypoly<-zonal(rster,prepVec$sumPoly,fun="mean",as.polygons=TRUE,na.rm=TRUE) )
+  print(paste("Zonal stats calculated for ",names(rster), sep=""))
   print(summaryzonal.time/60)
   
-  return(list(zonalAll=zonal.stats.summarypoly))
+  return(zonal.stats.summarypoly)
 }
 
 
