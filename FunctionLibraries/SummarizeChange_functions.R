@@ -81,7 +81,8 @@ parse.SIG.filenames<-function(filenames){
 #or are multiplied by a factor of 100 or 1000 in order to be
 #stored as integers.  Look up the documentation to check what 
 #the conversion should be
-#expects a single rastrer
+#expects a single raster, 'which.rast' is the user-readable raster name, met.rast 
+#is the actual raster object
 #if you specify NA for the conversion factor, then the function just
 #returns the original raster
 multiply.conversion.factor<-function(which.rast, met.rast, metname,conv.fact){
