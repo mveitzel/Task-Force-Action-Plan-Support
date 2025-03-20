@@ -105,8 +105,8 @@ diff.rasters<-function(raster1,raster1.rast,raster2,raster2.rast,metric){
 	#this function expects a single pair of rasters to calculate a difference between
 	#set the layer name 
 	#commenting out the more complex layer name and keeping them the same for each calculation
-	dffname<-paste(metric,raster1,raster2,sep="__")
-	#
+	#dffname<-paste(metric,raster1,raster2,sep="__")
+
 	#*Changing the name to a more complex name makes joining dataframes from a list
 	#*not work. So stick with the simpler "diff" name. 
   dffname<-"diff"
@@ -275,12 +275,16 @@ zonal.calculations<-function(rsters,prepVec){
 #You could still use this version for the differenced result, but would have to 
 #specify 'differenced.result$diff' in the 'rstr' call rather than 'differenced.result'. 
 #outputs a single SpatVector with zonal results
+
+
 zonal.calculations.single.raster<-function(rster,prepVec){
   
   #----------- Zonal calcs for entire summary areas ------------#
   #this takes a long time
   ###***TODO MV add in the print statement the name of the vector, which means adding an argument 
   ### specifying what the huc level is
+  ### names(rster) should be the same for every loop so that the list can be joined after processing
+  ### I think there needs to be a separate identifier for the printing statement. 
   summaryzonal.time<- system.time(zonal.stats.summarypoly<-zonal(rster,prepVec$sumPoly,fun="mean",as.polygons=TRUE,na.rm=TRUE) )
   print(paste("Zonal stats calculated for ",names(rster), sep=""))
   print(summaryzonal.time/60)
