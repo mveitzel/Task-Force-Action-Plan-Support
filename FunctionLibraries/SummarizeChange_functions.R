@@ -286,7 +286,7 @@ zonal.calculations.single.raster<-function(rster,prepVec){
   ### names(rster) should be the same for every loop so that the list can be joined after processing
   ### I think there needs to be a separate identifier for the printing statement. 
   summaryzonal.time<- system.time(zonal.stats.summarypoly<-zonal(rster,prepVec$sumPoly,fun="mean",as.polygons=TRUE,na.rm=TRUE) )
-  print(paste("Zonal stats calculated for ",names(rster), sep=""))
+  print(paste("Zonal stats calculated for ",names(rster), "using " , sep=""))
   print(summaryzonal.time/60)
   
   return(zonal.stats.summarypoly)
