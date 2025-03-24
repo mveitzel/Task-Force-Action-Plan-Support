@@ -283,7 +283,7 @@ zonal.calculations<-function(rsters,prepVec){
 ### specifying what the huc level is, called mapun, or minimum mapping unit
 zonal.calculations.single.raster<-function(rster,mapun,prepVec){
   summaryzonal.time<- system.time(zonal.stats.summarypoly<-zonal(rster,prepVec$sumPoly,fun="mean",as.polygons=TRUE,na.rm=TRUE) )
-  print(paste("Zonal stats calculated for ",names(rster), " using " mapun, sep=""))
+  print(paste("Zonal stats calculated for ",names(rster), " using ", mapun, sep=""))
   print(summaryzonal.time/60)
   
   return(zonal.stats.summarypoly)
