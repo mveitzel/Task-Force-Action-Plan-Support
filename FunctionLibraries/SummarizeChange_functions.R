@@ -106,11 +106,11 @@ diff.rasters<-function(raster1,raster1.rast,raster2,raster2.rast,metric){
 	#this function expects a single pair of rasters to calculate a difference between
 	#set the layer name 
 	#commenting out the more complex layer name and keeping them the same for each calculation
-	#dffname<-paste(metric,raster1,raster2,sep="__")
+	dffname<-paste(metric,raster1,raster2,sep="__")
 
 	#*Changing the name to a more complex name makes joining dataframes from a list
 	#*not work. So stick with the simpler "diff" name. 
-  dffname<-"diff"
+  #dffname<-"diff"
 
 	#calculate the difference
 	print(paste("Subtracting ",raster2," from ",raster1," for ",metric),sep="")
