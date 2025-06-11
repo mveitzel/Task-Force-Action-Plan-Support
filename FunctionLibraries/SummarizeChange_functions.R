@@ -61,6 +61,7 @@ generate.SIG.filename<-function(additional.wd.folders, scenario.fldr, scenario.n
   return(metr.nm)
 }
 
+#Parse SIG filenames to read in FVS rasters
 parse.SIG.filenames<-function(filenames){
   filenames.df<-data.frame(scenario=character(),
                            year=character(),
@@ -71,6 +72,22 @@ parse.SIG.filenames<-function(filenames){
       paste("S_",sub(".*scenario_(\\d{1}).*", "\\1", filenames[i,],perl=TRUE),sep=""),
       sub(".*year_(\\d{4}).*", "\\1", filenames[i,],perl=TRUE),
       sub(".*year_\\d{4}_([^_]+)_.*", "\\1", filenames[i,],perl=TRUE),
+      filenames[i,])
+  }
+  return(filenames.df)
+}
+
+#Parse SIG filenames to read in FIRE RESULTS rasters
+parse.SIG.fireresults.filenames<-function(filenames){
+  filenames.df<-data.frame(scenario=character(),
+                           year=character(),
+                           metric=character(),
+                           filename=character(),stringsAsFactors=FALSE)
+  for(i in 1:nrow(filenames)){
+    filenames.df[i,]<-c(
+      paste("S_",sub(".*scenario_(\\d{1}).*", "\\1", filenames[i,],perl=TRUE),sep=""),
+      sub(".*(\\d{4}).*", "\\1", filenames[i,],perl=TRUE),
+      sub(".*\\d{4}_([^_]+)_.*", "\\1", filenames[i,],perl=TRUE),
       filenames[i,])
   }
   return(filenames.df)
