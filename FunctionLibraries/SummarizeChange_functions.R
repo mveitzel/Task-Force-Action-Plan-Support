@@ -66,7 +66,7 @@ generate.SIG.filename<-function(additional.wd.folders, scenario.fldr, scenario.n
 }
 
 #Parse SIG filenames to read in FVS rasters
-parse.SIG.filenames<-function(filenames){
+parse.SIG.fvs.filenames<-function(filenames){
   filenames.df<-data.frame(scenario=character(),
                            year=character(),
                            metric=character(),
@@ -95,6 +95,14 @@ parse.SIG.fireresults.filenames<-function(filenames){
       filenames[i,])
   }
   return(filenames.df)
+}
+
+#just a little function that combines the file system string
+#with the filename (raster.file is the filename, raster.name is
+#the human readable name for the print statement) and calls rast
+read.in.raster<-function(loc,raster.file,raster.name){
+		print(paste("Reading in ", raster.name," at ",loc,raster1.file,sep=""))
+  	raster1.rast<-rast(paste(loc,raster1.file,sep=""))
 }
 
 #use the conversion factor (multiplicative) -- some CECS and other
