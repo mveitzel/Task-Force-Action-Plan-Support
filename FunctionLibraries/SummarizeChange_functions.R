@@ -349,6 +349,29 @@ zonal.calculations.single.raster<-function(rster,mapun,prepVec){
 }
 
 
+#---- Global calcs for entire area cropped by the boundary vector file
+
+#*** insert Lauren's code for global stuff in a function here
+
+# cropped.rasters1[[ years[i] ]][[ comparisons$comp[j] ]] <- crop(masked.rasters[[ years[i] ]][[ scenarios[j] ]], 
+# 																																			prepped_vector_global$boundary, mask = FALSE)
+# 				cropped.rasters[[ years[i] ]][[ comparisons$comp[j] ]] <- crop(cropped.rasters1[[ years[i] ]][[ scenarios[j] ]], 
+# 																																			prepped_vector_global$boundary, mask = TRUE)
+
+
+# 			global.calc[[ years[i] ]][[ scenarios[j] ]]$boundary <- boundary.code[l]
+				
+# 				global.calc[[ years[i] ]][[ scenarios[j] ]]$mean<-
+# 					global(cropped.rasters[[ years[i] ]][[ scenarios[j] ]],
+# 								"mean", 
+# 								na.rm = TRUE)
+				
+# 				global.calc[[ years[i] ]][[ scenarios[j] ]]$std<-
+# 					global(cropped.rasters[[ years[i] ]][[ scenarios[j] ]],
+# 								"std", 
+# 								na.rm = TRUE)
+	
+
 #***TODO edit this one to take one raster of the veg classification, and a list of rasters to be masked
 #this function assumes we want a 'current' vegetation classification
 #for a given set of years - I'm choosing the 'before year' as the 
