@@ -187,13 +187,13 @@ plot.results<-function(dt.dff,ttlestrng,xlbl,metnm,af.yr,bf.yr,sum.area,sumIDnm,
 
 #This function assumes you'll use another raster to subset 
 #or mask out parts of your input raster
-subset.raster<-function(input.raster,mask.raster){
+subset.raster.with.raster<-function(input.raster,mask.raster){
 	input.raster*mask.raster
 }
 
 #This function assumes you'll use a vector to subset or 
 #mask out parts of your input raster
-mask.rasters<-function(input.raster,mask.vector){
+subset.raster.with.vector<-function(input.raster,mask.vector){
 	mask(input.raster,mask.vector)
 }
 
