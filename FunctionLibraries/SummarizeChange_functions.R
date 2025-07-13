@@ -117,24 +117,21 @@ multiply.conversion.factor<-function(rast.name, rast.file, metname,conv.fact){
 	return(conv.rast)
 }
 
+#LM TODO: is this a good example for scenarios? let's adjust the comment text appropriately
 #function to diff two rasters - for scenario modeling, 'raster1' is a base
 #case and 'raster2' is one of the scenarios; or 'raster1' is an earlier time 
 #step and 'raster2' is a later time step.  For outcome reporting, 'raster1' is
 #before treatments, and 'raster2' is after treatments.
-#'raster1' is the name, and 'raster1.met' is the actual raster
-diff.rasters<-function(raster1,raster1.rast,raster2,raster2.rast,metric){
+#'raster1.name' is the human readable name, and 'raster1.rast' is the actual raster object
+#'metric' needs to match the 'diffname' metric name, and is used in the print statement
+diff.rasters<-function(raster1.name,raster1.rast,raster2.name,raster2.rast,metric){
 
 	#this function expects a single pair of rasters to calculate a difference between
 	#set the layer name 
-	#commenting out the more complex layer name and keeping them the same for each calculation
-	dffname<-paste(metric,raster1,raster2,sep="_")
-
-	#*Changing the name to a more complex name makes joining dataframes from a list
-	#*not work. So stick with the simpler "diff" name. 
-  #dffname<-"diff"
+	dffname<-paste(metric,raster1.name,raster2.name,sep="_")
 
 	#calculate the difference
-	print(paste("Subtracting ",raster1," from ",raster2," for ",metric," (",raster2," minus ",raster1,")"),sep="")
+	print(paste("Subtracting ",raster1.name," from ",raster2.name," for ",metric," (",raster2.name," minus ",raster1.name,")"),sep="")
 	delta<-raster2.rast-raster1.rast
 	names(delta)<-dffname
 
