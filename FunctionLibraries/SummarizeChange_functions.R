@@ -139,22 +139,24 @@ diff.rasters<-function(raster1.name,raster1.rast,raster2.name,raster2.rast,metri
 }
 
 
-#returns layers with both projected to dat1 (first argument)'s Coordinate Reference System
-check.crs.match<-function(dat1,dat2){
+#returns second layer (dat.comp) projected to dat.ref (first argument)'s Coordinate Reference System
+#if CRS matches, just passes through original second layer (dat.comp)
+check.crs.match<-function(dat.ref,dat.comp){
 	#check crs/projection is the same for both
-	crs.match<-identical(crs(dat1),crs(dat2))
+	crs.match<-identical(crs(dat.ref),crs(dat.comp))
 	if(crs.match){
 		print(paste("Coordinate Reference System match? ",crs.match,sep=""))
 	} else {
 		print("Set second layer's CRS to first layer's CRS")
-		dat2<-project(dat2,crs(dat1))
-		crs.match<-identical(crs(dat1),crs(dat2))
-		print(paste("Coordinate Reference System match? ",crs.match,sep=""))
+		dat.comp<-project(dat.comp,crs(dat.ref))
+		crs.match2<-identical(crs(dat.ref),crs(dat.comp))
+		print(paste("Coordinate Reference System match? ",crs.match2,sep=""))
 	}
-	return(dat2)
+	return(dat.comp)
 }
 
-
+#these may get deprecated if we go with boxplots in general
+#but leaving function here just in case we need it
 #Make the histogram plots
 plot.results<-function(dt.dff,ttlestrng,xlbl,metnm,af.yr,bf.yr,sum.area,sumIDnm,lnd.clss,dttme,reg){
 	dt.dff.shp<-dt.dff
