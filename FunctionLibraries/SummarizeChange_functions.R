@@ -102,17 +102,17 @@ parse.SIG.fireresults.filenames<-function(filenames){
 #or are multiplied by a factor of 100 or 1000 in order to be
 #stored as integers.  Look up the documentation to check what 
 #the conversion should be
-#expects a single raster, 'which.rast' is the user-readable raster name, met.rast 
+#expects a single raster, 'rast.name' is the user-readable raster name, rast.file 
 #is the actual raster object
 #if you specify NA for the conversion factor, then the function just
 #returns the original raster
-multiply.conversion.factor<-function(which.rast, met.rast, metname,conv.fact){
+multiply.conversion.factor<-function(rast.name, rast.file, metname,conv.fact){
 	if(!is.na(conv.fact)){
-		print(paste("Converting raster, multiplying (",which.rast,") ",metname, " by",conv.fact),sep="")
-		conv.rast<-met.rast*conv.fact
+		print(paste("Converting raster, multiplying (",rast.name,") ",metname, " by",conv.fact),sep="")
+		conv.rast<-rast.file*conv.fact
 	} else {
 		print("No conversion factor specified.")
-		conv.rast<-met.rast
+		conv.rast<-rast.file
 	}
 	return(conv.rast)
 }
