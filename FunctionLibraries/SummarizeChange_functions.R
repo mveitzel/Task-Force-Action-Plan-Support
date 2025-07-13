@@ -11,39 +11,42 @@ library('terra')
 ##########################################################
 #################### FUNCTIONS ######################
 
-#function to read in raster1 and raster2 rasters
-#this function expects a single pair of rasters to calculate a difference between
-#if 'conv' is NA, don't multiply by any factors
-#raster1name and raster2name are just strings to go in print statements, etc
-#raster1.filename and raster2.filename need to be actual filenames
-#do specify the file path as 'location', e.g. use "getwd()" to pull your current
-#location, or specify a different location
-#TODO*** add a default argument for location to just be getwd()
-#returns a single raster
-read.checkcrs.convert.and.diff.rasters<-function(location,raster1name,raster1.filename,raster2name,raster2.filename,metr,conv){
+# MV TODO: I think this function can be deprecated because we do this in
+# a number of different smaller functions now
 
-	#read in the rasters
-	print(paste("Reading in ",location,raster1.filename,sep=""))
-	raster1.met<-rast(paste(location,raster1.filename,sep=""))
-	print(paste("Reading in ",location,raster2.filename,sep=""))
-	raster2.met<-rast(paste(location,raster2.filename,sep=""))
+# #function to read in raster1 and raster2 rasters
+# #this function expects a single pair of rasters to calculate a difference between
+# #if 'conv' is NA, don't multiply by any factors
+# #raster1name and raster2name are just strings to go in print statements, etc
+# #raster1.filename and raster2.filename need to be actual filenames
+# #do specify the file path as 'location', e.g. use "getwd()" to pull your current
+# #location, or specify a different location
+# #TODO*** add a default argument for location to just be getwd()
+# #returns a single raster
+# read.checkcrs.convert.and.diff.rasters<-function(location,raster1name,raster1.filename,raster2name,raster2.filename,metr,conv){
 
-	#check that the Coordinate Reference System is the same
-	#or set it to the raster1 metric (the first argument)
-	#(note that this may not handle datum transformations)
-	raster2.met<-check.crs.match(raster1.met,raster2.met)
+# 	#read in the rasters
+# 	print(paste("Reading in ",location,raster1.filename,sep=""))
+# 	raster1.met<-rast(paste(location,raster1.filename,sep=""))
+# 	print(paste("Reading in ",location,raster2.filename,sep=""))
+# 	raster2.met<-rast(paste(location,raster2.filename,sep=""))
 
-	#use a conversion factor for each raster if necessary
-	if(!is.na(conv)){
-		raster1.met.conv<-multiply.conversion.factor(raster1name,raster1.met,metr,conv)
-		raster2.met.conv<-multiply.conversion.factor(raster2name,raster2.met,metr,conv)
-		delta.met<-diff.rasters(raster1name, raster1.met.conv,raster2name,raster2.met.conv, metr)
-	} else {
-		print("No conversion factor applied")
-		delta.met<-diff.rasters(raster1name, raster1.met,raster2name,raster2.met, metr)
-	}
-	return(delta.met)
-}
+# 	#check that the Coordinate Reference System is the same
+# 	#or set it to the raster1 metric (the first argument)
+# 	#(note that this may not handle datum transformations)
+# 	raster2.met<-check.crs.match(raster1.met,raster2.met)
+
+# 	#use a conversion factor for each raster if necessary
+# 	if(!is.na(conv)){
+# 		raster1.met.conv<-multiply.conversion.factor(raster1name,raster1.met,metr,conv)
+# 		raster2.met.conv<-multiply.conversion.factor(raster2name,raster2.met,metr,conv)
+# 		delta.met<-diff.rasters(raster1name, raster1.met.conv,raster2name,raster2.met.conv, metr)
+# 	} else {
+# 		print("No conversion factor applied")
+# 		delta.met<-diff.rasters(raster1name, raster1.met,raster2name,raster2.met, metr)
+# 	}
+# 	return(delta.met)
+# }
 
 #Generate CECS filenames to read in rasters
 generate.CECS.filename<-function(metrname,yearname,datavintage){
