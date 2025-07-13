@@ -53,9 +53,10 @@ generate.CECS.filename<-function(metrname,yearname,datavintage){
 	return(metr.nm)
 }
 
+#***LM TODO: do we need this function?
 #Generate SIG filenames to read in rasters
 generate.SIG.filename<-function(additional.wd.folders, scenario.fldr, scenario.nm,year.nm, metric, data.typ, dte.time){
-  #generate the CECS filenames for this metric, year, and version/vintage
+  #generate the SIG filenames for this metric, year, and scenario numbers
   metr.nm<-paste(additional.wd.folders, "treated_",scenario.nm,"_","year","_", year.nm, "_",metric, "_", data.typ, "_", dte.time,".tif",sep="")
   print(paste("Preparing to read in: ",metr.nm,sep=""))
   return(metr.nm)
@@ -130,7 +131,7 @@ diff.rasters<-function(raster1,raster1.rast,raster2,raster2.rast,metric){
   #dffname<-"diff"
 
 	#calculate the difference
-	print(paste("Subtracting ",raster2," from ",raster1," for ",metric),sep="")
+	print(paste("Subtracting ",raster1," from ",raster2," for ",metric," (",raster2," minus ",raster1,")"),sep="")
 	delta<-raster2.rast-raster1.rast
 	names(delta)<-dffname
 
