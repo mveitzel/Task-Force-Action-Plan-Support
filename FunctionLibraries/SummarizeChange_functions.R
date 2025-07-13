@@ -6,6 +6,37 @@ library("viridis")
 #library("sf")
 library('terra')
 
+###################  GLOSSARY ##########################
+
+#raster.name refers to a human readable phrase for a raster layer
+#raster.file refers to the filename of the raster
+#raster.rast refers to the raster object itself in memory
+
+#"name" means human-readable phrase to describe an element of 
+# the analysis, e.g. for printing out
+#"code" means short abbreviation of an element of analysis, 
+# e.g. for a filename or needs to match a column name (often 
+# a 2-3 letter code)
+#"shape" means an actual file name for a shapefile/vector dataset
+#"vect" means the vector object itself in memory
+
+#METRIC -- this will be its own data frame and analysis
+#metric.code is a short code, usually should be the code that
+#is in the file
+#metric.name is what will be displayed in figures. 
+
+#BOUNDARY -- this may get looped through so might have more than one element
+#but does assume a single shapefile at a time
+#This is the filename for whatever your cropped boundary is (meaning the cookie
+#cutter shape)
+# boundary.shape is the filename, boundary.code is the 2-3 character code, and 
+# boundary.name is the human-readable name for the boundary we're cropping to
+
+#ZONAL SUMMARY UNIT -- the unit we will do zonal averages or other summaries for
+#Filename for whatever your summary unit is
+#e.g. zonal.summary.shape is the filename, zonal.summary.name is human readable,
+# and zonal.summary.code is a short 2-3 character code for filenames and column headers
+
 
 #########################################################
 ##########################################################
