@@ -197,43 +197,43 @@ subset.raster.with.vector<-function(input.raster,mask.vector){
 	mask(input.raster,mask.vector)
 }
 
-#TODO*** once you confirm the other functions work, remove this function
-#This function reads in and processes the vector layers:
-#crop.poly is the boundary polygon of your entire analysis region,
-#whether that's the entire state, or a region, or a smaller area
-#you need to read in the rasters (rstrs) to check the coordinate system
-#sumPly is the spatial summary unit polygon (e.g. HUC), and the SumPlyNm 
-#is the name of that column in the vector file (for example in the HUC 
-#dataset, if it's a HUC10, the column name is 'huc10' and if it's a HUC12,
-#the name is 'huc12')
-read.in.and.process.vectors<-function(crop.poly,rstrs,sumPly,sumPlyNm){
+# #TODO*** once you confirm the other functions work, remove this function
+# #This function reads in and processes the vector layers:
+# #crop.poly is the boundary polygon of your entire analysis region,
+# #whether that's the entire state, or a region, or a smaller area
+# #you need to read in the rasters (rstrs) to check the coordinate system
+# #sumPly is the spatial summary unit polygon (e.g. HUC), and the SumPlyNm 
+# #is the name of that column in the vector file (for example in the HUC 
+# #dataset, if it's a HUC10, the column name is 'huc10' and if it's a HUC12,
+# #the name is 'huc12')
+# read.in.and.process.vectors<-function(crop.poly,rstrs,sumPly,sumPlyNm){
 
-	#Project, crop, calculate areas, and subset by date
+# 	#Project, crop, calculate areas, and subset by date
 
-	#-------------- State boundary for clipping ------------#
-	#               (or region, as appropriate)             #
+# 	#-------------- State boundary for clipping ------------#
+# 	#               (or region, as appropriate)             #
 
-	cr.poly<-vect(crop.poly)
-	#returns layers with both projected to first argument's CRS
-	crop_poly_proj<-check.crs.match(rstrs$raster1,cr.poly)
-	print(paste(crop.poly," read in and processed.",sep=""))
+# 	cr.poly<-vect(crop.poly)
+# 	#returns layers with both projected to first argument's CRS
+# 	crop_poly_proj<-check.crs.match(rstrs$raster1,cr.poly)
+# 	print(paste(crop.poly," read in and processed.",sep=""))
 
 
-	#---------------- Polygons to summarize over ------------#
+# 	#---------------- Polygons to summarize over ------------#
 
-	summary_poly<-vect(sumPly)
-	#returns layers with both projected to first argument's CRS
-	summary_poly_proj<-check.crs.match(rstrs$raster1,summary_poly)
-	summary_ID_name<-sumPlyNm
-	#crop to CA or regional boundary
-	summary_poly_proj<-crop(summary_poly_proj,crop_poly_proj)
-	#explicitly calculate the area of the HUC8
-	summary_poly_proj$huc_area<-expanse(summary_poly_proj,unit="ha")
-	print(paste(sumPly," read in and processed. Summary field: ",sumPlyNm,sep=""))
+# 	summary_poly<-vect(sumPly)
+# 	#returns layers with both projected to first argument's CRS
+# 	summary_poly_proj<-check.crs.match(rstrs$raster1,summary_poly)
+# 	summary_ID_name<-sumPlyNm
+# 	#crop to CA or regional boundary
+# 	summary_poly_proj<-crop(summary_poly_proj,crop_poly_proj)
+# 	#explicitly calculate the area of the HUC8
+# 	summary_poly_proj$huc_area<-expanse(summary_poly_proj,unit="ha")
+# 	print(paste(sumPly," read in and processed. Summary field: ",sumPlyNm,sep=""))
 
-	return(list(boundary=crop_poly_proj,sumPoly=summary_poly_proj))
+# 	return(list(boundary=crop_poly_proj,sumPoly=summary_poly_proj))
 
-}
+# }
 
 ##########EDITED VERSION TO MAKE MORE GENERAL###############
 #When trying to process a vector for a single raster (i.e. that has not been differenced
@@ -274,19 +274,19 @@ read.in.and.process.vectors.single.raster<-function(crop.poly,rstr,sumPly,sumPly
   
 }
 
-#TODO*** once you confirm the other functions work, remove this function
-#This function actually does the zonal calculations for raster pixels that fall within
-#the entire spatial summary area (e.g. HUC)
-zonal.calculations<-function(rsters,prepVec){
+# #TODO*** once you confirm the other functions work, remove this function
+# #This function actually does the zonal calculations for raster pixels that fall within
+# #the entire spatial summary area (e.g. HUC)
+# zonal.calculations<-function(rsters,prepVec){
 
-	 #----------- Zonal calcs for entire summary areas ------------#
-	 #this takes a long time
-	 summaryzonal.time<- system.time(zonal.stats.summarypoly<-zonal(rsters$diff,prepVec$sumPoly,fun="mean",as.polygons=TRUE,na.rm=TRUE) )
-	print("Zonal stats calculated for whole summary unit (raw averages)")
-	 print(summaryzonal.time/60)
+# 	 #----------- Zonal calcs for entire summary areas ------------#
+# 	 #this takes a long time
+# 	 summaryzonal.time<- system.time(zonal.stats.summarypoly<-zonal(rsters$diff,prepVec$sumPoly,fun="mean",as.polygons=TRUE,na.rm=TRUE) )
+# 	print("Zonal stats calculated for whole summary unit (raw averages)")
+# 	 print(summaryzonal.time/60)
 
-		return(list(zonalAll=zonal.stats.summarypoly))
-}
+# 		return(list(zonalAll=zonal.stats.summarypoly))
+# }
 
 
 #############EDITED VERSION OF ZONAL CALCULATIONS FUNCTION######################
