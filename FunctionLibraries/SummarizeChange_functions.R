@@ -87,14 +87,14 @@ generate.CECS.filename<-function(metrname,yearname,datavintage){
 	return(metr.nm)
 }
 
-#***LM TODO: do we need this function?
-#Generate SIG filenames to read in rasters
-generate.SIG.filename<-function(additional.wd.folders, scenario.fldr, scenario.nm,year.nm, metric, data.typ, dte.time){
-  #generate the SIG filenames for this metric, year, and scenario numbers
-  metr.nm<-paste(additional.wd.folders, "treated_",scenario.nm,"_","year","_", year.nm, "_",metric, "_", data.typ, "_", dte.time,".tif",sep="")
-  print(paste("Preparing to read in: ",metr.nm,sep=""))
-  return(metr.nm)
-}
+# #***LM TODO: do we need this function?
+# #Generate SIG filenames to read in rasters
+# generate.SIG.filename<-function(additional.wd.folders, scenario.fldr, scenario.nm,year.nm, metric, data.typ, dte.time){
+#   #generate the SIG filenames for this metric, year, and scenario numbers
+#   metr.nm<-paste(additional.wd.folders, "treated_",scenario.nm,"_","year","_", year.nm, "_",metric, "_", data.typ, "_", dte.time,".tif",sep="")
+#   print(paste("Preparing to read in: ",metr.nm,sep=""))
+#   return(metr.nm)
+# }
 
 #Parse SIG filenames to read in FVS rasters
 parse.SIG.fvs.filenames<-function(filenames){
@@ -312,6 +312,8 @@ read.in.and.process.vectors.single.raster<-function(crop.poly,rstr,sumPly,sumPly
   return(list(boundary=crop_poly_proj,sumPoly=summary_poly_proj))
   
 }
+
+process.boundary.vector<-function()
 
 # #TODO*** once you confirm the other functions work, remove this function
 # #This function actually does the zonal calculations for raster pixels that fall within
