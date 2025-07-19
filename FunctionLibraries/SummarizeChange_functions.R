@@ -292,7 +292,7 @@ read.in.and.process.vectors.single.raster<-function(crop.poly,rstr,sumPly,sumPly
   #               (or region, as appropriate)             #
   
   cr.poly<-vect(crop.poly)
-  #returns layers with both projected to first argument's CRS
+  #returns layers with the second projected to first argument's CRS
   crop_poly_proj<-check.crs.match(rstr,cr.poly)
   print(paste(crop.poly," read in and processed.",sep=""))
   
@@ -300,7 +300,7 @@ read.in.and.process.vectors.single.raster<-function(crop.poly,rstr,sumPly,sumPly
   #---------------- Polygons to summarize over ------------#
   
   summary_poly<-vect(sumPly)
-  #returns layers with both projected to first argument's CRS
+  #returns layers the second projected to first argument's CRS
   summary_poly_proj<-check.crs.match(rstr,summary_poly)
   summary_ID_name<-sumPlyNm
   #crop to CA or regional boundary
@@ -313,10 +313,6 @@ read.in.and.process.vectors.single.raster<-function(crop.poly,rstr,sumPly,sumPly
   
 }
 
-clip.vector.by.boundary.vector<-function(bdr.shape, bdr.name,vect.shape,vect.name){
-
-}
-
 read.and.prepare.boundary.vector<-function(bdry.shape,bdry.name,ref.rast){
   boundary.vect<-vect(bdry.shape)
   #returns layers with both projected to first argument's CRS
@@ -324,6 +320,21 @@ read.and.prepare.boundary.vector<-function(bdry.shape,bdry.name,ref.rast){
   print(paste(bdry.name," read in and processed.",sep=""))
  	return(boundary.vect.proj)
 }
+
+crop.vector.by.boundary.vector<-function(bdr.vect, bdr.name,vect.shape,vect.name){
+	to.crop.vect<-vect(vect.shape)
+  print(paste(vect.name," read in and processed.",sep=""))
+  #returns layers with the second projected to first argument's CRS
+  to.crop.vect.proj<-check.crs.match(bdr.vect,to.crop.vect)
+  #crop using boundary
+	cropped.vect<-crop(to.crop.vect.proj,bdr.vect)
+  print(paste(vect.name," cropped to ",bdr.name,sep=""))
+  #explicitly calculate the area of the cropped vector
+  cropped.vect$post_crop_area_ha<-expanse(cropped.vect,unit="ha")
+  print(paste(vect.name," Areas recalculated",sep=""))
+  return(cropped.vect)
+}
+
 
 # #TODO*** once you confirm the other functions work, remove this function
 # #This function actually does the zonal calculations for raster pixels that fall within
