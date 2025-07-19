@@ -321,7 +321,7 @@ read.and.prepare.boundary.vector<-function(bdry.shape,bdry.name,ref.rast){
   boundary.vect<-vect(bdry.shape)
   #returns layers with both projected to first argument's CRS
   boundary.vect.proj<-check.crs.match(ref.rast,boundary.vect)
-  print(paste(bdry.name, "(",bdry.shape,") read in and processed.",sep=""))
+  print(paste(bdry.name," read in and processed.",sep=""))
  	return(boundary.vect.proj)
 }
 
