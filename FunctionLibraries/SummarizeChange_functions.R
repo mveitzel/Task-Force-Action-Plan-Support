@@ -350,13 +350,14 @@ zonal.calculations.single.raster<-function(rster,mapun,prepVec){
   return(zonal.stats.summarypoly)
 }
 
-zonal.calculations.single.raster.exact<-function(rster,mapun,prepVec){
-  summaryzonal.time<- system.time(zonal.stats.summarypoly<-zonal(rster,prepVec$sumPoly,fun="mean",as.polygons=TRUE,na.rm=TRUE,exact=TRUE) )
-  print(paste("Zonal stats calculated for ",names(rster), " using ", mapun, sep=""))
-  print(summaryzonal.time/60)
+# #Including this function for posterity, though it takes a long time to run so not likely to use it
+# zonal.calculations.single.raster.exact<-function(rster,mapun,prepVec){
+#   summaryzonal.time<- system.time(zonal.stats.summarypoly<-zonal(rster,prepVec$sumPoly,fun="mean",as.polygons=TRUE,na.rm=TRUE,exact=TRUE) )
+#   print(paste("Zonal stats calculated for ",names(rster), " using ", mapun, sep=""))
+#   print(summaryzonal.time/60)
   
-  return(zonal.stats.summarypoly)
-}
+#   return(zonal.stats.summarypoly)
+# }
 
 
 
