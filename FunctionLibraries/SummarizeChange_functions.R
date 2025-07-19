@@ -353,7 +353,7 @@ read.and.check.crs.patch.vector<-function(ptch.shape,ptch.name,ptch.layer,bdary.
 	return(ptch.vect.proj)
 }
 
-#If you are summarizing vectors at the scale of a boundary poly, inter.vect/name and bound.vect/name will be repeats
+#If you are summarizing vectors at the scale of a boundary poly, inter.vect/name and bound.vect/name will be repeated
 intersect.and.aggregate.vectors<-function(inter.vect,inter.name,pch.vect,pch.name,ag.name,ag.code,bound.vect,bound.name){
 	#first intersect the patch variable with a boundary polygon (e.g. region) or a zonal summary polygon (e.g. HUC)
 	intersected.patch.vect<-intersect(inter.vect,pch.vect)
@@ -369,7 +369,17 @@ intersect.and.aggregate.vectors<-function(inter.vect,inter.name,pch.vect,pch.nam
 
 #for the function that does the raster summary, have a method=global and method=zonal with an if statement
 
+summarize.pixels.in.area.of.interest<-function(rast.rast,rast.name,vect.vect,vect.name,method){
+	if(method=="zonal"){
+			#call zonal summary
+		}else if(method=="global"){
+			#flesh this out with LC's help
+		}
+	#return()
+}
 
+#The next function is where I'll write something that does zonal: huc12, huc12-intersected-with-fires, and huc12-intersected-with treatments
+#it will call the summarize.pixels function three times
 
 #this function will filter patches for e.g. treatment types and date ranges
 filter.patches<-function()
@@ -377,7 +387,7 @@ filter.patches<-function()
 # 	        format(as.Date(treatments_proj$ACTIVITY_END),"%Y-%m-%d")<="2023-10-01" ,]
 # 	fires_proj<-fires_proj[format(as.Date(fires_proj$CONT_DATE),"%Y-%m-%d")>="2020-09-30" &
 # 	        format(as.Date(fires_proj$CONT_DATE),"%Y-%m-%d")<="2023-10-01" ,]
-
+# also have a way to filter by a list of treatment types
 
 # #TODO*** once you confirm the other functions work, remove this function
 # #This function actually does the zonal calculations for raster pixels that fall within

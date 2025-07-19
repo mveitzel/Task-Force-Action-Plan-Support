@@ -42,5 +42,5 @@ agg.fires.vect.region<-intersect.and.aggregate.vectors(
 		prepped.boundary.vect,boundary.name,fires,patch.name[2],"Regions","Region",prepped.boundary.vect,boundary.name)
 agg.fires.vect.huc<-intersect.and.aggregate.vectors(
 		prepped.zonal.summary.area.vect,vect.name,fires,patch.name[2],"HUC12","huc12",prepped.boundary.vect,boundary.name)
-$plot(agg.fires.vect.huc$,)
+
 

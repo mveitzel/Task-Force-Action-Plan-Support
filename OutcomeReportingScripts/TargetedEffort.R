@@ -38,7 +38,7 @@ source("Task-Force-Action-Plan-Support/FunctionLibraries/SummarizeChange_functio
 
 dv.rast<-rast("D:\\GIS_Large_Files\\CECS_Data\\CECS_CAWide_Vulner_TreeDieoff_SPI-2_2020_V250418.tif")
 dv.rast.priority<-dv>1000
-dv.vect<-as.polygons(dv.rast.priority,aggregate=TRUE)
+dv.vect<-as.polygons(dv.rast.priority,aggregate=TRUE)#what if we didn't aggregate first?
 
 #TREATMENT DATASET PREP
 #filter the treatment types for the appropriate policy goal/topic
