@@ -350,6 +350,15 @@ zonal.calculations.single.raster<-function(rster,mapun,prepVec){
   return(zonal.stats.summarypoly)
 }
 
+zonal.calculations.single.raster.exact<-function(rster,mapun,prepVec){
+  summaryzonal.time<- system.time(zonal.stats.summarypoly<-zonal(rster,prepVec$sumPoly,fun="mean",as.polygons=TRUE,na.rm=TRUE,exact=TRUE) )
+  print(paste("Zonal stats calculated for ",names(rster), " using ", mapun, sep=""))
+  print(summaryzonal.time/60)
+  
+  return(zonal.stats.summarypoly)
+}
+
+
 
 #---- Global calcs for entire area cropped by the boundary vector file
 
