@@ -37,6 +37,8 @@ library('terra')
 #e.g. zonal.summary.shape is the filename, zonal.summary.name is human readable,
 # and zonal.summary.code is a short 2-3 character code for filenames and column headers
 
+#PATCH -- this refers to areas that are not extensive/don't cover the whole area
+#most commonly this is outcome reporting referring to fire footprints or treatment areas
 
 #########################################################
 ##########################################################
@@ -274,6 +276,7 @@ subset.raster.with.vector<-function(input.raster,mask.vector){
 
 # }
 
+#***TODO: MV suggests using the other two functions to do what this one does, and deleting this one
 ##########EDITED VERSION TO MAKE MORE GENERAL###############
 #When trying to process a vector for a single raster (i.e. that has not been differenced
 #and only includes one raster layer), the read.in.and.process.vectors function would
@@ -321,19 +324,59 @@ read.and.prepare.boundary.vector<-function(bdry.shape,bdry.name,ref.rast){
  	return(boundary.vect.proj)
 }
 
-crop.vector.by.boundary.vector<-function(bdr.vect, bdr.name,vect.shape,vect.name){
-	to.crop.vect<-vect(vect.shape)
+#this function just reads in a vector file and checks CRS
+read.vector.and.check.crs<-function(bdr.vect,vect.shape,vect.name){
+	new.vect<-vect(vect.shape)
   print(paste(vect.name," read in and processed.",sep=""))
   #returns layers with the second projected to first argument's CRS
-  to.crop.vect.proj<-check.crs.match(bdr.vect,to.crop.vect)
-  #crop using boundary
-	cropped.vect<-crop(to.crop.vect.proj,bdr.vect)
+  vect.proj<-check.crs.match(bdr.vect,new.vect)
+ 	return(vect.proj)
+}
+
+#This function both crops by the boundary vector and also recalculates areas
+#because you will always want to have the correct area after doing a vector operation
+crop.vector.by.boundary.and.recalc.area<-function(bdr.vect, bdr.name,proj.vect,vect.name){
+ #crop using boundary
+	cropped.vect<-crop(proj.vect,bdr.vect)
   print(paste(vect.name," cropped to ",bdr.name,sep=""))
   #explicitly calculate the area of the cropped vector
   cropped.vect$post_crop_area_ha<-expanse(cropped.vect,unit="ha")
   print(paste(vect.name," Areas recalculated",sep=""))
   return(cropped.vect)
 }
+
+read.and.check.crs.patch.vector<-function(ptch.shape,ptch.name,ptch.layer,bdary.vect,bdary.name,zonal.sum.vect,zonal.sum.name){
+	ptch.vect<-vect(ptch.shape,layer=ptch.layer)
+	print(paste(ptch.name, " read in, layer: ", ptch.layer,sep=""))
+ 	#returns layers with second projected to first argument's CRS
+	ptch.vect.proj<-check.crs.match(bdary.vect,ptch.vect)
+	return(ptch.vect.proj)
+}
+
+#If you are summarizing vectors at the scale of a boundary poly, inter.vect/name and bound.vect/name will be repeats
+intersect.and.aggregate.vectors<-function(inter.vect,inter.name,pch.vect,pch.name,ag.name,ag.code,bound.vect,bound.name){
+	#first intersect the patch variable with a boundary polygon (e.g. region) or a zonal summary polygon (e.g. HUC)
+	intersected.patch.vect<-intersect(inter.vect,pch.vect)
+	print(paste(inter.name," intersected with ", pch.name, sep=""))
+	#Then aggregate based on the salient ID of the intersecting layer, e.g. 'huc12' or 'Region'
+	ag.pch.vect<-aggregate(intersected.patch.vect,by=ag.code,dissolve=TRUE)
+	print(paste(pch.name," aggregated based on ",ag.name," (column name ",ag.code,")",sep=""))
+	#Then crop (though intersect already basically does that), and recalculate the area of resulting polygons
+	crop.agg.patch.vect<-crop.vector.by.boundary.and.recalc.area(bound.vect,bound.name,ag.pch.vect,pch.name)
+	return(crop.agg.patch.vect)
+}
+
+
+#for the function that does the raster summary, have a method=global and method=zonal with an if statement
+
+
+
+#this function will filter patches for e.g. treatment types and date ranges
+filter.patches<-function()
+# 	treatments_proj<-treatments_proj[format(as.Date(treatments_proj$ACTIVITY_END),"%Y-%m-%d")>="2020-09-30" &
+# 	        format(as.Date(treatments_proj$ACTIVITY_END),"%Y-%m-%d")<="2023-10-01" ,]
+# 	fires_proj<-fires_proj[format(as.Date(fires_proj$CONT_DATE),"%Y-%m-%d")>="2020-09-30" &
+# 	        format(as.Date(fires_proj$CONT_DATE),"%Y-%m-%d")<="2023-10-01" ,]
 
 
 # #TODO*** once you confirm the other functions work, remove this function
