@@ -313,7 +313,17 @@ read.in.and.process.vectors.single.raster<-function(crop.poly,rstr,sumPly,sumPly
   
 }
 
-process.boundary.vector<-function()
+clip.vector.by.boundary.vector<-function(bdr.shape, bdr.name,vect.shape,vect.name){
+
+}
+
+read.and.prepare.boundary.vector<-function(bdry.shape,bdry.name,ref.rast){
+  boundary.vect<-vect(bdry.shape)
+  #returns layers with both projected to first argument's CRS
+  boundary.vect.proj<-check.crs.match(ref.rast,boundary.vect)
+  print(paste(bdry.name, "(",bdry.shape,") read in and processed.",sep=""))
+ 	return(boundary.vect.proj)
+}
 
 # #TODO*** once you confirm the other functions work, remove this function
 # #This function actually does the zonal calculations for raster pixels that fall within
