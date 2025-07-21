@@ -43,4 +43,14 @@ agg.fires.vect.region<-intersect.and.aggregate.vectors(
 agg.fires.vect.huc<-intersect.and.aggregate.vectors(
 		prepped.zonal.summary.area.vect,vect.name,fires,patch.name[2],"HUC12","huc12",prepped.boundary.vect,boundary.name)
 
+metric.name<-"Drought Vulnerability"
+
+huc_DV<-summarize.pixels.in.area.of.interest(reference.rast,metric.name,prepped.zonal.summary.area.vect,vect.name,"zonal")
+
+# oops I accidentally used the non-prepped version that wasn't cropped
+#      user     system    elapsed 
+#24.3666667  0.5361667 24.9105000 
+#is the timing for the whole state.  Not bad!
+
+
 

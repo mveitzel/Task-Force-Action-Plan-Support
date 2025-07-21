@@ -367,19 +367,38 @@ intersect.and.aggregate.vectors<-function(inter.vect,inter.name,pch.vect,pch.nam
 }
 
 
-#for the function that does the raster summary, have a method=global and method=zonal with an if statement
+#This version does zonal calculations for raster pixels that fall within the specified
+#summary unit. However, rather than requiring the result from differencing rasters 
+#(which has 3 rasters - $raster1, $raster2, $diff), this only requires a single raster. 
+#You could still use this version for the differenced result, but would have to 
+#specify 'differenced.result$diff' in the 'rstr' call rather than 'differenced.result'. 
+#outputs a single SpatVector with zonal results
+zonal.calculations<-function(rster.rast,zonal.sum.name,zonal.sum.vect){
+  summaryzonal.time<- system.time(zonal.calcs.vect<-zonal(rster.rast,zonal.sum.vect,fun="mean",as.polygons=TRUE,na.rm=TRUE) )
+  print(paste("Zonal stats calculated for ",names(rster.rast), " using ", zonal.sum.name, sep=""))
+  print(summaryzonal.time/60)
+ 
+  return(zonal.calcs.vect)
+}
 
+#for the function that does the raster summary, have a method=global and method=zonal with an if statement
+#rast.name is a metric name
 summarize.pixels.in.area.of.interest<-function(rast.rast,rast.name,vect.vect,vect.name,method){
 	if(method=="zonal"){
 			#call zonal summary
+			result<-zonal.calculations(rast.rast,vect.name,vect.vect)
 		}else if(method=="global"){
 			#flesh this out with LC's help
 		}
-	#return()
+	return(result)
 }
 
 #The next function is where I'll write something that does zonal: huc12, huc12-intersected-with-fires, and huc12-intersected-with treatments
 #it will call the summarize.pixels function three times
+
+run.zonal.statistics.one.metric<-function(){
+
+}
 
 #this function will filter patches for e.g. treatment types and date ranges
 filter.patches<-function()
@@ -403,26 +422,6 @@ filter.patches<-function()
 # 		return(list(zonalAll=zonal.stats.summarypoly))
 # }
 
-
-#############EDITED VERSION OF ZONAL CALCULATIONS FUNCTION######################
-#This version does zonal calculations for raster pixels that fall within the specified
-#summary unit. However, rather than requiring the result from differencing rasters 
-#(which has 3 rasters - $raster1, $raster2, $diff), this only requires a single raster. 
-#You could still use this version for the differenced result, but would have to 
-#specify 'differenced.result$diff' in the 'rstr' call rather than 'differenced.result'. 
-#outputs a single SpatVector with zonal results
-
-
-#----------- Zonal calcs for entire summary areas ------------#
-#this takes a long time
-### specifying what the huc level is, called mapun, or minimum mapping unit
-zonal.calculations.single.raster<-function(rster,mapun,prepVec){
-  summaryzonal.time<- system.time(zonal.stats.summarypoly<-zonal(rster,prepVec$sumPoly,fun="mean",as.polygons=TRUE,na.rm=TRUE) )
-  print(paste("Zonal stats calculated for ",names(rster), " using ", mapun, sep=""))
-  print(summaryzonal.time/60)
-  
-  return(zonal.stats.summarypoly)
-}
 
 # #Including this function for posterity, though it takes a long time to run so not likely to use it
 # zonal.calculations.single.raster.exact<-function(rster,mapun,prepVec){
