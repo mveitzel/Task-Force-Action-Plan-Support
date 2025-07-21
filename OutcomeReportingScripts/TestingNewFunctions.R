@@ -27,7 +27,7 @@ patch.name<-c("Treatments","Fires")
 patch.shape<-c(paste(loc.data,"ITT_2024_Data/Interagency Tracking System.gdb",sep=""),paste(loc.data,"FireFootprints/fire23_1.gdb",sep=""))
 patch.layer<-c("Treat_n_harvests_polygons2023_20240911","firep23_1")
 
-#treatments<-read.and.check.crs.patch.vector(patch.shape[1],patch.name[1],patch.layer[1],prepped.boundary.vect)
+treatments<-read.and.check.crs.patch.vector(patch.shape[1],patch.name[1],patch.layer[1],prepped.boundary.vect)
 fires<-read.and.check.crs.patch.vector(patch.shape[2],patch.name[2],patch.layer[2],prepped.boundary.vect)
 
 agg.name<-"Regions"
@@ -38,10 +38,14 @@ agg.code<-"Region"
 #in general, where there's no overlap, and also no overlap = that code doesn't appear in the dissolve argument (the column name)
 #it throws out the 'zeroes'.  Will have to decide how to handle that, I think it's largely fine because we aren't going to do 
 #histograms quite how we did it before.  I think HUC12 is only for mapping, maybe histograms/boxplots for reality checks but not for display
-agg.fires.vect.region<-intersect.and.aggregate.vectors(
-		prepped.boundary.vect,boundary.name,fires,patch.name[2],"Regions","Region",prepped.boundary.vect,boundary.name)
+#agg.fires.vect.region<-intersect.and.aggregate.vectors(
+#		prepped.boundary.vect,boundary.name,fires,patch.name[2],"Regions","Region",prepped.boundary.vect,boundary.name)
 agg.fires.vect.huc<-intersect.and.aggregate.vectors(
 		prepped.zonal.summary.area.vect,vect.name,fires,patch.name[2],"HUC12","huc12",prepped.boundary.vect,boundary.name)
+#agg.treatments.vect.region<-intersect.and.aggregate.vectors(
+#		prepped.boundary.vect,boundary.name,treatments,patch.name[1],"Regions","Region",prepped.boundary.vect,boundary.name)
+agg.treatments.vect.huc<-intersect.and.aggregate.vectors(
+		prepped.zonal.summary.area.vect,vect.name,treatments,patch.name[1],"HUC12","huc12",prepped.boundary.vect,boundary.name)
 
 metric.name<-"Drought Vulnerability"
 
@@ -51,6 +55,54 @@ huc_DV<-summarize.pixels.in.area.of.interest(reference.rast,metric.name,prepped.
 #      user     system    elapsed 
 #24.3666667  0.5361667 24.9105000 
 #is the timing for the whole state.  Not bad!
+#     user    system   elapsed 
+#6.9768333 0.1421667 7.1306667 
+#is the timing for just the sierras
 
+#sketching out the function that will do all the things
+
+
+#date stamp of this set of results - appended to all outputs to avoid overwriting older versions
+datetime<-"2025Jul20"
+
+#ending year of water year
+before.year<-2020
+after.year<-2023
+
+metric.name<-"Drought Vulnerability"
+vint<-"250418"
+metric.code<-"Vulner_TreeDieoff_SPI-2"
+#xlabel<-"Change in Runoff"
+#index, so no conversion factor
+conversion<-NA
+#read in the rasters, convert them from CECS 'units', and difference them final minus initial (after minus before)	
+#generate CECS file names
+before.yr.name<-generate.CECS.filename(metric.code,before.year,vint)
+after.yr.name<-generate.CECS.filename(metric.code,after.year,vint)
+
+before.rast<-read.in.raster(loc.data,before.yr.name,metric.name)
+after.rast<-read.in.raster(loc.data,after.yr.name,metric.name)
+
+before.proj.rast<-check.crs.match(reference.rast,before.rast)
+after.proj.rast<-check.crs.match(reference.rast,after.rast)
+
+before.prepped.rast<-multiply.conversion.factor(metric.name,before.proj.rast,conversion)
+after.prepped.rast<-multiply.conversion.factor(metric.name,after.proj.rast,conversion)
+
+diff<-diff.rasters(before.yr.name,before.prepped.rast,after.yr.name,after.prepped.rast,metric.name)
+
+whole.summary.area<-summarize.pixels.in.area.of.interest(diff,metric.name,prepped.zonal.summary.area.vect,vect.name,"zonal")
+treatments<-summarize.pixels.in.area.of.interest(diff,metric.name,agg.treatments.vect.huc,patch.name[1],"zonal")
+fires<-summarize.pixels.in.area.of.interest(diff,metric.name,agg.fires.vect.huc,patch.name[2],"zonal")
+
+# zonal summary polys
+#      user    system   elapsed 
+# 9.3341667 0.3913333 9.6680000 
+# treatments
+#    user  system elapsed 
+#  0.8200  0.0425  0.8590 
+# fires
+#      user    system   elapsed 
+# 3.3078333 0.1958333 3.4911667 
 
 

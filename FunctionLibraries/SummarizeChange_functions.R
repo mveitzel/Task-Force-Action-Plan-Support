@@ -84,7 +84,7 @@ library('terra')
 #Generate CECS filenames to read in rasters
 generate.CECS.filename<-function(metrname,yearname,datavintage){
 	#generate the CECS filenames for this metric, year, and version/vintage
-	metr.nm<-paste("CECS_CAWide_",metrname,"_",yearname,"_V",datavintage,".tif",sep="")
+	metr.nm<-paste("CECS_Data/CECS_CAWide_",metrname,"_",yearname,"_V",datavintage,".tif",sep="")
 	print(paste("Preparing to read in ",metr.nm,sep=""))
 	return(metr.nm)
 }
@@ -134,8 +134,8 @@ parse.SIG.fireresults.filenames<-function(filenames){
 #with the filename (raster.file is the filename, raster.name is
 #the human readable name for the print statement) and calls rast
 read.in.raster<-function(loc,raster.file,raster.name){
-		print(paste("Reading in ", raster.name," at ",loc,raster1.file,sep=""))
-  	raster1.rast<-rast(paste(loc,raster1.file,sep=""))
+		print(paste("Reading in ", raster.name," at ",loc,raster.file,sep=""))
+  	raster1.rast<-rast(paste(loc,raster.file,sep=""))
 }
 
 #use the conversion factor (multiplicative) -- some CECS and other
@@ -143,17 +143,17 @@ read.in.raster<-function(loc,raster.file,raster.name){
 #or are multiplied by a factor of 100 or 1000 in order to be
 #stored as integers.  Look up the documentation to check what 
 #the conversion should be
-#expects a single raster, 'rast.name' is the user-readable raster name, rast.file 
+#expects a single raster, 'rast.name' is the user-readable raster (or metric) name, rast.rast 
 #is the actual raster object
 #if you specify NA for the conversion factor, then the function just
 #returns the original raster
-multiply.conversion.factor<-function(rast.name, rast.file, metname,conv.fact){
+multiply.conversion.factor<-function(rast.name, rast.rast,conv.fact){
 	if(!is.na(conv.fact)){
-		print(paste("Converting raster, multiplying (",rast.name,") ",metname, " by",conv.fact),sep="")
-		conv.rast<-rast.file*conv.fact
+		print(paste("Converting raster, multiplying (",rast.name,") ", " by",conv.fact),sep="")
+		conv.rast<-rast.rast*conv.fact
 	} else {
 		print("No conversion factor specified.")
-		conv.rast<-rast.file
+		conv.rast<-rast.rast
 	}
 	return(conv.rast)
 }
