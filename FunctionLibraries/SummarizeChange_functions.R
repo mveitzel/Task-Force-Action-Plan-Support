@@ -228,6 +228,8 @@ plot.results<-function(dt.dff,ttlestrng,xlbl,metnm,af.yr,bf.yr,sum.area,sumIDnm,
 
 #This function assumes you'll use another raster to subset 
 #or mask out parts of your input raster
+#if you want to use it as a mask, the mask.raster ought to have NA
+#where you want to mask pixels out
 subset.raster.with.raster<-function(input.raster,mask.raster){
 	input.raster*mask.raster
 }
@@ -237,6 +239,31 @@ subset.raster.with.raster<-function(input.raster,mask.raster){
 subset.raster.with.vector<-function(input.raster,mask.vector){
 	mask(input.raster,mask.vector)
 }
+
+
+
+#---- Global calcs for entire area cropped by the boundary vector file
+
+#*** insert Lauren's code for global stuff in a function here
+
+# cropped.rasters1[[ years[i] ]][[ comparisons$comp[j] ]] <- crop(masked.rasters[[ years[i] ]][[ scenarios[j] ]], 
+# 																																			prepped_vector_global$boundary, mask = FALSE)
+# 				cropped.rasters[[ years[i] ]][[ comparisons$comp[j] ]] <- crop(cropped.rasters1[[ years[i] ]][[ scenarios[j] ]], 
+# 																																			prepped_vector_global$boundary, mask = TRUE)
+
+
+# 			global.calc[[ years[i] ]][[ scenarios[j] ]]$boundary <- boundary.code[l]
+				
+# 				global.calc[[ years[i] ]][[ scenarios[j] ]]$mean<-
+# 					global(cropped.rasters[[ years[i] ]][[ scenarios[j] ]],
+# 								"mean", 
+# 								na.rm = TRUE)
+				
+# 				global.calc[[ years[i] ]][[ scenarios[j] ]]$std<-
+# 					global(cropped.rasters[[ years[i] ]][[ scenarios[j] ]],
+# 								"std", 
+# 								na.rm = TRUE)
+	
 
 # #TODO*** once you confirm the other functions work, remove this function
 # #This function reads in and processes the vector layers:
@@ -434,36 +461,15 @@ filter.patches<-function()
 
 
 
-#---- Global calcs for entire area cropped by the boundary vector file
-
-#*** insert Lauren's code for global stuff in a function here
-
-# cropped.rasters1[[ years[i] ]][[ comparisons$comp[j] ]] <- crop(masked.rasters[[ years[i] ]][[ scenarios[j] ]], 
-# 																																			prepped_vector_global$boundary, mask = FALSE)
-# 				cropped.rasters[[ years[i] ]][[ comparisons$comp[j] ]] <- crop(cropped.rasters1[[ years[i] ]][[ scenarios[j] ]], 
-# 																																			prepped_vector_global$boundary, mask = TRUE)
-
-
-# 			global.calc[[ years[i] ]][[ scenarios[j] ]]$boundary <- boundary.code[l]
-				
-# 				global.calc[[ years[i] ]][[ scenarios[j] ]]$mean<-
-# 					global(cropped.rasters[[ years[i] ]][[ scenarios[j] ]],
-# 								"mean", 
-# 								na.rm = TRUE)
-				
-# 				global.calc[[ years[i] ]][[ scenarios[j] ]]$std<-
-# 					global(cropped.rasters[[ years[i] ]][[ scenarios[j] ]],
-# 								"std", 
-# 								na.rm = TRUE)
-	
-
-#***TODO edit this one to take one raster of the veg classification, and a list of rasters to be masked
 #this function assumes we want a 'current' vegetation classification
 #for a given set of years - I'm choosing the 'before year' as the 
 #one to base the classification on
 #this is using SIG's crosswalk between CWHR type to a higher level
 #aggregation of forestland, shrubland, and grassland
-create.subset.masks<-function(rast1, rast.diff, b.yr,vintage,location){
+#And then using CECS Fveg to get a current veg classification
+#note that this function has not been tested, here for posterity
+#in case we want to use this strategy
+create.ecosystem.subset.masks.from.CECS<-function(ref.rast, rast.diff, b.yr,vintage,location){
 	#Mike has a CECS layer with the Fveg codes
 	CECSveg<-read.csv("CECS_Fveg_codes.csv",header=T)
 	#SIG has a crosswalk between the Fveg codes and broad veg types they summarize in tabular form
@@ -477,7 +483,7 @@ create.subset.masks<-function(rast1, rast.diff, b.yr,vintage,location){
 
 	#reading in Mike's layer to make sure that this is all aligned
 	eco<-rast( paste(location,"CECS_CAWide_Veg_Fveg_",b.yr,"_V",vintage,".tif",sep=""),lyrs=1)
-	eco<-check.crs.match(rasts$raster1,eco)
+	eco<-check.crs.match(ref.rast)
 
 	#Now make the masks based on the codes
 	grass.only<-eco %in% grass.codes
@@ -499,38 +505,42 @@ create.subset.masks<-function(rast1, rast.diff, b.yr,vintage,location){
 #This function does the subsetting of the rasters, leaving a new set of 
 #rasters that only include pixels that are within one of the masks - one
 #raster each for forest, shrub, grass, and WUI and non-WUI (wildland)
-mask.subset.by.land.class<-function(rasts,sbst,msks){
+#this is here in case you want to use the full set of masks that were developed
+#from the CECS dataset, and do all the subsets of a single raster
+#Note that this function has not been tested, but is here for posterity
+#in case we want to use this method
+mask.subset.by.land.class<-function(rast,sbst,msks,wui,wild){
 
 	#save the 'all ecosystem' raster in one place
-	rasters.all<-rasts
+	raster.all<-rast
 
 	#subset for each ecosystem
 	if(sbst=="AllEcosystems"){
-		rasts.subsetted<-rasters.all
+		rast.subsetted<-raster.all
 		print(paste("Raster subset completed for ",sbst,sep=""))
 	} else if (sbst=="Forest") {
-		rasters.tree<-sapply(rasters.all,subset.raster,msks$tree.only)
-		rasts.subsetted<-rasters.tree
+		rasters.tree<-sapply(raster.all,subset.raster.with.raster,msks$tree.only)
+		rast.subsetted<-raster.tree
 		print(paste("Raster subset completed for ",sbst,sep=""))
 	} else if (sbst=="Grassland"){
-		rasters.grass<-sapply(rasters.all,subset.raster,msks$grass.only)
-		rasts.subsetted<-rasters.grass
+		rasters.grass<-sapply(raster.all,subset.raster.with.raster,msks$grass.only)
+		rast.subsetted<-raster.grass
 		print(paste("Raster subset completed for ",sbst,sep=""))
 	} else if (sbst=="Shrubland"){
-		rasters.shrub<-sapply(rasters.all,subset.raster,msks$shrub.only)
-		rasts.subsetted<-rasters.shrub
+		rasters.shrub<-sapply(raster.all,subset.raster.with.raster,msks$shrub.only)
+		rast.subsetted<-raster.shrub
 		print(paste("Raster subset completed for ",sbst,sep=""))
 	} else if (sbst=="Urban-WUI") {
-		rasters.wuiurb<-sapply(rasters.all,mask.rasters,wui.urb.poly.proj)
-		rasts.subsetted<-rasters.wuiurb
+		rasters.wuiurb<-sapply(raster.all,subset.raster.with.vector,wui)
+		rast.subsetted<-raster.wuiurb
 		print(paste("Raster subset completed for ",sbst,sep=""))
 	} else if (sbst=="Wildland"){
-		rasters.wuiwild<-sapply(rasters.all,mask.rasters,wui.wild.poly.proj)
-		rasts.subsetted<-rasters.wuiwild
+		rasters.wuiwild<-sapply(raster.all,subset.raster.with.vector,wild)
+		rast.subsetted<-raster.wuiwild
 		print(paste("Raster subset completed for ",sbst,sep=""))
 	}
 
-	return(rasts.subsetted)
+	return(rast.subsetted)
 }
 
 ################ END FUNCTIONS #######################
