@@ -233,13 +233,20 @@ plot.results<-function(dt.dff,ttlestrng,xlbl,metnm,af.yr,bf.yr,sum.area,sumIDnm,
 #to assign NAs to the parts outside the vector
 #or to the NAs in the raster outside the area of interest
 #the function also checks CRS compatibility and crops the mask to the boundary
+#if mask and mask.name are NA, then this just crops and masks the raster to the boundary
+#(used for the global summary)
 subset.raster<-function(input.rast,name.rast,mask,mask.name,boundary.vect,boundary.name){
-	mask.proj<-check.crs.match(mask,boundary.vect)
-	mask.crop<-crop(mask.proj,boundary.vect)
-	print(paste("CRS checked for ",mask.name," and cropped to ",boundary.name,sep =""))
+	if(!is.na(mask)){
+		mask.proj<-check.crs.match(mask,boundary.vect)
+		mask<-crop(mask.proj,boundary.vect)
+		print(paste("CRS checked for ",mask.name," and cropped to ",boundary.name,sep =""))
+		}else{
+			mask<-boundary.vect
+			mask.name<-boundary.name
+		}
 	cropped.rast<-crop(input.rast, mask)
 	masked.rast<-mask(cropped.rast,mask)
-	print(paste("Subset mask ",name.rast," to include only ",mask.name," complete.", sep=""))
+	print(paste("Subsetted/masked ",name.rast," to include only ",mask.name, sep=""))
 	return(masked.rast)
 }
 	
@@ -374,11 +381,8 @@ intersect.and.aggregate.vectors<-function(inter.vect,inter.name,pch.vect,pch.nam
 
 
 #This version does zonal calculations for raster pixels that fall within the specified
-#summary unit. However, rather than requiring the result from differencing rasters 
-#(which has 3 rasters - $raster1, $raster2, $diff), this only requires a single raster. 
-#You could still use this version for the differenced result, but would have to 
-#specify 'differenced.result$diff' in the 'rstr' call rather than 'differenced.result'. 
-#outputs a single SpatVector with zonal results
+#summary unit.  this only requires a single raster and outputs a single SpatVector with zonal results
+#calculating 'mean' is hard-coded in
 zonal.calculations<-function(rster.rast,zonal.sum.name,zonal.sum.vect){
   summaryzonal.time<- system.time(zonal.calcs.vect<-zonal(rster.rast,zonal.sum.vect,fun="mean",as.polygons=TRUE,na.rm=TRUE) )
   print(paste("Zonal stats calculated for ",names(rster.rast), " using ", zonal.sum.name, sep=""))
@@ -387,6 +391,16 @@ zonal.calculations<-function(rster.rast,zonal.sum.name,zonal.sum.vect){
   return(zonal.calcs.vect)
 }
 
+#calculating 'mean' is hard-coded in
+global.calculations<-function(rst.rast,rst.name,bound.vect,bound.name){
+	sub.rast<-subset.raster(rst.rast,rst.name,NA,NA,bound.vect,bound.name)
+	global.avg<-global(sub.rast,"mean",na.rm=TRUE)
+	global.sum.vect<-bound.vect
+	global.sum.vect[rst.name]<-global.avg
+	return(global.sum.vect)
+}
+
+
 #for the function that does the raster summary, have a method=global and method=zonal with an if statement
 #rast.name is a metric name
 summarize.pixels.in.area.of.interest<-function(rast.rast,rast.name,vect.vect,vect.name,method){
@@ -394,13 +408,15 @@ summarize.pixels.in.area.of.interest<-function(rast.rast,rast.name,vect.vect,vec
 			#call zonal summary
 			result<-zonal.calculations(rast.rast,vect.name,vect.vect)
 		}else if(method=="global"){
-			#flesh this out with LC's help
+			#call global summary, vect.vect/name is expected to be the boundary name
+			result<-global.calculations(rast.rast,rast.name,vect.vect,vect.name)
 		}
 	return(result)
 }
 
 #The next function is where I'll write something that does zonal: huc12, huc12-intersected-with-fires, and huc12-intersected-with treatments
 #it will call the summarize.pixels function three times
+#consider whether you do the global summaries here too, thinking that would be a good idea
 
 run.zonal.statistics.one.metric<-function(){
 
