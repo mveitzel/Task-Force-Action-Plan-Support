@@ -226,43 +226,22 @@ plot.results<-function(dt.dff,ttlestrng,xlbl,metnm,af.yr,bf.yr,sum.area,sumIDnm,
 	}
 }
 
-#This function assumes you'll use another raster to subset 
-#or mask out parts of your input raster
-#if you want to use it as a mask, the mask.raster ought to have NA
-#where you want to mask pixels out
-subset.raster.with.raster<-function(input.raster,mask.raster){
-	input.raster*mask.raster
+#This function assumes you'll use a vector or raster
+#to subset or mask out parts of your input raster
+#two steps to make sure the extent of the raster is the 
+#extent of the subset mask, and then do the mask
+#to assign NAs to the parts outside the vector
+#or to the NAs in the raster outside the area of interest
+#the function also checks CRS compatibility and crops the mask to the boundary
+subset.raster<-function(input.rast,name.rast,mask,mask.name,boundary.vect,boundary.name){
+	mask.proj<-check.crs.match(mask,boundary.vect)
+	mask.crop<-crop(mask.proj,boundary.vect)
+	print(paste("CRS checked for ",mask.name," and cropped to ",boundary.name,sep =""))
+	cropped.rast<-crop(input.rast, mask)
+	masked.rast<-mask(cropped.rast,mask)
+	print(paste("Subset mask ",name.rast," to include only ",mask.name," complete.", sep=""))
+	return(masked.rast)
 }
-
-#This function assumes you'll use a vector to subset or 
-#mask out parts of your input raster
-subset.raster.with.vector<-function(input.raster,mask.vector){
-	mask(input.raster,mask.vector)
-}
-
-
-
-#---- Global calcs for entire area cropped by the boundary vector file
-
-#*** insert Lauren's code for global stuff in a function here
-
-# cropped.rasters1[[ years[i] ]][[ comparisons$comp[j] ]] <- crop(masked.rasters[[ years[i] ]][[ scenarios[j] ]], 
-# 																																			prepped_vector_global$boundary, mask = FALSE)
-# 				cropped.rasters[[ years[i] ]][[ comparisons$comp[j] ]] <- crop(cropped.rasters1[[ years[i] ]][[ scenarios[j] ]], 
-# 																																			prepped_vector_global$boundary, mask = TRUE)
-
-
-# 			global.calc[[ years[i] ]][[ scenarios[j] ]]$boundary <- boundary.code[l]
-				
-# 				global.calc[[ years[i] ]][[ scenarios[j] ]]$mean<-
-# 					global(cropped.rasters[[ years[i] ]][[ scenarios[j] ]],
-# 								"mean", 
-# 								na.rm = TRUE)
-				
-# 				global.calc[[ years[i] ]][[ scenarios[j] ]]$std<-
-# 					global(cropped.rasters[[ years[i] ]][[ scenarios[j] ]],
-# 								"std", 
-# 								na.rm = TRUE)
 	
 
 # #TODO*** once you confirm the other functions work, remove this function
