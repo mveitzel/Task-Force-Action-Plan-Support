@@ -105,23 +105,3 @@ fires<-summarize.pixels.in.area.of.interest(diff,metric.name,agg.fires.vect.huc,
 #      user    system   elapsed 
 # 3.3078333 0.1958333 3.4911667 
 
-##### targeted effort testing
-
-dv.rast<-rast("D:\\GIS_Large_Files\\CECS_Data\\CECS_CAWide_Vulner_TreeDieoff_SPI-2_2020_V250418.tif")
-dv.rast.priority<-dv.rast> 10000 
-#dv.rast.pri<-subst(dv.rast.priority,FALSE,NA)
-
-treat.rast<-rasterize(treatments,reference.rast)
-
-crosstab.time<- system.time(dv.treat<-crosstab(c(dv.rast.priority,treat.rast)) )
-crosstab.time/60
-#    user   system  elapsed 
-#15.82867  1.52350 17.40600 
-
-result<-as.data.frame(dv.treat)
-
-result$area<-result$Freq*30*30*0.000247105
-
-prop.dv.pri<-result$area[result$CECS_CAWide_Vulner_TreeDieoff_SPI.2_2020_V250418==1]/sum(result$area)
-
-
