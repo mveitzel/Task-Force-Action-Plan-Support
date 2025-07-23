@@ -1,9 +1,44 @@
-#loc <- '/Users/laurencox/Documents/Task Force/Scenario Modeling/'
-loc<-"D:\\GitRepos\\BattlesLabRepos\\"
-setwd(loc)
-getwd()
+loc.scripts<-"D:/GitRepos/BattlesLabRepos/Task-Force-Action-Plan-Support/"
+loc.data<-"D:/GIS_Large_Files/"
+loc.output<-"D:/DropboxFiles/Dropbox/Professional/UCB_Battles/ActionPlanSupport"
 
-source("Task-Force-Action-Plan-Support/FunctionLibraries/SummarizeChange_functions.R")
+setwd(loc.output)
+source(paste(loc.scripts,"FunctionLibraries/SummarizeChange_functions.R",sep=""))
+
+boundary.shape<-c(paste(loc.scripts,"VectorFiles/CA.shp",sep=""))
+boundary.name<-c("CA")
+reference.rast<-rast(paste(loc.data,"CECS_Data/CECS_CAWide_Vulner_TreeDieoff_SPI-2_2020_V250418.tif",sep=""))
+
+prepped.boundary.vect<-read.and.prepare.boundary.vector(boundary.shape,boundary.name,reference.rast)
+
+
+# PREP TREATMENT dataset
+
+patch.name<-c("Treatments")
+patch.shape<-c(paste(loc.data,"ITT_2024_Data/Interagency Tracking System.gdb",sep=""))
+patch.layer<-c("Treat_n_harvests_polygons2023_20240911")
+
+treat.vect<-read.and.check.crs.patch.vector(patch.shape[1],patch.name[1],patch.layer[1],prepped.boundary.vect)
+
+#filter the treatment types for the appropriate policy goal/topic
+#function to do this, hard code in a list of treatment type names
+#also filter for time range?  This will be helpful for outcome reporting, but not as important for targeted effort
+#so have an 'NA' option for the end date
+
+activity.list<-
+
+#aggregate the treatments into one big polygon
+act.filt<-subset(act,act$ACTIVITY_D %in%)
+act.agg<-aggregate(act,)
+
+#".code" means the column name in the shapefile
+read.in.activities.and.priority.areas <- function(activity.shape, activity.code, priority.shape,priority.code){
+  intersected.layers<-aggregate(activity.shape,by=activity.code)
+}
+
+output<-read.in.activities.and.priority.areas(act,"ACTIVITY_D",whp,"")
+
+
 
 #PRIORITY LAYER(S) PREP
 #reading in a layer that will indicate high priority areas
@@ -38,29 +73,8 @@ source("Task-Force-Action-Plan-Support/FunctionLibraries/SummarizeChange_functio
 
 dv.rast<-rast("D:\\GIS_Large_Files\\CECS_Data\\CECS_CAWide_Vulner_TreeDieoff_SPI-2_2020_V250418.tif")
 dv.rast.priority<-dv>1000
-dv.vect<-as.polygons(dv.rast.priority,aggregate=TRUE)#what if we didn't aggregate first?
+#dv.vect<-as.polygons(dv.rast.priority,aggregate=TRUE)#what if we didn't aggregate first?
 
-#TREATMENT DATASET PREP
-#filter the treatment types for the appropriate policy goal/topic
-#function to do this, hard code in a list of treatment type names
-#also filter for time range?  This will be helpful for outcome reporting, but not as important for targeted effort
-#so have an 'NA' option for the end date
-
-act <- vect("/Users/laurencox/Desktop/Activity_polygons.shp")
-#plot(act)
-
-
-
-#aggregate the treatments into one big polygon
-act.filt<-subset(act,act$ACTIVITY_D %in%)
-act.agg<-aggregate(act,)
-
-#".code" means the column name in the shapefile
-read.in.activities.and.priority.areas <- function(activity.shape, activity.code, priority.shape,priority.code){
-  intersected.layers<-aggregate(activity.shape,by=activity.code)
-}
-
-output<-read.in.activities.and.priority.areas(act,"ACTIVITY_D",whp,"")
 
 
 #also need to check crses
