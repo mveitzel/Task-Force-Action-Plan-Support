@@ -11,8 +11,9 @@ reference.rast<-rast(paste(loc.data,"CECS_Data/CECS_CAWide_Vulner_TreeDieoff_SPI
 
 prepped.boundary.vect<-read.and.prepare.boundary.vector(boundary.shape,boundary.name,reference.rast)
 
-
-# PREP TREATMENT dataset
+####################################################################
+# PREP TREATMENT DATASET                                           #
+####################################################################
 
 patch.name<-c("Treatments")
 patch.shape<-c(paste(loc.data,"ITT_2024_Data/Interagency Tracking System.gdb",sep=""))
@@ -21,59 +22,59 @@ patch.layer<-c("Treat_n_harvests_polygons2023_20240911")
 treat.vect<-read.and.check.crs.patch.vector(patch.shape[1],patch.name[1],patch.layer[1],prepped.boundary.vect)
 treat.prep.vect<-crop.vector.by.boundary.and.recalc.area(prepped.boundary.vect,boundary.name,treat.vect,patch.name[1])
 
-
-policy.target<-"Forest Health"
 start<-"2020-09-30"
 end<-"2023-10-01"
 
-treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start,NA)
 
-#getting the different areas in ha of the different policy targets
-areas<-list()
-for(i in 1:length(activity.list)){
-  temp<-treat.subs.vect<-filter.patches(treat.prep.vect,names(activity.list)[i],start,NA)
-  temp2<-aggregate(treat.subs.vect)
-  areas[[names(activity.list)[i]]]<-expanse(temp2)
-}
+# #***TODO: something is going wrong with the first four, fire risk related metrics
+# #getting the different areas in ha of the different policy targets
+# areas<-list()
+# for(i in 1:length(activity.list)){
+#   temp<-treat.subs.vect<-filter.patches(treat.prep.vect,names(activity.list)[i],start,NA)
+#   temp2<-aggregate(treat.subs.vect)
+#   areas[[names(activity.list)[i]]]<-expanse(temp2,unit="ha")
+# }
 
+# areas*2.47105
 
-# PREP STRATIFICATION LAYERS (WUI/Wildland and Ecosystem Type)
-
+####################################################################
+# PREP STRATIFICATION LAYERS (WUI/Wildland and Ecosystem Type)   ###
+####################################################################
 #I had to do some crazy stuff to pull out just the WUI classification from the FRAP layer SIG gave me
-#I could not get the raster to match with Mike's CECS rasters so I vectorized the WUI/non-WUI rasters
+#I could not get the raster to match with CECS rasters so I vectorized the WUI/non-WUI rasters
+
+#"5 Class WUI raster, developed by SIG. 0 = everything else, 1 = influence, 
+#2 = intermix, 3 = interface, 4 = urban, 5 = wildland
 
 # wui_FRAP<-rast("WUI24_extract.tif")
-# #For the FRAP layer via SIG, 2=intermix, 1=interface, and 3=influnce
-# wui.urb<-wui_FRAP %in% c(2,1,3)
-# # and 0 = notWUI (which includes urban and ag, but Mike has masked) = wildland
-# wui.wild<-wui_FRAP == 0
+# #For the FRAP layer via SIG, 2=intermix, 1=interface, and 3=influence
+# wui.urb<-wui_FRAP %in% c(2,1,3) #should I include 4 = urban?
+# # and 5 = wildland 
+# wui.wild<-wui_FRAP == 5
 # wui.urb.poly<-as.polygons(wui.urb,aggregate=TRUE)
 # wui.wild.poly<-as.polygons(wui.wild,aggregate=TRUE)
 # wui.urb.poly.proj<-check.crs.match(rasters$before,wui.urb.poly)
 # wui.wild.poly.proj<-check.crs.match(rasters$before,wui.wild.poly)
 # wui.urb.poly.proj<-wui.urb.poly.proj[wui.urb.poly.proj$Band_1==1,]
 # wui.wild.poly.proj<-wui.wild.poly.proj[wui.wild.poly.proj$Band_1==1,]
-# writeVector(wui.urb.poly.proj,"WUI_24_Urb_Poly_proj.shp",overwrite=TRUE)
-# writeVector(wui.wild.poly.proj,"WUI_24_Wild_Poly_proj.shp",overwrite=TRUE)
+# writeVector(wui.urb.poly.proj,"VectorFiles/FRAP24_WUI.shp",overwrite=TRUE)
+# writeVector(wui.wild.poly.proj,"VectorFiles/FRAP24_Wild.shp",overwrite=TRUE)
 
-wui.urb.vect<-vect("WUI_24_Urb_Poly_proj.shp")
-wui.wild.vect<-vect("WUI_24_Wild_Poly_proj.shp")
-
-
-
-#Run Treatment layer through stratification if needed
-
-treat.strat.vect
-
-treat.rast<-rasterize(treat.strat.vect,reference.rast)
+wui.urb.vect<-vect(paste(loc.scripts,"VectorFiles/FRAP24_WUI.shp",sep=""))
+wui.wild.vect<-vect(paste(loc.scripts,"VectorFiles/FRAP24_WUI.shp",sep=""))
 
 
-#PRIORITY LAYER(S) PREP
+
+####################################################################
+############# PRIORITY LAYERS CALCS      ###########################
+####################################################################
+
 #reading in each layer that will indicate high priority areas
 #needs to be separately scripted because each one has a slightly different way to be 
 #thresholded or recoded in order to do the crosstab
 
-#WHP
+#---------------- WHP, Wildland ---------------------------#
+
 
 # for the whp, we expect to only ever use hazard classes 4 and 5, so we made a vector version of the raster with just those classes
 # kept this code for posterity, it didn't run well on LC's computer but might run better elsewhere
@@ -99,7 +100,16 @@ treat.rast<-rasterize(treat.strat.vect,reference.rast)
 # #might want to separate out the different WUI classes and wildland, so this is really more like 2-5 of our targeted effort metrics
 
 
-# Drought Vulnerability
+#---------------- Drought Vulnerability, forest -------------------------#
+
+#prep treatment layer
+policy.target<-"Forest Health"
+treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start,NA)
+treat.strat.vect
+
+treat.rast<-rasterize(treat.strat.vect,reference.rast)
+
+
 
 dv.rast<-rast("D:\\GIS_Large_Files\\CECS_Data\\CECS_CAWide_Vulner_TreeDieoff_SPI-2_2020_V250418.tif")
 dv.rast.priority<-dv.rast> 10000 
