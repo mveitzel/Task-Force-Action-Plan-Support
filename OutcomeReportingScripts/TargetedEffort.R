@@ -61,9 +61,9 @@ end<-"2023-10-01"
 # writeVector(wui.wild.poly.proj,"VectorFiles/FRAP24_Wild.shp",overwrite=TRUE)
 
 wui.urb.vect<-vect(paste(loc.scripts,"VectorFiles/FRAP24_WUI.shp",sep=""))
-wui.wild.vect<-vect(paste(loc.scripts,"VectorFiles/FRAP24_WUI.shp",sep=""))
+wui.wild.vect<-vect(paste(loc.scripts,"VectorFiles/FRAP24_Wild.shp",sep=""))
 
-
+## add ecosystem layers here, which are rasters
 
 ####################################################################
 ############# PRIORITY LAYERS CALCS      ###########################
@@ -75,6 +75,18 @@ wui.wild.vect<-vect(paste(loc.scripts,"VectorFiles/FRAP24_WUI.shp",sep=""))
 
 #---------------- WHP, Wildland ---------------------------#
 
+policy.target<-"Wildland Fire Risk"
+#treatment type/activity type filter
+treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start,NA)
+
+#subset treatments for wildland only (spatial subset)
+
+treat.rast<-rasterize(treat.strat.vect,reference.rast)
+
+#read in WHP raster
+#recode for 4 & 5 vs other
+
+#then do crosstab between recoded WHP raster and filtered/subsetted treatments
 
 # for the whp, we expect to only ever use hazard classes 4 and 5, so we made a vector version of the raster with just those classes
 # kept this code for posterity, it didn't run well on LC's computer but might run better elsewhere
@@ -100,12 +112,15 @@ wui.wild.vect<-vect(paste(loc.scripts,"VectorFiles/FRAP24_WUI.shp",sep=""))
 # #might want to separate out the different WUI classes and wildland, so this is really more like 2-5 of our targeted effort metrics
 
 
+#---------------- WHP, WUI ---------------------------#
+
+
 #---------------- Drought Vulnerability, forest -------------------------#
 
 #prep treatment layer
 policy.target<-"Forest Health"
 treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start,NA)
-treat.strat.vect
+treat.strat.vect<-
 
 treat.rast<-rasterize(treat.strat.vect,reference.rast)
 
