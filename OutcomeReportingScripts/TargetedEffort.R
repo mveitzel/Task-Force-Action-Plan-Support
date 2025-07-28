@@ -16,52 +16,47 @@ prepped.boundary.vect<-read.and.prepare.boundary.vector(boundary.shape,boundary.
 ####################################################################
 
 patch.name<-c("Treatments")
-patch.shape<-c(paste(loc.data,"ITT_2024_Data/Interagency Tracking System.gdb",sep=""))
-patch.layer<-c("Treat_n_harvests_polygons2023_20240911")
+patch.shape<-c(paste(loc.data,"ITS_2025Jul25_Polygons/appended.gdb",sep=""))
+patch.layer<-c("appended_poly")
 
 treat.vect<-read.and.check.crs.patch.vector(patch.shape[1],patch.name[1],patch.layer[1],prepped.boundary.vect)
 treat.prep.vect<-crop.vector.by.boundary.and.recalc.area(prepped.boundary.vect,boundary.name,treat.vect,patch.name[1])
 
-start<-"2020-09-30"
-end<-"2023-10-01"
+start.year<-"2020"
+end.year<-"2024"
 
+start<-paste(start.year,"-09-30",sep="")
+end<-paste(end.year,"-10-01",sep="")
 
-# #***TODO: something is going wrong with the first four, fire risk related metrics
-# #getting the different areas in ha of the different policy targets
-# areas<-list()
-# for(i in 1:length(activity.list)){
-#   temp<-treat.subs.vect<-filter.patches(treat.prep.vect,names(activity.list)[i],start,NA)
-#   temp2<-aggregate(treat.subs.vect)
-#   areas[[names(activity.list)[i]]]<-expanse(temp2,unit="ha")
-# }
+ #getting the different areas in ha of the different policy targets
+ areas<-list()
+ treat.filt.vect<-list()
+ for(i in 1:length(activity.list)){
+   temp<-filter.patches(treat.prep.vect,names(activity.list)[i],start,NA)
+   treat.filt.vect[[names(activity.list)[i]]]<-aggregate(temp)
+    #convert to acres
+   areas[[names(activity.list)[i]]]<-expanse(treat.filt.vect[[names(activity.list)[i]]],unit="ha")*2.47105
+ }
 
-# areas*2.47105
 
 ####################################################################
 # PREP STRATIFICATION LAYERS (WUI/Wildland and Ecosystem Type)   ###
 ####################################################################
-#I had to do some crazy stuff to pull out just the WUI classification from the FRAP layer SIG gave me
-#I could not get the raster to match with CECS rasters so I vectorized the WUI/non-WUI rasters
 
-#"5 Class WUI raster, developed by SIG. 0 = everything else, 1 = influence, 
-#2 = intermix, 3 = interface, 4 = urban, 5 = wildland
+#Does one need to recalculate vegetation and wui masks?
+recalculate.masks<-FALSE
 
-# wui_FRAP<-rast("WUI24_extract.tif")
-# #For the FRAP layer via SIG, 2=intermix, 1=interface, and 3=influence
-# wui.urb<-wui_FRAP %in% c(2,1,3) #should I include 4 = urban?
-# # and 5 = wildland 
-# wui.wild<-wui_FRAP == 5
-# wui.urb.poly<-as.polygons(wui.urb,aggregate=TRUE)
-# wui.wild.poly<-as.polygons(wui.wild,aggregate=TRUE)
-# wui.urb.poly.proj<-check.crs.match(rasters$before,wui.urb.poly)
-# wui.wild.poly.proj<-check.crs.match(rasters$before,wui.wild.poly)
-# wui.urb.poly.proj<-wui.urb.poly.proj[wui.urb.poly.proj$Band_1==1,]
-# wui.wild.poly.proj<-wui.wild.poly.proj[wui.wild.poly.proj$Band_1==1,]
-# writeVector(wui.urb.poly.proj,"VectorFiles/FRAP24_WUI.shp",overwrite=TRUE)
-# writeVector(wui.wild.poly.proj,"VectorFiles/FRAP24_Wild.shp",overwrite=TRUE)
+if(recalculate.masks){
+  #source the file that has all the raster and vector calculations to create
+  #veg and wui/wildland masks
+  source(paste(loc.scripts,"FunctionLibraries/CalculateWUI_Veg_Masks.R",sep=""))
+} else {
+  #read in the raster files
+  wui.urb.rast<-vect(paste(loc.scripts,"ReferenceFiles/FRAP24_WUI.tif",sep=""))
+  wui.wild.rast<-rast(paste(loc.scripts,"ReferenceFiles/FRAP24_Wild.tif",sep=""))
 
-wui.urb.vect<-vect(paste(loc.scripts,"VectorFiles/FRAP24_WUI.shp",sep=""))
-wui.wild.vect<-vect(paste(loc.scripts,"VectorFiles/FRAP24_Wild.shp",sep=""))
+}
+
 
 ## add ecosystem layers here, which are rasters
 
