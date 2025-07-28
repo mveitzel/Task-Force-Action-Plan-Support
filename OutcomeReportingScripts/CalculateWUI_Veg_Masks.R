@@ -29,7 +29,7 @@ wild.rast<-(other.class.proj.rast)*(non.ag.urban.class.rast)
 #make a new raster and pull out only the wildland (set everything else to NA), and export
 wild.only.rast<-wild.rast
 wild.only.rast[wild.rast!=1]<-NA
-writeRaster(wild.only.rast,paste(loc.scripts,"ReferenceFiles/FRAP24_WildlandOnly.tif"),sep="")
+writeRaster(wild.only.rast,paste(loc.scripts,"ReferenceFiles/FRAP24_WildlandOnly.tif",sep=""))
 
 ## WUI MASK IS INTERFACE, INTERMIX, AND INFLUENCE AS PER CALFIRE'S DEFINITION
 
@@ -44,7 +44,7 @@ wui.class.proj.rast<-rasterize(wui.class.only.vect,reference.rast)
 
 wui.rast<-wui.class.proj.rast
 wui.rast[wui.rast!=1]<-NA
-writeRaster(wui.rast,paste("FRAP24_WUIOnly.tif",sep=""))
+writeRaster(wui.rast,paste(loc.scripts,"ReferenceFiles/FRAP24_WUIOnly.tif",sep=""))
 
 
 
