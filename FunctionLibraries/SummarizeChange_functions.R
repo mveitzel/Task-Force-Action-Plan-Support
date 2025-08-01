@@ -237,7 +237,7 @@ plot.results<-function(dt.dff,ttlestrng,xlbl,metnm,af.yr,bf.yr,sum.area,sumIDnm,
 #(used for the global summary)
 subset.raster<-function(input.rast,name.rast,mask,mask.name,boundary.vect,boundary.name){
 	if(!is.na(mask)){
-		mask.proj<-check.crs.match(mask,boundary.vect)
+		mask.proj<-check.crs.match(boundary.vect,mask)
 		mask<-crop(mask.proj,boundary.vect)
 		print(paste("CRS checked for ",mask.name," and cropped to ",boundary.name,sep =""))
 		}else{
@@ -358,11 +358,11 @@ crop.vector.by.boundary.and.recalc.area<-function(bdr.vect, bdr.name,proj.vect,v
   return(cropped.vect)
 }
 
-read.and.check.crs.patch.vector<-function(ptch.shape,ptch.name,ptch.layer,bdary.vect,bdary.name){
+read.and.check.crs.patch.vector<-function(ptch.shape,ptch.name,ptch.layer,ref.layer){
 	ptch.vect<-vect(ptch.shape,layer=ptch.layer)
 	print(paste(ptch.name, " read in, layer: ", ptch.layer,sep=""))
  	#returns layers with second projected to first argument's CRS
-	ptch.vect.proj<-check.crs.match(bdary.vect,ptch.vect)
+	ptch.vect.proj<-check.crs.match(ref.layer,ptch.vect)
 	return(ptch.vect.proj)
 }
 
@@ -575,7 +575,7 @@ mask.subset.by.land.class<-function(rast,sbst,msks,wui,wild){
       print(result)
       prop.pri<-result$area[result[,pri.name]==1]/sum(result$area)
       print(prop.pri)
-      return(prop.pri)
+      return(c(result$area[result[,pri.name]==1],sum(result$area),prop.pri))
     }
 
 ################ END FUNCTIONS #######################
