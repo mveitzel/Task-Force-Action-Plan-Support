@@ -574,7 +574,7 @@ mask.subset.by.land.class<-function(rast,sbst,msks,wui,wild){
       result$area<-result$Freq*30*30*0.000247105
       print(result)
       prop.pri<-result$area[result[,pri.name]==1]/sum(result$area)
-      print(prop.pri)
+      print(c(result$area[result[,pri.name]==1],sum(result$area),prop.pri))
       return(c(result$area[result[,pri.name]==1],sum(result$area),prop.pri))
     }
 

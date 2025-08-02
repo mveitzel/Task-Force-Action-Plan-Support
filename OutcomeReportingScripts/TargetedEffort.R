@@ -4,7 +4,7 @@
 
 timer.start<-Sys.time()
 
-datestamp<-"2025Jul31"
+datestamp<-"2025Aug02"
 
 #scripts and important reference layers are in the github repo
 loc.scripts<-"D:/GitRepos/BattlesLabRepos/Task-Force-Action-Plan-Support/"
@@ -18,6 +18,7 @@ setwd(loc.output)
 source(paste(loc.scripts,"FunctionLibraries/ActivityList.R",sep=""))
 #all the functions used to do various outcome reporting and some scenario modeling calcs
 source(paste(loc.scripts,"FunctionLibraries/SummarizeChange_functions.R",sep=""))
+
 #we use a CECS layer as a reference raster for spatial reference of CRS and extent
 reference.rast<-rast(paste(loc.data,"CECS_Data/CECS_CAWide_Vulner_TreeDieoff_SPI-2_2020_V250614.tif",sep=""))
 #make sure this is here because it has a different CRS we need to work from as well
@@ -85,10 +86,10 @@ if(recalculate.priority.layers){
   whp.priority.rast<-rast(paste(loc.data,"PriorityLayers/FinalPriorityLayers/WHPpriority_CALFIREproj.tif",sep=""))
   dv.priority.rast<-rast(paste(loc.data,"PriorityLayers/FinalPriorityLayers/DroughtVulnerabilityPriority_CECSproj.tif",sep=""))
   fl.priority.rast<-rast(paste(loc.data,"PriorityLayers/FinalPriorityLayers/FlameLengthPriority_CECSproj.tif",sep=""))
-  cr.pri.rast<-rast(paste(loc.data,"PriorityLayers/FinalPriorityLayers/CriticalHabitatPriority_CECSproj.tif",sep=""))
-  hy.pri.rast<-rast(paste(loc.data,"PriorityLayers/FinalPriorityLayers/HydropowerPriority_CECSproj.tif",sep=""))
-  de.pri.rast<-rast(paste(loc.data,"PriorityLayers/FinalPriorityLayers/DebrisFlowPriority_CECSproj.tif",sep=""))
-  sh.pri.rast<-rast(paste(loc.data,"PriorityLayers/FinalPriorityLayers/AtRiskShrubsPriority_CECSproj.tif",sep=""))
+  cr.priority.rast<-rast(paste(loc.data,"PriorityLayers/FinalPriorityLayers/CriticalHabitatPriority_CECSproj.tif",sep=""))
+  hy.priority.rast<-rast(paste(loc.data,"PriorityLayers/FinalPriorityLayers/HydropowerPriority_CECSproj.tif",sep=""))
+  de.priority.rast<-rast(paste(loc.data,"PriorityLayers/FinalPriorityLayers/DebrisFlowPriority_CECSproj.tif",sep=""))
+  sh.priority.rast<-rast(paste(loc.data,"PriorityLayers/FinalPriorityLayers/AtRiskShrubsPriority_CECSproj.tif",sep=""))
 }
 
 
@@ -125,6 +126,7 @@ targeted.effort.results<-data.frame(Boundary=character(),PolicyTarget=character(
                                     PriorityArea=numeric(),TotalTreatmentArea=numeric(),
                                     ProportionOfTreatments=numeric(),stringsAsFactors=FALSE)
 
+count<-1
 for(i in 1:length(boundary.name)){
 
     prepped.boundary.vect<-read.and.prepare.boundary.vector(boundary.shape[i],boundary.name[i],reference.rast)
@@ -181,14 +183,14 @@ for(i in 1:length(boundary.name)){
     treat.strat.rast<-treat.rast*wild.proj.rast #using the WHP projection version
 
     #Do crosstab
-    targeted.effort.results[count,]<-c(boundary.name[i],policy.target,metric.name,
-      crosstab.calc(whp.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i]))
+    crosstab.result<-crosstab.calc(whp.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i])
+    targeted.effort.results[count,]<-c(boundary.name[i],policy.target,metric.name,crosstab.result)
     write.csv(targeted.effort.results,paste("TargetedEffortResults_",datestamp,".csv",sep=""),append=TRUE)
     count<-count+1
 
     #-----------------FLAME LENGTH, WILDLAND--------------#
     policy.target<-"Wildland Fire Risk"
-    metric.name<-
+    metric.name<-"FlameLengthAbove8FtWildland"
     #treatment type/activity type filter
     treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start,NA)
     #check CRS match with whp projection (only for layers using WHP layer)
@@ -199,8 +201,8 @@ for(i in 1:length(boundary.name)){
     treat.strat.rast<-treat.rast*wild.rast #using the CECS projection version
 
     #Do crosstab
-    targeted.effort.results[count,]<-c(boundary.name[i],policy.target,metric.name,
-      crosstab.calc(fl.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i]))
+    crosstab.result<-crosstab.calc(fl.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i])
+    targeted.effort.results[count,]<-c(boundary.name[i],policy.target,metric.name,crosstab.result)
     write.csv(targeted.effort.results,paste("TargetedEffortResults_",datestamp,".csv",sep=""),append=TRUE)
     count<-count+1
 
@@ -219,8 +221,8 @@ for(i in 1:length(boundary.name)){
     treat.strat.rast<-treat.rast*wui.proj.rast #using the WHP projection version
 
     #Do crosstab
-    targeted.effort.results[count,]<-c(boundary.name[i],policy.target,metric.name
-      crosstab.calc(whp.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i]))
+    crosstab.result<-crosstab.calc(whp.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i])
+    targeted.effort.results[count,]<-c(boundary.name[i],policy.target,metric.name,crosstab.result)
     write.csv(targeted.effort.results,paste("TargetedEffortResults_",datestamp,".csv",sep=""),append=TRUE)
     count<-count+1
 
@@ -233,18 +235,17 @@ for(i in 1:length(boundary.name)){
     treat.proj.vect<-check.crs.match(reference.rast,treat.subs.vect)
     #rasterize treatment layer first
     treat.rast<-rasterize(treat.proj.vect,reference.rast)
+    treat.proj.rast<-check.crs.match(reference.rast,treat.rast)
     #then stratify as necessary - subset treatments for wui only (spatial subset)
-    treat.strat.rast<-treat.rast*wui.rast #using the CECS projection version
+    treat.strat.rast<-treat.proj.rast*wui.rast #using the CECS projection version
 
     #Do crosstab
-    targeted.effort.results[count,]<-c(boundary.name[i],policy.target,,metric.name,
-      crosstab.calc(fl.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i]))
+    crosstab.result<-crosstab.calc(fl.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i])
+    targeted.effort.results[count,]<-c(boundary.name[i],policy.target,metric.name,crosstab.result)
     write.csv(targeted.effort.results,paste("TargetedEffortResults_",datestamp,".csv",sep=""),append=TRUE)
     count<-count+1
 
     #---------------- Drought Vulnerability, forest -------------------------#
-
-#currently the forest mask is giving me problems
 
     policy.target<-"Forest Health"
     metric.name<-"DroughtVulnerability"
@@ -257,8 +258,8 @@ for(i in 1:length(boundary.name)){
     treat.strat.rast<-rasterize(treat.strat.vect,reference.rast)
     
     #Do crosstab
-    targeted.effort.results[count,]<-c(boundary.name[i],policy.target,metric.name,
-      crosstab.calc(dv.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i]))
+    crosstab.result<-crosstab.calc(dv.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i])
+    targeted.effort.results[count,]<-c(boundary.name[i],policy.target,metric.name,crosstab.result)
     write.csv(targeted.effort.results,paste("TargetedEffortResults_",datestamp,".csv",sep=""),append=TRUE)
     count<-count+1
 
@@ -277,8 +278,8 @@ for(i in 1:length(boundary.name)){
     treat.strat.rast<-rasterize(treat.strat.vect,whp.rast)
   
     #Do crosstab
-    targeted.effort.results[count,]<-c(boundary.name[i],policy.target,metric.name,
-      crosstab.calc(whp.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i]))
+    crosstab.result<-crosstab.calc(whp.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i])
+    targeted.effort.results[count,]<-c(boundary.name[i],policy.target,metric.name,crosstab.result)
     write.csv(targeted.effort.results,paste("TargetedEffortResults_",datestamp,".csv",sep=""),append=TRUE)
     count<-count+1
 
@@ -295,8 +296,8 @@ for(i in 1:length(boundary.name)){
     treat.strat.rast<-rasterize(treat.strat.vect,reference.rast)
 
     #Do crosstab
-    targeted.effort.results[count,]<-c(boundary.name[i],policy.target,metric.name,
-      crosstab.calc(fl.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i]))
+    crosstab.result<-crosstab.calc(fl.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i])
+    targeted.effort.results[count,]<-c(boundary.name[i],policy.target,metric.name,crosstab.result)
     write.csv(targeted.effort.results,paste("TargetedEffortResults_",datestamp,".csv",sep=""),append=TRUE)
     count<-count+1
 
@@ -310,8 +311,8 @@ for(i in 1:length(boundary.name)){
     treat.strat.rast<-rasterize(treat.subs.vect,reference.rast)
     
     #Do crosstab
-    targeted.effort.results[count,]<-c(boundary.name[i],policy.target,metric.name,
-      crosstab.calc(cr.pri.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i]))
+    crosstab.result<-crosstab.calc(cr.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i])
+    targeted.effort.results[count,]<-c(boundary.name[i],policy.target,metric.name,crosstab.result)
     write.csv(targeted.effort.results,paste("TargetedEffortResults_",datestamp,".csv",sep=""),append=TRUE)
     count<-count+1
 
@@ -325,8 +326,8 @@ for(i in 1:length(boundary.name)){
     treat.strat.rast<-rasterize(treat.subs.vect,reference.rast)
     
     #Do crosstab
-    targeted.effort.results[count,]<-c(boundary.name[i],policy.target,metric.name,
-      crosstab.calc(hy.pri.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i]))
+    crosstab.result<-crosstab.calc(hy.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i])
+    targeted.effort.results[count,]<-c(boundary.name[i],policy.target,metric.name,crosstab.result)
     write.csv(targeted.effort.results,paste("TargetedEffortResults_",datestamp,".csv",sep=""),append=TRUE)
     count<-count+1
 
@@ -340,8 +341,8 @@ for(i in 1:length(boundary.name)){
     treat.strat.rast<-rasterize(treat.subs.vect,reference.rast)
     
     #Do crosstab
-    targeted.effort.results[count,]<-c(boundary.name[i],policy.target,metric.name,
-      crosstab.calc(de.pri.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i]))
+    crosstab.result<-crosstab.calc(de.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i])
+    targeted.effort.results[count,]<-c(boundary.name[i],policy.target,metric.name,crosstab.result)
     write.csv(targeted.effort.results,paste("TargetedEffortResults_",datestamp,".csv",sep=""),append=TRUE)
     count<-count+1
 
@@ -359,8 +360,8 @@ for(i in 1:length(boundary.name)){
     treat.strat.rast<-rasterize(treat.strat.vect,reference.rast)
         
     #Do crosstab
-    targeted.effort.results[count,]<-c(boundary.name[i],policy.target,metric.name,
-      crosstab.calc(sh.pri.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i]))
+    crosstab.result<-crosstab.calc(sh.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i])
+    targeted.effort.results[count,]<-c(boundary.name[i],policy.target,metric.name,crosstab.result)
     write.csv(targeted.effort.results,paste("TargetedEffortResults_",datestamp,".csv",sep=""),append=TRUE)
     count<-count+1
 

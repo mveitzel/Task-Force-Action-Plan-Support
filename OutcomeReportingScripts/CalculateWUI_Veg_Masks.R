@@ -1,5 +1,18 @@
 #CalculateWUI_Veg_Masks.R
 
+#First let's get the state boundary from the Task Force regions.
+
+regions.vect<-vect(paste(loc.scripts,"ReferenceFiles/TaskForceRegions_20250722.shp",sep=""))
+state.vect<-aggregate(regions.vect)
+#there are some small mismatches with the region boundaries, so get rid of those 'holes':
+state_clean.vect<-fillHoles(state.vect)
+writeVector(state_clean.vect,paste(loc.scripts,"ReferenceFiles/CA_State_TF.shp",sep=""))
+
+
+
+
+
+
 #  WHR layers
 
 # these have been subset by our team from the larger WHR 13 classification
