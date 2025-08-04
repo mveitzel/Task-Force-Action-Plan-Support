@@ -189,7 +189,11 @@ check.crs.match<-function(dat.ref,dat.comp){
 		print(paste("Coordinate Reference System match? ",crs.match,sep=""))
 	} else {
 		print("Set second layer's CRS to first layer's CRS")
-		dat.comp<-project(dat.comp,crs(dat.ref))
+		if(class(dat.comp)=="SpatRaster"){
+				dat.comp<-project(dat.comp,crs(dat.ref),threads=TRUE)
+			}else if(class(dat.comp)=="SpatVector"){
+				dat.comp<-project(dat.comp,crs(dat.ref))
+			}
 		crs.match2<-identical(crs(dat.ref),crs(dat.comp))
 		print(paste("Coordinate Reference System match? ",crs.match2,sep=""))
 	}
@@ -348,9 +352,10 @@ read.vector.and.check.crs<-function(bdr.vect,vect.shape,vect.name){
 
 #This function both crops by the boundary vector and also recalculates areas
 #because you will always want to have the correct area after doing a vector operation
-crop.vector.by.boundary.and.recalc.area<-function(bdr.vect, bdr.name,proj.vect,vect.name){
+crop.vector.by.boundary.and.recalc.area<-function(bdr.vect, bdr.name,vect.vect,vect.name){
  #crop using boundary
-	cropped.vect<-crop(proj.vect,bdr.vect)
+  print("Starting crop.vector.by.boundary.and.recalc.area")
+	cropped.vect<-crop(vect.vect,bdr.vect)
   print(paste(vect.name," cropped to ",bdr.name,sep=""))
   #explicitly calculate the area of the cropped vector
   cropped.vect$post_crop_area_ha<-expanse(cropped.vect,unit="ha")
@@ -358,11 +363,18 @@ crop.vector.by.boundary.and.recalc.area<-function(bdr.vect, bdr.name,proj.vect,v
   return(cropped.vect)
 }
 
-read.and.check.crs.patch.vector<-function(ptch.shape,ptch.name,ptch.layer,ref.layer){
+#if you don't specify a reference layer, it won't do the projection
+read.and.check.crs.patch.vector<-function(ptch.shape,ptch.name,ptch.layer,ref.layer=NULL){
+	print("Starting read.and.check.crs.patch.vector")
 	ptch.vect<-vect(ptch.shape,layer=ptch.layer)
 	print(paste(ptch.name, " read in, layer: ", ptch.layer,sep=""))
  	#returns layers with second projected to first argument's CRS
-	ptch.vect.proj<-check.crs.match(ref.layer,ptch.vect)
+ 	if(!is.null(ref.layer)){
+		ptch.vect.proj<-check.crs.match(ref.layer,ptch.vect)
+		} else {
+			print("Reference layer not specified; no reprojecting implemented")
+			ptch.vect.proj<-ptch.vect
+		}
 	return(ptch.vect.proj)
 }
 
@@ -563,16 +575,14 @@ mask.subset.by.land.class<-function(rast,sbst,msks,wui,wild){
 
     crosstab.calc<-function(pri.rast,pri.name,trt.rast,pol.name,bdry.nm){
       names(pri.rast)<-pri.name
-      print(names(pri.rast))
+#      print(names(pri.rast))
       crosstab.time<- system.time(crosstab.result<-crosstab(c(pri.rast,trt.rast)) )
       print(paste("Crosstab calc complete for ",pri.name," for policy objective ",pol.name," within ",bdry.nm,sep=""))
-      print(crosstab.time/60)
-      #    user   system  elapsed 
-      #15.82867  1.52350 17.40600 
+#      print(crosstab.time/60)
       result<-as.data.frame(crosstab.result)
       #convert from 30-m pixels to acres 
       result$area<-result$Freq*30*30*0.000247105
-      print(result)
+#      print(result)
       prop.pri<-result$area[result[,pri.name]==1]/sum(result$area)
       print(c(result$area[result[,pri.name]==1],sum(result$area),prop.pri))
       return(c(result$area[result[,pri.name]==1],sum(result$area),prop.pri))

@@ -1,5 +1,12 @@
 #CalculateWUI_Veg_Masks.R
 
+# for rasters that are getting projected onto each other for consistency, 
+# the naming convention is dataorigin.<resamp/proj/etc>.projectiondata.rast
+# so for CECS data that is getting put into the projection of WHP data,
+# the name is CECS.<proj/resamp/etc>.WHP.rast
+
+###---------------------State Boundary --------------------###
+
 #First let's get the state boundary from the Task Force regions.
 
 regions.vect<-vect(paste(loc.scripts,"ReferenceFiles/TaskForceRegions_20250722.shp",sep=""))
@@ -9,97 +16,90 @@ state_clean.vect<-fillHoles(state.vect)
 writeVector(state_clean.vect,paste(loc.scripts,"ReferenceFiles/CA_State_TF.shp",sep=""))
 
 
+###--------------------- WUI LAYERS-----------------------###
+
+# raw WUI layer, doesn't match anything else and needs to be projected to WHP/WHR and CECS worlds respectively
+wui_FRAP.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WUI24_extract.tif",sep=""))
+
+#Create a version of the wui layer that matches WHP and ecosystem masps (WHR)
+whp.rast <- rast(paste(loc.data,"PriorityLayers/whp_classified_20240906.tif",sep=""))
+wui_FRAP_proj.whp.rast<-check.crs.match(whp.rast,wui_FRAP.rast)
+wui.resamp.whp.rast<-resample(wui_FRAP_proj.whp.rast,whp.rast,method="near",threads=TRUE)
+writeRaster(wui.resamp.whp.rast,paste(loc.data,"WUIVegetationClassifications/WUI24_extract_resampWHP.tif",sep=""))
+
+#now make the WHP/WHR WUI only layer
+#For the FRAP layer via SIG, 2=intermix, 1=interface, and 3=influence
+wui.reclass.whp.rast<-wui.resamp.whp.rast %in% c(2,1,3)
+wui.only.whp.rast<-wui.reclass.whp.rast
+wui.only.whp.rast[wui.reclass.whp.rast]<-1
+wui.only.whp.rast[wui.only.whp.rast!=1]<-NA
+writeRaster(wui.only.whp.rast,paste(loc.scripts,"ReferenceFiles/FRAP24_WUIOnly_WHP.tif",sep=""))
+
+#create a version of the wui layer that matches CECS (to make wildland and wui layer for CECS layers)
+cecs.rast<-rast(paste(loc.data,"CECS_Data/CECS_CAWide_Vulner_TreeDieoff_SPI-2_2020_V250614.tif",sep=""))
+wui_FRAP_proj.cecs.rast<-check.crs.match(cecs.rast,wui_FRAP.rast)
+wui.resamp.cecs.rast<-resample(wui_FRAP_proj.cecs.rast,cecs.rast,method="near",threads=TRUE)
+writeRaster(wui.resamp.cecs.rast,paste(loc.data,"WUIVegetationClassifications/WUI24_extract_resampCECS.tif",sep=""))
+
+#now make the CECS WUI only layer
+#For the FRAP layer via SIG, 2=intermix, 1=interface, and 3=influence
+wui.reclass.cecs.rast<-wui.resamp.cecs.rast %in% c(2,1,3)
+wui.only.cecs.rast<-wui.reclass.cecs.rast
+wui.only.cecs.rast[wui.reclass.cecs.rast]<-1
+wui.only.cecs.rast[wui.only.cecs.rast!=1]<-NA
+writeRaster(wui.only.cecs.rast,paste(loc.data,"WUIVegetationClassifications/FRAP24_WUIOnly_CECS.tif",sep=""))
 
 
+###------------- WILDLAND LAYERS -------------------------###
+
+#create a version of the cecs layer that matches WHP and ecosystem masks (WHR) - to make wildland stratification
+cecs.proj.whp.rast<-check.crs.match(whp.rast,cecs.rast)
+cecs.resamp.whp.rast<-resample(cecs.proj.whp.rast,whp.rast,method="near",threads=TRUE)
+# generally these layers should use bilinear interpolation for resampling, but this is just to catch what is NA
+
+#pull out just the non ag and urban areas from CECS (which are wildland and wui)
+non.ag.urban.class.whp.rast<-!is.na(cecs.resamp.whp.rast)
+#pull out the 'other' category from FRAP (code 0, which is ag, urban, and wildland)
+other.class.whp.rast<-wui.resamp.whp.rast==0
+writeRaster(other.class.whp.rast,paste(loc.data,"WUIVegetationClassifications/FRAP24_OtherOnly_WHP.tif",sep=""))
+# combine the other and the non-ag-urban, and you should get just wildland
+wild.whp.rast<-(other.class.whp.rast)*(non.ag.urban.class.whp.rast)
+#make a new raster and pull out only the wildland (set everything else to NA), and export
+wild.only.whp.rast<-wild.whp.rast
+wild.only.whp.rast[wild.whp.rast!=1]<-NA
+writeRaster(wild.only.whp.rast,paste(loc.scripts,"ReferenceFiles/FRAP24_WildlandOnly_WHP.tif",sep=""))
 
 
-#  WHR layers
+# And make a version where you use the CECS-projected WUI and CECS unprojected to make its own wildland stratification
 
-# these have been subset by our team from the larger WHR 13 classification
+#pull out just the non ag and urban areas from CECS (which are wildland and wui)
+non.ag.urban.class.cecs.rast<-!is.na(cecs.rast) 
+#pull out the 'other' category from FRAP (code 0, which is ag, urban, and wildland)
+other.class.cecs.rast<-wui.resamp.cecs.rast==0
+writeRaster(other.class.cecs.rast,paste(loc.data,"WUIVegetationClassifications/FRAP24_OtherOnly_CECS.tif",sep=""))
 
+wild.cecs.rast<-(other.class.cecs.rast)*(non.ag.urban.class.cecs.rast)
+#make a new raster and pull out only the wildland (set everything else to NA), and export
+wild.only.cecs.rast<-wild.cecs.rast
+wild.only.cecs.rast[wild.cecs.rast!=1]<-NA
+writeRaster(wild.only.cecs.rast,paste(loc.data,"WUIVegetationClassifications/FRAP24_WildlandOnly_CECS.tif",sep=""))
+
+
+###---------- WHR (forest/shrub layers) ------------------###
+
+## the ecosystem (WHR) layers are fine for any calculations but CECS
+## make a version for CECS
 
 ## ecosystem layers reclassified from Wildlife Habitat Relationships CALFIRE dataset
 forest.rast<-rast(paste(loc.scripts,"ReferenceFiles/WHR13_RECLASS_FOREST.tif",sep=""))
-forest.proj.rast<-check.crs.match(reference.rast,forest.rast)
-forest.proj.vect<-as.polygons(forest.proj.rast)
-forest.CECSproj.vect<-check.crs.match(reference.rast,forest.proj.vect)
-writeVector(forest.CECSproj.vect,paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_FOREST.shp",sep=""))
+forest.proj.rast<-check.crs.match(cecs.rast,forest.rast)
+forest.resamp.rast<-resample(forest.proj.rast,cecs.rast,method="near",threads=TRUE)
+writeRaster(forest.resamp.rast,paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_FOREST_CECS.tif",sep=""))
 
 shrub.rast<-rast(paste(loc.scripts,"ReferenceFiles/WHR13_RECLASS_SHRUB.tif",sep=""))
-shrub.proj.rast<-check.crs.match(reference.rast,shrub.rast)
-shrub.proj.vect<-as.polygons(shrub.proj.rast)
-shrub.CECSproj.vect<-check.crs.match(reference.rast,shrub.proj.vect)
-writeVector(shrub.CECSproj.vect,paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_SHRUB.shp",sep=""))
-
-
-
-#I had to do some crazy stuff to pull out just the WUI classification from the FRAP layer SIG gave me
-#I could not get the raster to match with CECS rasters so I vectorized the WUI/non-WUI rasters
-
-#"5 Class WUI raster, developed by SIG. 0 = everything else, 1 = influence, 
-#2 = intermix, 3 = interface, 4 = urban, 5 = wildland
-
-wui_FRAP.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WUI24_extract.tif",sep=""))
-
-## WILDLAND MASK IS NON-WUI, NON-AG, NON-URBAN
-
-#technically the crs matches, but the extent doesn't, even when cropping.
-#probably a datum mismatch that the reprojection algorithms aren't fixing
-#but at least start it out in the right projection in general
-wui_FRAP.proj.rast<-check.crs.match(reference.rast,wui_FRAP.rast)
-#pull out just the non ag and urban areas from CECS (which are wildland and wui)
-non.ag.urban.class.rast<-!is.na(reference.rast) #reference rast is a CECS layer
-#pull out the 'other' category from FRAP (which is ag, urban, and wildland)
-#(FRAP and/or SIG has combined wildland with ag and urban, in code '0')
-other.class.rast<-wui_FRAP.proj.rast==0
-#take it to vector, check crs/reproject, pull out only the "1" values
-other.class.vect<-as.polygons(other.class.rast)
-other.class.proj.vect<-check.crs.match(reference.rast,other.class.vect)
-other.class.only.vect<-other.class.proj.vect[other.class.proj.vect$Band_1==1,]
-#then rerasterize it using the reference rast for extent, etc
-other.class.proj.rast<-rasterize(other.class.only.vect,reference.rast)
-#then find the raster intersection of wildland+wui and ag+urban+wildland, which is wildland
-wild.rast<-(other.class.proj.rast)*(non.ag.urban.class.rast)
-#make a new raster and pull out only the wildland (set everything else to NA), and export
-wild.only.rast<-wild.rast
-wild.only.rast[wild.rast!=1]<-NA
-writeRaster(wild.only.rast,paste(loc.scripts,"ReferenceFiles/FRAP24_WildlandOnly.tif",sep=""))
-
-## WUI MASK IS INTERFACE, INTERMIX, AND INFLUENCE AS PER CALFIRE'S DEFINITION
-
-#For the FRAP layer via SIG, 2=intermix, 1=interface, and 3=influence
-wui.class.rast<-wui_FRAP.proj.rast %in% c(2,1,3)
-#pull the same trick to fix the projection by going to vector and back to raster again
-wui.class.vect<-as.polygons(wui.class.rast)
-wui.class.proj.vect<-check.crs.match(reference.rast,wui.class.vect)
-wui.class.only.vect<-wui.class.proj.vect[wui.class.proj.vect$Band_1==1,]
-#then rerasterize it using the reference rast for extent, etc
-wui.class.proj.rast<-rasterize(wui.class.only.vect,reference.rast)
-
-wui.rast<-wui.class.proj.rast
-wui.rast[wui.rast!=1]<-NA
-writeRaster(wui.rast,paste(loc.scripts,"ReferenceFiles/FRAP24_WUIOnly.tif",sep=""))
-
-
-#FOR WHP, ALSO HAVING TROUBLE WITH PROJECTIONS SO TAKE THE NEWLY 
-#CREATED WILDLAND MASK AND PROJECT IT BACK (VIA VECTORIZING AND 
-#RERASTERIZING) TO THE WHP COORDINATE SYSTEM
-whp.rast <- rast(paste(loc.data,"PriorityLayers/whp_classified_20240906.tif",sep=""))
-
-wild.vect<-as.polygons(wild.only.rast)
-wild.proj.vect<-check.crs.match(whp.rast,wild.vect)
-wild.proj.rast<-rasterize(wild.proj.vect,whp.rast) #this step takes a long time - use whp.rast for the extent
-writeRaster(wild.proj.rast,paste(loc.data,"WUIVegetationClassifications/FRAP24_WildlandOnly_WHPproj.tif",sep=""))
-
-#FOR WHP FOR THE WUI CALC, JUST DON'T DO ANY REPROJECTION
-#USE THE ORIGINAL LAYER TO RECLASSIFY, MAKE THE NA MASK, 
-#AND EXPORT TO BE USED
-wui.proj.reclass.rast<-wui_FRAP.rast %in% c(2,1,3)
-wui.proj.rast<-wui.proj.reclass.rast
-wui.proj.rast[wui.proj.rast!=1]<-NA
-#TODO***Do I want it to be 1 rather than TRUE?
-writeRaster(wui.proj.rast,paste(loc.data,"WUIVegetationClassifications/FRAP24_WUIOnly_WHPproj.tif",sep=""))
-
+shrub.proj.rast<-check.crs.match(cecs.rast,shrub.rast)
+shrub.resamp.rast<-resample(shrub.proj.rast,cecs.rast,method="near",threads=TRUE)
+writeRaster(shrub.resamp.rast,paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_SHRUB_CECS.tif",sep=""))
 
 ##########
 
@@ -108,36 +108,220 @@ writeRaster(wui.proj.rast,paste(loc.data,"WUIVegetationClassifications/FRAP24_WU
 
 SDGE.vect<-vect(paste(loc.data,"PriorityLayers/SDGE_2023_Q2NonConfidential.gdb",sep=""),layer="SDGE_TransmissionLine_2023_Q2")
 #Note that SDGE also has "SDGE_PrimaryDistributionLine_2023_Q2"
-SDGE.proj.vect<-check.crs.match(reference.rast,SDGE.vect)
 SCE.vect<-vect(paste(loc.data,"PriorityLayers/SCE_ICA_TransmissionLines.shp",sep=""))
-SCE.proj.vect<-check.crs.match(reference.rast,SCE.vect)
 PGE.vect<-vect(paste(loc.data,"PriorityLayers/TransmissionLines_upTo_115kV.shp",sep=""))
-PGE.proj.vect<-check.crs.match(reference.rast,PGE.vect)
 road.vect<-vect(paste(loc.data,"PriorityLayers/OSM_majorRoads_CA_2022.shp",sep=""))
-road.proj.vect<-check.crs.match(reference.rast,road.vect)
 
-tran.vect<-union(SDGE.proj.vect,SCE.proj.vect)
-tran.vect<-union(tran.vect,PGE.proj.vect)
-rdtr.vect<-union(tran.vect,road.proj.vect)
+
+SDGE.cecs.vect<-check.crs.match(cecs.rast,SDGE.vect)
+SCE.cecs.vect<-check.crs.match(cecs.rast,SCE.vect)
+PGE.cecs.vect<-check.crs.match(cecs.rast,PGE.vect)
+road.cecs.vect<-check.crs.match(cecs.rast,road.vect)
+
+tran.cecs.vect<-union(SDGE.cecs.vect,SCE.cecs.vect)
+tran.cecs.vect<-union(tran.cecs.vect,PGE.cecs.vect)
+rdtr.cecs.vect<-union(tran.cecs.vect,road.cecs.vect)
 
 
 #roads and transmission lines, CECS CRS
-rdtr.buff.vect<-buffer(rdtr.vect,width=500*0.3048)
-writeVector(rdtr.buff.vect,paste(loc.data,"WUIVegetationClassifications/RoadTransmissionLineBuffer_CECSproj.shp",sep=""))
-#for WHP calcs, WHP CRS
-rdtr.buff.proj.vect<-check.crs.match(whp.rast,rdtr.buff.vect)
-writeVector(rdtr.buff.proj.vect,paste(loc.data,"WUIVegetationClassifications/RoadTransmissionLineBuffer_WHPproj.shp",sep=""))
+rdtr.buff.cecs.vect<-buffer(rdtr.cecs.vect,width=500*0.3048)
+rdtr.buff.cecs.proj.vect<-check.crs.match(cecs.rast,rdtr.buff.cecs.vect)
+writeVector(rdtr.buff.cecs.proj.vect,paste(loc.data,"WUIVegetationClassifications/RoadTransmissionLineBuffer_CECSproj.shp",sep=""))
 
 
 # #---------------- Just Roads (for WHP, flame length, and shrubs) ----#
 #500 foot buffer but function expects meters (CECS CRS)
-road.buff.vect<-buffer(road.proj.vect,width=500*0.3048)
-writeVector(road.buff.vect,paste(loc.data,"WUIVegetationClassifications/RoadBuffer_CECSproj.shp",sep=""))
+road.buff.cecs.vect<-buffer(road.cecs.vect,width=500*0.3048)
+road.buff.cecs.proj.vect<-check.crs.match(cecs.rast,road.buff.cecs.vect)
+writeVector(road.buff.cecs.proj.vect,paste(loc.data,"WUIVegetationClassifications/RoadBuffer_CECSproj.shp",sep=""))
+
+
+# #---------------- do roads and utilities for WHP projection----------#
+
+SDGE.whp.vect<-check.crs.match(whp.rast,SDGE.vect)
+SCE.whp.vect<-check.crs.match(whp.rast,SCE.vect)
+PGE.whp.vect<-check.crs.match(whp.rast,PGE.vect)
+road.whp.vect<-check.crs.match(whp.rast,road.vect)
+
+tran.whp.vect<-union(SDGE.whp.vect,SCE.whp.vect)
+tran.whp.vect<-union(tran.whp.vect,PGE.whp.vect)
+rdtr.whp.vect<-union(tran.whp.vect,road.whp.vect)
+
+#for WHP calcs, WHP CRS
+rdtr.buff.whp.vect<-buffer(rdtr.whp.vect,width=500*0.3048)
+rdtr.buff.whp.proj.vect<-check.crs.match(whp.rast,rdtr.buff.whp.vect)
+writeVector(rdtr.buff.whp.proj.vect,paste(loc.data,"WUIVegetationClassifications/RoadTransmissionLineBuffer_WHPproj.shp",sep=""))
+
 #for WHP calcs (WHP CRS)
-road.buff.proj.vect<-check.crs.match(whp.rast,road.buff.vect)
-writeVector(road.buff.proj.vect,paste(loc.data,"WUIVegetationClassifications/RoadBuffer_WHPproj.shp",sep=""))
+road.buff.whp.vect<-buffer(road.whp.vect,width=500*0.3048)
+road.buff.whp.proj.vect<-check.crs.match(whp.rast,road.buff.whp.vect)
+writeVector(road.buff.whp.proj.vect,paste(loc.data,"WUIVegetationClassifications/RoadBuffer_WHPproj.shp",sep=""))
 
 
+############################################################
+
+## this code is me trying to work out the best way to reproject and resample things
+
+
+# #now comparing WHR (forest and shrub), WHP and WUI layers (all from CALFIRE)
+
+# forest.rast<-rast(paste(loc.scripts,"ReferenceFiles/WHR13_RECLASS_FOREST.tif",sep=""))
+# shrub.rast<-rast(paste(loc.scripts,"ReferenceFiles/WHR13_RECLASS_SHRUB.tif",sep=""))
+
+# #now let's look at the WHP layer
+# whp.rast <- rast(paste(loc.data,"PriorityLayers/whp_classified_20240906.tif",sep=""))
+# #identical to the shrub/forest layers which are WHR
+# #and compare with the TF boundary - identical with the shrub/forest and WHP layers.
+
+
+# wui_FRAP.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WUI24_extract.tif",sep=""))
+# #from terra's 'crs' command, here are the differences between the WHR (first) and WUI (second) projections:
+# #(1)
+# #ELLIPSOID[\"GRS 1980\",6378137,298.257222101,\n
+# #ELLIPSOID[\"GRS 1980\",6378137,298.257222101004,\n
+# #(2)
+# #CONVERSION[\"California Albers\",\n
+# # CONVERSION[\"Albers Equal Area\",\n  
+# #(3)
+# #AXIS[\"easting (X)\",east,\n
+# # AXIS[\"easting\",east,\n 
+# #(4)
+# # AXIS[\"northing (Y)\",north,\n 
+# #AXIS[\"northing\",north,\n 
+# #(5)
+# #USAGE[\n        SCOPE[\"State-wide spatial data management.\"],\n        AREA[\"United States (USA) - California.\"],\n        BBOX[32.53,-124.45,42.01,-114.12]],\n 
+
+# #I determine these are the same CRS, and the WHR metadata is more complete so I will use that one.
+# #looking at them in QGIS, though, there is a 1.4 m vertical offset and a 9.3 m horizontal offset.
+# #also, I do think that the crs bascically matches, because I can use the crosshairs in QGIS's measurement tool 
+# #and that implies they're aligned rotationally at least.  But let's go ahead and reproject it anyway.
+# wui_FRAP_proj.rast<-check.crs.match(forest.rast,wui_FRAP.rast)
+# writeRaster(wui_FRAP_proj.rast,paste(loc.data,"WUIVegetationClassifications/WUI24_extract_WHRproj.tif",sep=""))
+# #this did not fix it,as expected this is basically visually identical, but is still offset from the pixels in WHR
+
+
+# #looking at the actual pixels, the WHP matches the WHR but not the WUI layer
+# #WHR/forest/shrub is actually the same as the WHP layer.  But need to get the WUI layer to match.
+# #the extent is smaller, and the origin is different, for the WUI layer
+
+# #so let's try a resample and crop/extend
+
+# wui.resamp.rast<-resample(wui_FRAP_proj.rast,whp.rast,method="near",threads=TRUE)
+# writeRaster(wui.resamp.rast,paste(loc.data,"WUIVegetationClassifications/WUI24_extract_resamp.tif",sep=""))
+# #and now they visually match, and the origin matches and so does the extent
+
+# #testing raster math operation:
+
+# test<-wui.resamp.rast*whp.rast
+# #yes, this works.  just resample is good enough.
+
+
+# #and finally check against CECS
+
+# cecs.rast<-rast(paste(loc.data,"CECS_Data/CECS_CAWide_Vulner_TreeDieoff_SPI-2_2020_V250614.tif",sep=""))
+# cecs.proj.rast<-check.crs.match(whp.rast,cecs.rast)
+# cecs.resamp.rast<-resample(cecs.proj.rast,whp.rast,method="bilinear",threads=TRUE)
+
+# test<-cecs.resamp.rast*whp.rast
+# #yes, this works too!!!
+
+
+
+# #WUI (once it's appropriately resampled) is about the size of the state boundary
+# #WHP is slightly larger than the state boundary
+# #forest/shrub/WHR is slightly larger than state boundary
+# #so we're still going to clip everything by the new state boundary
+
+#####################################
+
+## this code was one of many workarounds trying to get stuff to work by vectorizing
+
+#  WHR layers
+
+# these have been subset by our team from the larger WHR 13 classification
+
+
+# ## ecosystem layers reclassified from Wildlife Habitat Relationships CALFIRE dataset
+# forest.rast<-rast(paste(loc.scripts,"ReferenceFiles/WHR13_RECLASS_FOREST.tif",sep=""))
+# forest.proj.rast<-check.crs.match(reference.rast,forest.rast)
+# forest.proj.vect<-as.polygons(forest.proj.rast)
+# forest.CECSproj.vect<-check.crs.match(reference.rast,forest.proj.vect)
+# writeVector(forest.CECSproj.vect,paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_FOREST.shp",sep=""))
+
+# shrub.rast<-rast(paste(loc.scripts,"ReferenceFiles/WHR13_RECLASS_SHRUB.tif",sep=""))
+# shrub.proj.rast<-check.crs.match(reference.rast,shrub.rast)
+# shrub.proj.vect<-as.polygons(shrub.proj.rast)
+# shrub.CECSproj.vect<-check.crs.match(reference.rast,shrub.proj.vect)
+# writeVector(shrub.CECSproj.vect,paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_SHRUB.shp",sep=""))
+
+
+
+# #I had to do some crazy stuff to pull out just the WUI classification from the FRAP layer SIG gave me
+# #I could not get the raster to match with CECS rasters so I vectorized the WUI/non-WUI rasters
+
+# #"5 Class WUI raster, developed by SIG. 0 = everything else, 1 = influence, 
+# #2 = intermix, 3 = interface, 4 = urban, 5 = wildland
+
+# # wui_FRAP.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WUI24_extract.tif",sep=""))
+
+# ## WILDLAND MASK IS NON-WUI, NON-AG, NON-URBAN
+
+# #technically the crs matches, but the extent doesn't, even when cropping.
+# #probably a datum mismatch that the reprojection algorithms aren't fixing
+# #but at least start it out in the right projection in general
+# wui_FRAP.proj.rast<-check.crs.match(reference.rast,wui_FRAP.rast)
+# #pull out just the non ag and urban areas from CECS (which are wildland and wui)
+# non.ag.urban.class.rast<-!is.na(reference.rast) #reference rast is a CECS layer
+# #pull out the 'other' category from FRAP (which is ag, urban, and wildland)
+# #(FRAP and/or SIG has combined wildland with ag and urban, in code '0')
+# other.class.rast<-wui_FRAP.proj.rast==0
+# #take it to vector, check crs/reproject, pull out only the "1" values
+# other.class.vect<-as.polygons(other.class.rast)
+# other.class.proj.vect<-check.crs.match(reference.rast,other.class.vect)
+# other.class.only.vect<-other.class.proj.vect[other.class.proj.vect$Band_1==1,]
+# #then rerasterize it using the reference rast for extent, etc
+# other.class.proj.rast<-rasterize(other.class.only.vect,reference.rast)
+# #then find the raster intersection of wildland+wui and ag+urban+wildland, which is wildland
+# wild.rast<-(other.class.proj.rast)*(non.ag.urban.class.rast)
+# #make a new raster and pull out only the wildland (set everything else to NA), and export
+# wild.only.rast<-wild.rast
+# wild.only.rast[wild.rast!=1]<-NA
+# writeRaster(wild.only.rast,paste(loc.scripts,"ReferenceFiles/FRAP24_WildlandOnly.tif",sep=""))
+
+# ## WUI MASK IS INTERFACE, INTERMIX, AND INFLUENCE AS PER CALFIRE'S DEFINITION
+
+# #For the FRAP layer via SIG, 2=intermix, 1=interface, and 3=influence
+# wui.class.rast<-wui_FRAP.proj.rast %in% c(2,1,3)
+# #pull the same trick to fix the projection by going to vector and back to raster again
+# wui.class.vect<-as.polygons(wui.class.rast)
+# wui.class.proj.vect<-check.crs.match(reference.rast,wui.class.vect)
+# wui.class.only.vect<-wui.class.proj.vect[wui.class.proj.vect$Band_1==1,]
+# #then rerasterize it using the reference rast for extent, etc
+# wui.class.proj.rast<-rasterize(wui.class.only.vect,reference.rast)
+
+# wui.rast<-wui.class.proj.rast
+# wui.rast[wui.rast!=1]<-NA
+# writeRaster(wui.rast,paste(loc.scripts,"ReferenceFiles/FRAP24_WUIOnly.tif",sep=""))
+
+
+# #FOR WHP, ALSO HAVING TROUBLE WITH PROJECTIONS SO TAKE THE NEWLY 
+# #CREATED WILDLAND MASK AND PROJECT IT BACK (VIA VECTORIZING AND 
+# #RERASTERIZING) TO THE WHP COORDINATE SYSTEM
+# whp.rast <- rast(paste(loc.data,"PriorityLayers/whp_classified_20240906.tif",sep=""))
+
+# wild.vect<-as.polygons(wild.only.rast)
+# wild.proj.vect<-check.crs.match(whp.rast,wild.vect)
+# wild.proj.rast<-rasterize(wild.proj.vect,whp.rast) #this step takes a long time - use whp.rast for the extent
+# writeRaster(wild.proj.rast,paste(loc.data,"WUIVegetationClassifications/FRAP24_WildlandOnly_WHPproj.tif",sep=""))
+
+# #FOR WHP FOR THE WUI CALC, JUST DON'T DO ANY REPROJECTION
+# #USE THE ORIGINAL LAYER TO RECLASSIFY, MAKE THE NA MASK, 
+# #AND EXPORT TO BE USED
+# wui.proj.reclass.rast<-wui_FRAP.rast %in% c(2,1,3)
+# wui.proj.rast<-wui.proj.reclass.rast
+# wui.proj.rast[wui.proj.rast!=1]<-NA
+# #TODO***Do I want it to be 1 rather than TRUE?
+# writeRaster(wui.proj.rast,paste(loc.data,"WUIVegetationClassifications/FRAP24_WUIOnly_WHPproj.tif",sep=""))
 
 ###########################################
 
