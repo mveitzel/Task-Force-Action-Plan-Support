@@ -162,6 +162,7 @@ current.conditions[7,]<-c("Habitat","Critical Habitat","CDFW ACE","Species Diver
 write.csv(current.conditions,paste("CurrentConditions",datestamp,".csv",sep=""))
 
 rdtr.cecs.clip<-crop(rdtr.buff.cecs.vect,prepped.boundary.cecs.vect)
+ area<-expanse(aggregate(rdtr.cecs.clip))
 
 
 mask.areas<-data.frame(Mask=character(),CRS=character(),Area=numeric(),stringsAsFactors=FALSE)

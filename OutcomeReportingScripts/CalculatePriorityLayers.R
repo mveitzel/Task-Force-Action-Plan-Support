@@ -1,5 +1,6 @@
 #CalculatePriorityLayers.R
 
+
   # #---------- WHP read in and process-------------------------*
   #2024 Wildfire Hazard Potential from CALFIRE
   whp.rast <- rast(paste(loc.data,"PriorityLayers/whp_classified_20240906.tif",sep=""))

@@ -293,45 +293,45 @@ subset.raster<-function(input.rast,name.rast,mask,mask.name,boundary.vect,bounda
 
 # }
 
-#***TODO: MV suggests using the other two functions to do what this one does, and deleting this one
-##########EDITED VERSION TO MAKE MORE GENERAL###############
-#When trying to process a vector for a single raster (i.e. that has not been differenced
-#and only includes one raster layer), the read.in.and.process.vectors function would
-#have an error because it was looking for a specific layer with the "rsters" call. 
-#This edited function does the same thing that read.in.and.process.vectors does
-#but calls for a single raster rather than the stack of three that results from 
-#the differencing function. You could use this version on a differenced raster
-#but the 'rstr' call would require "differenced.raster.result$raster1" instead of 
-#just "differenced.raster.result" which would contain "$raster1", "$raster2", and "$diff."
+# #***TODO: MV suggests using the other two functions to do what this one does, and deleting this one
+# ##########EDITED VERSION TO MAKE MORE GENERAL###############
+# #When trying to process a vector for a single raster (i.e. that has not been differenced
+# #and only includes one raster layer), the read.in.and.process.vectors function would
+# #have an error because it was looking for a specific layer with the "rsters" call. 
+# #This edited function does the same thing that read.in.and.process.vectors does
+# #but calls for a single raster rather than the stack of three that results from 
+# #the differencing function. You could use this version on a differenced raster
+# #but the 'rstr' call would require "differenced.raster.result$raster1" instead of 
+# #just "differenced.raster.result" which would contain "$raster1", "$raster2", and "$diff."
 
-read.in.and.process.vectors.single.raster<-function(crop.poly,rstr,sumPly,sumPlyNm){
+# read.in.and.process.vectors.single.raster<-function(crop.poly,rstr,sumPly,sumPlyNm){
   
-  #Project, crop, calculate areas, and subset by date
+#   #Project, crop, calculate areas, and subset by date
   
-  #-------------- State boundary for clipping ------------#
-  #               (or region, as appropriate)             #
+#   #-------------- State boundary for clipping ------------#
+#   #               (or region, as appropriate)             #
   
-  cr.poly<-vect(crop.poly)
-  #returns layers with the second projected to first argument's CRS
-  crop_poly_proj<-check.crs.match(rstr,cr.poly)
-  print(paste(crop.poly," read in and processed.",sep=""))
+#   cr.poly<-vect(crop.poly)
+#   #returns layers with the second projected to first argument's CRS
+#   crop_poly_proj<-check.crs.match(rstr,cr.poly)
+#   print(paste(crop.poly," read in and processed.",sep=""))
   
   
-  #---------------- Polygons to summarize over ------------#
+#   #---------------- Polygons to summarize over ------------#
   
-  summary_poly<-vect(sumPly)
-  #returns layers the second projected to first argument's CRS
-  summary_poly_proj<-check.crs.match(rstr,summary_poly)
-  summary_ID_name<-sumPlyNm
-  #crop to CA or regional boundary
-  summary_poly_proj<-crop(summary_poly_proj,crop_poly_proj)
-  #explicitly calculate the area of the HUC8
-  summary_poly_proj$huc_area_ha<-expanse(summary_poly_proj,unit="ha")
-  print(paste(sumPly," read in and processed. Summary field: ",sumPlyNm,sep=""))
+#   summary_poly<-vect(sumPly)
+#   #returns layers the second projected to first argument's CRS
+#   summary_poly_proj<-check.crs.match(rstr,summary_poly)
+#   summary_ID_name<-sumPlyNm
+#   #crop to CA or regional boundary
+#   summary_poly_proj<-crop(summary_poly_proj,crop_poly_proj)
+#   #explicitly calculate the area of the HUC8
+#   summary_poly_proj$huc_area_ha<-expanse(summary_poly_proj,unit="ha")
+#   print(paste(sumPly," read in and processed. Summary field: ",sumPlyNm,sep=""))
   
-  return(list(boundary=crop_poly_proj,sumPoly=summary_poly_proj))
+#   return(list(boundary=crop_poly_proj,sumPoly=summary_poly_proj))
   
-}
+# }
 
 read.and.prepare.boundary.vector<-function(bdry.shape,bdry.name,ref.rast){
   boundary.vect<-vect(bdry.shape)
@@ -404,24 +404,27 @@ zonal.calculations<-function(rster.rast,zonal.sum.name,zonal.sum.vect){
 }
 
 #calculating 'mean' is hard-coded in
-global.calculations<-function(rst.rast,rst.name,bound.vect,bound.name){
+global.calculations<-function(rst.rast,rst.name,bound.vect,bound.name,dffnm){
+	print("Starting global.calculations")
 	sub.rast<-subset.raster(rst.rast,rst.name,NA,NA,bound.vect,bound.name)
-	global.avg<-global(sub.rast,"mean",na.rm=TRUE)
+	global.avg<-as.numeric(global(sub.rast,"mean",na.rm=TRUE))
 	global.sum.vect<-bound.vect
-	global.sum.vect[rst.name]<-global.avg
+	global.sum.vect[,dffnm]<-global.avg
 	return(global.sum.vect)
 }
 
 
 #for the function that does the raster summary, have a method=global and method=zonal with an if statement
 #rast.name is a metric name
-summarize.pixels.in.area.of.interest<-function(rast.rast,rast.name,vect.vect,vect.name,method){
+summarize.pixels.in.area.of.interest<-function(rast.rast,rast.name,vect.vect,vect.name,method,dffnm){
 	if(method=="zonal"){
+			print(method)
 			#call zonal summary
 			result<-zonal.calculations(rast.rast,vect.name,vect.vect)
 		}else if(method=="global"){
+			print(method)
 			#call global summary, vect.vect/name is expected to be the boundary name
-			result<-global.calculations(rast.rast,rast.name,vect.vect,vect.name)
+			result<-global.calculations(rast.rast,rast.name,vect.vect,vect.name, dffnm)
 		}
 	return(result)
 }
