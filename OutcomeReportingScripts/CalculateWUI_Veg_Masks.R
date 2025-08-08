@@ -9,11 +9,11 @@
 
 #First let's get the state boundary from the Task Force regions.
 
-regions.vect<-vect(paste(loc.scripts,"ReferenceFiles/TaskForceRegions_20250722.shp",sep=""))
-state.vect<-aggregate(regions.vect)
-#there are some small mismatches with the region boundaries, so get rid of those 'holes':
-state_clean.vect<-fillHoles(state.vect)
-writeVector(state_clean.vect,paste(loc.scripts,"ReferenceFiles/CA_State_TF.shp",sep=""))
+# regions.vect<-vect(paste(loc.scripts,"ReferenceFiles/TaskForceRegions_20250722.shp",sep=""))
+# state.vect<-aggregate(regions.vect)
+# #there are some small mismatches with the region boundaries, so get rid of those 'holes':
+# state_clean.vect<-fillHoles(state.vect)
+# writeVector(state_clean.vect,paste(loc.scripts,"ReferenceFiles/CA_State_TF.shp",sep=""))
 
 
 ###--------------------- WUI LAYERS-----------------------###
@@ -21,47 +21,38 @@ writeVector(state_clean.vect,paste(loc.scripts,"ReferenceFiles/CA_State_TF.shp",
 # raw WUI layer, doesn't match anything else and needs to be projected to WHP/WHR and CECS worlds respectively
 wui_FRAP.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WUI24_extract.tif",sep=""))
 
+#reclass first
+#For the FRAP layer via SIG, 2=intermix, 1=interface, and 3=influence
+# Per Forest, only use intermix and interface
+wui.reclass.rast<-wui_FRAP.rast %in% c(2,1)
+wui.only.rast<-wui.reclass.rast
+wui.only.rast[wui.reclass.rast]<-1
+wui.only.rast[wui.only.rast!=1]<-NA
+
 #Create a version of the wui layer that matches WHP and ecosystem masps (WHR)
 whp.rast <- rast(paste(loc.data,"PriorityLayers/whp_classified_20240906.tif",sep=""))
-wui_FRAP_proj.whp.rast<-check.crs.match(whp.rast,wui_FRAP.rast)
-wui.resamp.whp.rast<-resample(wui_FRAP_proj.whp.rast,whp.rast,method="near",threads=TRUE)
-writeRaster(wui.resamp.whp.rast,paste(loc.data,"WUIVegetationClassifications/WUI24_extract_resampWHP.tif",sep=""))
-
-#now make the WHP/WHR WUI only layer
-#For the FRAP layer via SIG, 2=intermix, 1=interface, and 3=influence
-wui.reclass.whp.rast<-wui.resamp.whp.rast %in% c(2,1,3)
-wui.only.whp.rast<-wui.reclass.whp.rast
-wui.only.whp.rast[wui.reclass.whp.rast]<-1
-wui.only.whp.rast[wui.only.whp.rast!=1]<-NA
-writeRaster(wui.only.whp.rast,paste(loc.scripts,"ReferenceFiles/FRAP24_WUIOnly_WHP.tif",sep=""))
+wui.proj.whp.rast<-check.crs.match(whp.rast,wui.only.rast,"near")
+writeRaster(wui.proj.whp.rast,paste(loc.scripts,"ReferenceFiles/FRAP24_WUIOnly_WHP.tif",sep=""))
 
 #create a version of the wui layer that matches CECS (to make wildland and wui layer for CECS layers)
 cecs.rast<-rast(paste(loc.data,"CECS_Data/CECS_CAWide_Vulner_TreeDieoff_SPI-2_2020_V250614.tif",sep=""))
-wui_FRAP_proj.cecs.rast<-check.crs.match(cecs.rast,wui_FRAP.rast)
-wui.resamp.cecs.rast<-resample(wui_FRAP_proj.cecs.rast,cecs.rast,method="near",threads=TRUE)
-writeRaster(wui.resamp.cecs.rast,paste(loc.data,"WUIVegetationClassifications/WUI24_extract_resampCECS.tif",sep=""))
-
-#now make the CECS WUI only layer
-#For the FRAP layer via SIG, 2=intermix, 1=interface, and 3=influence
-wui.reclass.cecs.rast<-wui.resamp.cecs.rast %in% c(2,1,3)
-wui.only.cecs.rast<-wui.reclass.cecs.rast
-wui.only.cecs.rast[wui.reclass.cecs.rast]<-1
-wui.only.cecs.rast[wui.only.cecs.rast!=1]<-NA
-writeRaster(wui.only.cecs.rast,paste(loc.data,"WUIVegetationClassifications/FRAP24_WUIOnly_CECS.tif",sep=""))
+wui.proj.cecs.rast<-check.crs.match(cecs.rast,wui.only.rast,"near")
+writeRaster(wui.proj.cecs.rast,paste(loc.data,"WUIVegetationClassifications/FRAP24_WUIOnly_CECS.tif",sep=""))
 
 
 ###------------- WILDLAND LAYERS -------------------------###
 
-#create a version of the cecs layer that matches WHP and ecosystem masks (WHR) - to make wildland stratification
-cecs.proj.whp.rast<-check.crs.match(whp.rast,cecs.rast)
-cecs.resamp.whp.rast<-resample(cecs.proj.whp.rast,whp.rast,method="near",threads=TRUE)
-# generally these layers should use bilinear interpolation for resampling, but this is just to catch what is NA
-
+#reclassify first
 #pull out just the non ag and urban areas from CECS (which are wildland and wui)
-non.ag.urban.class.whp.rast<-!is.na(cecs.resamp.whp.rast)
+non.ag.urban.class.cecs.rast<-!is.na(cecs.rast)
 #pull out the 'other' category from FRAP (code 0, which is ag, urban, and wildland)
-other.class.whp.rast<-wui.resamp.whp.rast==0
-writeRaster(other.class.whp.rast,paste(loc.data,"WUIVegetationClassifications/FRAP24_OtherOnly_WHP.tif",sep=""))
+# per Forest, include influence in with the wildland
+other.class.wui.rast<-wui_FRAP.rast %in% c(0,3)
+
+
+non.ag.urban.class.whp.rast<-check.crs.match(whp.rast,non.ag.urban.class.cecs.rast,"near")
+other.class.whp.rast<-check.crs.match(whp.rast,other.class.wui.rast,"near")
+
 # combine the other and the non-ag-urban, and you should get just wildland
 wild.whp.rast<-(other.class.whp.rast)*(non.ag.urban.class.whp.rast)
 #make a new raster and pull out only the wildland (set everything else to NA), and export
@@ -71,12 +62,7 @@ writeRaster(wild.only.whp.rast,paste(loc.scripts,"ReferenceFiles/FRAP24_Wildland
 
 
 # And make a version where you use the CECS-projected WUI and CECS unprojected to make its own wildland stratification
-
-#pull out just the non ag and urban areas from CECS (which are wildland and wui)
-non.ag.urban.class.cecs.rast<-!is.na(cecs.rast) 
-#pull out the 'other' category from FRAP (code 0, which is ag, urban, and wildland)
-other.class.cecs.rast<-wui.resamp.cecs.rast==0
-writeRaster(other.class.cecs.rast,paste(loc.data,"WUIVegetationClassifications/FRAP24_OtherOnly_CECS.tif",sep=""))
+other.class.cecs.rast<-check.crs.match(cecs.rast,other.class.wui.rast,"near")
 
 wild.cecs.rast<-(other.class.cecs.rast)*(non.ag.urban.class.cecs.rast)
 #make a new raster and pull out only the wildland (set everything else to NA), and export
@@ -92,14 +78,12 @@ writeRaster(wild.only.cecs.rast,paste(loc.data,"WUIVegetationClassifications/FRA
 
 ## ecosystem layers reclassified from Wildlife Habitat Relationships CALFIRE dataset
 forest.rast<-rast(paste(loc.scripts,"ReferenceFiles/WHR13_RECLASS_FOREST.tif",sep=""))
-forest.proj.rast<-check.crs.match(cecs.rast,forest.rast)
-forest.resamp.rast<-resample(forest.proj.rast,cecs.rast,method="near",threads=TRUE)
-writeRaster(forest.resamp.rast,paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_FOREST_CECS.tif",sep=""))
+forest.proj.rast<-check.crs.match(cecs.rast,forest.rast,"near")
+writeRaster(forest.proj.rast,paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_FOREST_CECS.tif",sep=""))
 
 shrub.rast<-rast(paste(loc.scripts,"ReferenceFiles/WHR13_RECLASS_SHRUB.tif",sep=""))
-shrub.proj.rast<-check.crs.match(cecs.rast,shrub.rast)
-shrub.resamp.rast<-resample(shrub.proj.rast,cecs.rast,method="near",threads=TRUE)
-writeRaster(shrub.resamp.rast,paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_SHRUB_CECS.tif",sep=""))
+shrub.proj.rast<-check.crs.match(cecs.rast,shrub.rast,"near")
+writeRaster(shrub.proj.rast,paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_SHRUB_CECS.tif",sep=""))
 
 ##########
 
@@ -110,7 +94,9 @@ SDGE.vect<-vect(paste(loc.data,"PriorityLayers/SDGE_2023_Q2NonConfidential.gdb",
 #Note that SDGE also has "SDGE_PrimaryDistributionLine_2023_Q2"
 SCE.vect<-vect(paste(loc.data,"PriorityLayers/SCE_ICA_TransmissionLines.shp",sep=""))
 PGE.vect<-vect(paste(loc.data,"PriorityLayers/TransmissionLines_upTo_115kV.shp",sep=""))
-road.vect<-vect(paste(loc.data,"PriorityLayers/OSM_majorRoads_CA_2022.shp",sep=""))
+#gisdata-caltrans.opendata.arcgis.com/datasets/cf4982ddf16c4c9ca7242364c94c7ad6_0/about
+#updated 2024
+road.vect<-vect(paste(loc.data,"PriorityLayers/Public_Road_Functional_Classification.shp",sep=""))
 
 
 SDGE.cecs.vect<-check.crs.match(cecs.rast,SDGE.vect)
@@ -125,14 +111,16 @@ rdtr.cecs.vect<-union(tran.cecs.vect,road.cecs.vect)
 
 #roads and transmission lines, CECS CRS
 rdtr.buff.cecs.vect<-buffer(rdtr.cecs.vect,width=500*0.3048)
-rdtr.buff.cecs.proj.vect<-check.crs.match(cecs.rast,rdtr.buff.cecs.vect)
+rdtr.buff.cecs.simp.vect<-aggregate(rdtr.buff.cecs.vect)
+rdtr.buff.cecs.proj.vect<-check.crs.match(cecs.rast,rdtr.buff.cecs.simp.vect)
 writeVector(rdtr.buff.cecs.proj.vect,paste(loc.data,"WUIVegetationClassifications/RoadTransmissionLineBuffer_CECSproj.shp",sep=""))
 
 
 # #---------------- Just Roads (for WHP, flame length, and shrubs) ----#
 #500 foot buffer but function expects meters (CECS CRS)
 road.buff.cecs.vect<-buffer(road.cecs.vect,width=500*0.3048)
-road.buff.cecs.proj.vect<-check.crs.match(cecs.rast,road.buff.cecs.vect)
+road.buff.cecs.simp.vect<-aggregate(road.buff.cecs.vect)
+road.buff.cecs.proj.vect<-check.crs.match(cecs.rast,road.buff.cecs.simp.vect)
 writeVector(road.buff.cecs.proj.vect,paste(loc.data,"WUIVegetationClassifications/RoadBuffer_CECSproj.shp",sep=""))
 
 
@@ -149,12 +137,14 @@ rdtr.whp.vect<-union(tran.whp.vect,road.whp.vect)
 
 #for WHP calcs, WHP CRS
 rdtr.buff.whp.vect<-buffer(rdtr.whp.vect,width=500*0.3048)
-rdtr.buff.whp.proj.vect<-check.crs.match(whp.rast,rdtr.buff.whp.vect)
+rdtr.buff.whp.simp.vect<-aggregate(rdtr.buff.whp.vect)
+rdtr.buff.whp.proj.vect<-check.crs.match(whp.rast,rdtr.buff.whp.simp.vect)
 writeVector(rdtr.buff.whp.proj.vect,paste(loc.data,"WUIVegetationClassifications/RoadTransmissionLineBuffer_WHPproj.shp",sep=""))
 
 #for WHP calcs (WHP CRS)
 road.buff.whp.vect<-buffer(road.whp.vect,width=500*0.3048)
-road.buff.whp.proj.vect<-check.crs.match(whp.rast,road.buff.whp.vect)
+road.buff.whp.simp.vect<-aggregate(road.buff.whp.vect)
+road.buff.whp.proj.vect<-check.crs.match(whp.rast,road.buff.whp.simp.vect)
 writeVector(road.buff.whp.proj.vect,paste(loc.data,"WUIVegetationClassifications/RoadBuffer_WHPproj.shp",sep=""))
 
 

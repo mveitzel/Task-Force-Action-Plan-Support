@@ -191,7 +191,7 @@ if(metric.name=="Shrub:Grass Ratio"){
 ########### READ IN AND PROCESS VECTORS ##############
 
 #loop through all california, and the four regions
-boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/CA_State_TF.shp",sep=""),
+boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""),
                   paste(loc.scripts,"ReferenceFiles/Region_Sierra.shp",sep=""),
                   paste(loc.scripts,"ReferenceFiles/Region_NorthernCA.shp",sep=""),
                   paste(loc.scripts,"ReferenceFiles/Region_SouthernCA.shp",sep=""),
@@ -219,7 +219,7 @@ for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each
 	}	
 
 	zonal.summary.area.vect<-read.vector.and.check.crs(prepped.boundary.vect,vect.shape,vect.name)
-	prepped.zonal.summary.area.vect<-crop.vector.by.boundary.and.recalc.area(prepped.boundary.vect,boundary.name,zonal.summary.area.vect,vect.name)
+	prepped.zonal.summary.area.vect<-crop.vector.by.boundary.and.recalc.area(prepped.boundary.vect,boundary.name[k],zonal.summary.area.vect,vect.name)
 
 	#these are necessary because to do the aggregation, you need to intersect both vectors, and then
 	# have a column name (agg.code) to do the aggregation/dissolve on.
@@ -228,13 +228,13 @@ for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each
 
 
 	agg.fires.vect.region<-intersect.and.aggregate.vectors(
-		prepped.boundary.vect,boundary.name,fires,patch.name[2],agg.name[1],agg.code[1],prepped.boundary.vect,boundary.name)
+		prepped.boundary.vect,boundary.name,fires,patch.name[2],agg.name[1],agg.code[1],prepped.boundary.vect,boundary.name[k])
 	agg.fires.vect.huc<-intersect.and.aggregate.vectors(
-		prepped.zonal.summary.area.vect,vect.name,fires,patch.name[2],agg.name[2],agg.code[2],prepped.boundary.vect,boundary.name)
+		prepped.zonal.summary.area.vect,vect.name,fires,patch.name[2],agg.name[2],agg.code[2],prepped.boundary.vect,boundary.name[k])
 	agg.treatments.vect.region<-intersect.and.aggregate.vectors(
-		prepped.boundary.vect,boundary.name,treatments,patch.name[1],agg.name[1],agg.code[1],prepped.boundary.vect,boundary.name)
+		prepped.boundary.vect,boundary.name,treatments,patch.name[1],agg.name[1],agg.code[1],prepped.boundary.vect,boundary.name[k])
 	agg.treatments.vect.huc<-intersect.and.aggregate.vectors(
-		prepped.zonal.summary.area.vect,vect.name,treatments,patch.name[1],agg.name[2],agg.code[2],prepped.boundary.vect,boundary.name)
+		prepped.zonal.summary.area.vect,vect.name,treatments,patch.name[1],agg.name[2],agg.code[2],prepped.boundary.vect,boundary.name[k])
 
 
 	########### END READ IN AND PROCESS VECTORS ##############
@@ -291,7 +291,6 @@ for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each
 		write.table(all.zonal.results,paste("RawZonalCalcOutput_",diffname,"_",datetime,".csv",sep=""),
 			sep = ",",quote = FALSE, col.names = FALSE, row.names = FALSE,na="NA",append=TRUE)
 	}
-
 
 	################### END ZONAL CALCS ######################
 

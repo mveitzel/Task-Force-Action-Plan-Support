@@ -182,7 +182,7 @@ diff.rasters<-function(raster1.name,raster1.rast,raster2.name,raster2.rast,metri
 
 #returns second layer (dat.comp) projected to dat.ref (first argument)'s Coordinate Reference System
 #if CRS matches, just passes through original second layer (dat.comp)
-check.crs.match<-function(dat.ref,dat.comp){
+check.crs.match<-function(dat.ref,dat.comp,resample.method){
 	#check crs/projection is the same for both
 	crs.match<-identical(crs(dat.ref),crs(dat.comp))
 	if(crs.match){
@@ -190,9 +190,9 @@ check.crs.match<-function(dat.ref,dat.comp){
 	} else {
 		print("Set second layer's CRS to first layer's CRS")
 		if(class(dat.comp)=="SpatRaster"){
-				dat.comp<-project(dat.comp,crs(dat.ref),threads=TRUE)
+				dat.comp<-project(dat.comp,dat.ref, method=resample.method,threads=TRUE)
 			}else if(class(dat.comp)=="SpatVector"){
-				dat.comp<-project(dat.comp,crs(dat.ref))
+				dat.comp<-project(dat.comp,dat.ref)
 			}
 		crs.match2<-identical(crs(dat.ref),crs(dat.comp))
 		print(paste("Coordinate Reference System match? ",crs.match2,sep=""))
@@ -241,7 +241,7 @@ plot.results<-function(dt.dff,ttlestrng,xlbl,metnm,af.yr,bf.yr,sum.area,sumIDnm,
 #(used for the global summary)
 subset.raster<-function(input.rast,name.rast,mask,mask.name,boundary.vect,boundary.name){
 	if(!is.na(mask)){
-		mask.proj<-check.crs.match(boundary.vect,mask)
+		mask.proj<-check.crs.match(boundary.vect,mask,"near")
 		mask<-crop(mask.proj,boundary.vect)
 		print(paste("CRS checked for ",mask.name," and cropped to ",boundary.name,sep =""))
 		}else{
@@ -346,7 +346,7 @@ read.vector.and.check.crs<-function(bdr.vect,vect.shape,vect.name){
 	new.vect<-vect(vect.shape)
   print(paste(vect.name," read in and processed.",sep=""))
   #returns layers with the second projected to first argument's CRS
-  vect.proj<-check.crs.match(bdr.vect,new.vect)
+  vect.proj<-check.crs.match(bdr.vect,new.vect,"near")
  	return(vect.proj)
 }
 
@@ -370,7 +370,7 @@ read.and.check.crs.patch.vector<-function(ptch.shape,ptch.name,ptch.layer,ref.la
 	print(paste(ptch.name, " read in, layer: ", ptch.layer,sep=""))
  	#returns layers with second projected to first argument's CRS
  	if(!is.null(ref.layer)){
-		ptch.vect.proj<-check.crs.match(ref.layer,ptch.vect)
+		ptch.vect.proj<-check.crs.match(ref.layer,ptch.vect,"near")
 		} else {
 			print("Reference layer not specified; no reprojecting implemented")
 			ptch.vect.proj<-ptch.vect

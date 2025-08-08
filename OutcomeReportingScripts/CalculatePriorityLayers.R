@@ -9,6 +9,7 @@
   whp.priority.rast<-whp.rast
   whp.priority.rast[whp.rast %in% c(4,5)]<-1
   whp.priority.rast[whp.priority.rast!=1]<-0
+  whp.pri.rast[is.na(whp.pri.rast)]<-0
   writeRaster(whp.priority.rast,paste(loc.data,"PriorityLayers/FinalPriorityLayers/WHPpriority_WHP.tif",sep=""))
 
 
@@ -24,6 +25,7 @@
   dv.priority.rast<-dv.proj.rast
   dv.priority.rast[dv.proj.rast> 10000]<-1
   dv.priority.rast[dv.priority.rast!=1]<-0
+  dv.pri.rast[is.na(dv.pri.rast)]<-0
   writeRaster(dv.priority.rast,paste(loc.data,"PriorityLayers/FinalPriorityLayers/DroughtVulnerabilityPriority_CECS.tif",sep=""))
 
   # #---------- Flame Length read in and process---------*
@@ -40,6 +42,7 @@
   fl.priority.rast<-fl.proj.ft.rast
   fl.priority.rast[fl.proj.ft.rast > 8 ]<-1
   fl.priority.rast[fl.priority.rast!=1]<-0
+  fl.pri.rast[is.na(fl.pri.rast)]<-0
   writeRaster(fl.priority.rast,paste(loc.data,"PriorityLayers/FinalPriorityLayers/FlameLengthPriority_CECS.tif",sep=""))
 
   # #---------------- Critical Habitat -------------------------#
@@ -52,7 +55,8 @@
   cr.rast<-rasterize(cr.proj.vect,whp.rast,field="SpBioRnkEc")
   cr.pri.rast<-cr.rast
   cr.pri.rast[cr.rast %in% c(4,5)]<-1
-  cr.pri.rast[cr.pri.rast!=1]<-0
+  cr.pri.rast[cr.pri.rast %in% c(0,1,2,3)]<-0
+  cr.pri.rast[is.na(cr.pri.rast)]<-0
   writeRaster(cr.pri.rast,paste(loc.data,"PriorityLayers/FinalPriorityLayers/CriticalHabitatPriority_WHP.tif",sep=""))
 
   # #---------------- Hydropower -------------------------#
@@ -77,8 +81,9 @@
   de.proj.vect<-check.crs.match(whp.rast,de.vect)
   de.proj.rast<-rasterize(de.proj.vect,whp.rast,field="pfprgt")
   de.pri.rast<-de.proj.rast
-  de.pri.rast[de.proj.rast>(quantile(de.proj.vect$pfprgt,probs=0.6))]<-1
+  de.pri.rast[de.proj.rast>(quantile(de.proj.vect$pfprgt,probs=0.8))]<-1
   de.pri.rast[de.pri.rast!=1]<-0
+  de.pri.rast[is.na(de.pri.rast)]<-0
   writeRaster(de.pri.rast,paste(loc.data,"PriorityLayers/FinalPriorityLayers/DebrisFlowPriority_WHP.tif",sep=""))
 
   # #---------------- High-Risk Shrubs -------------------------#
