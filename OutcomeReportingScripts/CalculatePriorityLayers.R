@@ -1,15 +1,14 @@
 #CalculatePriorityLayers.R
 
-
   # #---------- WHP read in and process-------------------------*
   #2024 Wildfire Hazard Potential from CALFIRE
   whp.rast <- rast(paste(loc.data,"PriorityLayers/whp_classified_20240906.tif",sep=""))
   whp.proj.rast<-check.crs.match(whp.rast,whp.rast) # use itself as reference
   #High fire risk is hazard classes 4 (high) and 5 (very high), as in SIG scenario modeling
   whp.priority.rast<-whp.rast
+  whp.priority.rast[whp.priority.rast %in% c(0,1,2,3)]<-0
   whp.priority.rast[whp.rast %in% c(4,5)]<-1
-  whp.priority.rast[whp.priority.rast!=1]<-0
-  whp.pri.rast[is.na(whp.pri.rast)]<-0
+  whp.priority.rast[is.na(whp.priority.rast)]<-0
   writeRaster(whp.priority.rast,paste(loc.data,"PriorityLayers/FinalPriorityLayers/WHPpriority_WHP.tif",sep=""))
 
 
@@ -25,7 +24,7 @@
   dv.priority.rast<-dv.proj.rast
   dv.priority.rast[dv.proj.rast> 10000]<-1
   dv.priority.rast[dv.priority.rast!=1]<-0
-  dv.pri.rast[is.na(dv.pri.rast)]<-0
+  dv.priority.rast[is.na(dv.priority.rast)]<-0
   writeRaster(dv.priority.rast,paste(loc.data,"PriorityLayers/FinalPriorityLayers/DroughtVulnerabilityPriority_CECS.tif",sep=""))
 
   # #---------- Flame Length read in and process---------*
@@ -42,7 +41,7 @@
   fl.priority.rast<-fl.proj.ft.rast
   fl.priority.rast[fl.proj.ft.rast > 8 ]<-1
   fl.priority.rast[fl.priority.rast!=1]<-0
-  fl.pri.rast[is.na(fl.pri.rast)]<-0
+  fl.priority.rast[is.na(fl.priority.rast)]<-0
   writeRaster(fl.priority.rast,paste(loc.data,"PriorityLayers/FinalPriorityLayers/FlameLengthPriority_CECS.tif",sep=""))
 
   # #---------------- Critical Habitat -------------------------#
@@ -54,8 +53,8 @@
   cr.proj.vect<-check.crs.match(whp.rast,cr.vect)
   cr.rast<-rasterize(cr.proj.vect,whp.rast,field="SpBioRnkEc")
   cr.pri.rast<-cr.rast
-  cr.pri.rast[cr.rast %in% c(4,5)]<-1
   cr.pri.rast[cr.pri.rast %in% c(0,1,2,3)]<-0
+  cr.pri.rast[cr.rast %in% c(4,5)]<-1
   cr.pri.rast[is.na(cr.pri.rast)]<-0
   writeRaster(cr.pri.rast,paste(loc.data,"PriorityLayers/FinalPriorityLayers/CriticalHabitatPriority_WHP.tif",sep=""))
 
@@ -114,5 +113,17 @@
   sh.pri.rast<-shrub.road.whp.rast
   sh.pri.rast[is.na(sh.pri.rast)]<-0
   writeRaster(sh.pri.rast,paste(loc.data,"PriorityLayers/FinalPriorityLayers/ShrubRoadPriority_WHP.tif",sep=""))
+
+#####################
+
+# this was an attempt to use Dawn's method for 'cover' to fill in values
+
+# boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""))
+# boundary.name<-c("CA")
+# prepped.boundary.whp.vect<-read.and.prepare.boundary.vector(boundary.shape[1],boundary.name[1],whp.rast)
+# prepped.boundary.whp.vect$CA<-0
+# CA.whp.rast<-rasterize(prepped.boundary.whp.vect,whp.rast,field="CA")
+# prepped.boundary.cecs.vect<-check.crs.match(cecs.rast,prepped.boundary.whp.vect)
+# CA.cecs.rast<-rasterize(prepped.boundary.cecs.vect,cecs.rast,field="CA")
 
 

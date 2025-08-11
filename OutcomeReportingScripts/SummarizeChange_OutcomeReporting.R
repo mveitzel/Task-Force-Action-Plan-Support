@@ -118,6 +118,9 @@ if(metric.name=="Drought Vulnerability"){
 	before.rast<-read.in.raster(loc.data,before.yr.name,metric.name)
 	after.rast<-read.in.raster(loc.data,after.yr.name,metric.name)
 
+ global(is.infinite(dv.priority.rast),"sum")
+
+
 	before.proj.rast<-check.crs.match(reference.rast,before.rast)
 	after.proj.rast<-check.crs.match(reference.rast,after.rast)
 

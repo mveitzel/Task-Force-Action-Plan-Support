@@ -578,10 +578,10 @@ mask.subset.by.land.class<-function(rast,sbst,msks,wui,wild){
 
     crosstab.calc<-function(pri.rast,pri.name,trt.rast,pol.name,bdry.nm){
       names(pri.rast)<-pri.name
-#      print(names(pri.rast))
+      print(names(pri.rast))
       crosstab.time<- system.time(crosstab.result<-crosstab(c(pri.rast,trt.rast)) )
       print(paste("Crosstab calc complete for ",pri.name," for policy objective ",pol.name," within ",bdry.nm,sep=""))
-#      print(crosstab.time/60)
+      print(crosstab.time/60)
       result<-as.data.frame(crosstab.result)
       #convert from 30-m pixels to acres 
       result$area<-result$Freq*30*30*0.000247105
