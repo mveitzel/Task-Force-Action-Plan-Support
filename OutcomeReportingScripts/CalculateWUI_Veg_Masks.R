@@ -115,6 +115,129 @@ rdtr.buff.cecs.simp.vect<-aggregate(rdtr.buff.cecs.vect)
 rdtr.buff.cecs.proj.vect<-check.crs.match(cecs.rast,rdtr.buff.cecs.simp.vect)
 writeVector(rdtr.buff.cecs.proj.vect,paste(loc.data,"WUIVegetationClassifications/RoadTransmissionLineBuffer_CECSproj.shp",sep=""))
 
+#because rasterizing the entire Functional Road Classification dataset is
+#too long to compute in a reasonable amount of time, we'll clip things
+#for each region, and then stick them back together afterwards.
+
+rdtr.buff.cecs.proj.vect<-vect(paste(loc.data,"WUIVegetationClassifications/RoadTransmissionLineBuffer_CECSproj.shp",sep=""))
+#ca.vect<-vect(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""))
+#ca.proj.vect<-check.crs.match(rdtr.buff.cecs.proj.vect,ca.vect)
+#rdtr.crop.vect<-crop(rdtr.buff.cecs.proj.vect,ca.proj.vect)
+
+# #this takes very little time, and is 10-15% of the whole area
+# test.vect<-vect(paste(loc.scripts,"ReferenceFiles/TCSI_boundary.shp",sep=""))
+# test.proj.vect<-check.crs.match(cecs.rast,test.vect)
+# test.crop.rast<-crop(cecs.rast,test.proj.vect)
+# test.crop.vect<-crop(rdtr.crop.vect,test.proj.vect)
+# rdtr.test.crop.rast<-rasterize(test.crop.vect,test.crop.rast)
+#> dim(test.crop.rast)/dim(cecs.rast)
+#[1] 0.1054222 0.1435667 1.0000000
+#>
+
+#now try it with a region (Sierra takes 10.5 min)
+timer.start<-Sys.time()
+#pull in a region
+region.vect<-vect(paste(loc.scripts,"ReferenceFiles/Region_Sierra.shp",sep=""))
+#project it to CECS or WHP
+region.proj.vect<-check.crs.match(cecs.rast,region.vect)
+#crop the raster (cecs or whp) to that region
+region.crop.rast<-crop(cecs.rast,region.proj.vect)
+#crop the road/transmission lines to that region
+region.crop.vect<-crop(rdtr.buff.cecs.proj.vect,region.proj.vect)
+#then rasterize
+rdtr.test.crop.rast<-rasterize(region.crop.vect,region.crop.rast)
+#and save in a new object
+rdtr.sierra.rast<-rdtr.test.crop.rast
+timer.end<-Sys.time()
+time.total<-timer.end-timer.start
+print(time.total)
+#dim(test.crop.rast)/dim(cecs.rast)
+#[1] 0.6090444 0.4848000 1.0000000
+#> 
+
+
+#now try it with a region (5 min for socal)
+timer.start<-Sys.time()
+#pull in a region
+region.vect<-vect(paste(loc.scripts,"ReferenceFiles/Region_SouthernCA.shp",sep=""))
+#project it to CECS or WHP
+region.proj.vect<-check.crs.match(cecs.rast,region.vect)
+#crop the raster (cecs or whp) to that region
+region.crop.rast<-crop(cecs.rast,region.proj.vect)
+#crop the road/transmission lines to that region
+region.crop.vect<-crop(rdtr.buff.cecs.proj.vect,region.proj.vect)
+#then rasterize
+rdtr.test.crop.rast<-rasterize(region.crop.vect,region.crop.rast)
+#and save in a new object
+rdtr.south.rast<-rdtr.test.crop.rast
+timer.end<-Sys.time()
+time.total<-timer.end-timer.start
+print(time.total)
+
+
+#now try it with a region (9.5 min for Northern CA)
+timer.start<-Sys.time()
+#pull in a region
+region.vect<-vect(paste(loc.scripts,"ReferenceFiles/Region_NorthernCA.shp",sep=""))
+#project it to CECS or WHP
+region.proj.vect<-check.crs.match(cecs.rast,region.vect)
+#crop the raster (cecs or whp) to that region
+region.crop.rast<-crop(cecs.rast,region.proj.vect)
+#crop the road/transmission lines to that region
+region.crop.vect<-crop(rdtr.buff.cecs.proj.vect,region.proj.vect)
+#then rasterize
+rdtr.test.crop.rast<-rasterize(region.crop.vect,region.crop.rast)
+#and save in a new object
+rdtr.north.rast<-rdtr.test.crop.rast
+timer.end<-Sys.time()
+time.total<-timer.end-timer.start
+print(time.total)
+
+
+#now try it with a region (I think Central took something like 9 min)
+timer.start<-Sys.time()
+#pull in a region
+region.vect<-vect(paste(loc.scripts,"ReferenceFiles/Region_CentralCoast.shp",sep=""))
+#project it to CECS or WHP
+region.proj.vect<-check.crs.match(cecs.rast,region.vect)
+#crop the raster (cecs or whp) to that region
+region.crop.rast<-crop(cecs.rast,region.proj.vect)
+#crop the road/transmission lines to that region
+region.crop.vect<-crop(rdtr.buff.cecs.proj.vect,region.proj.vect)
+#then rasterize
+rdtr.test.crop.rast<-rasterize(region.crop.vect,region.crop.rast)
+#and save in a new object
+rdtr.central.rast<-rdtr.test.crop.rast
+timer.end<-Sys.time()
+time.total<-timer.end-timer.start
+print(time.total)
+
+#rdtr.central.ext.rast<-extend(rdtr.central.rast,cecs.rast)
+#rdtr.sierra.ext.rast<-extend(rdtr.sierra.rast,cecs.rast)
+#rdtr.south.ext.rast<-extend(rdtr.south.rast,cecs.rast)
+#rdtr.north.ext.rast<-extend(rdtr.north.rast,cecs.rast)
+
+rdtr.allstate.cecs.rast<-mosaic(rdtr.central.rast,rdtr.sierra.rast,rdtr.south.rast,rdtr.north.rast,fun="max")
+
+writeRaster(rdtr.allstate.cecs.rast,paste(loc.data,"WUIVegetationClassifications/RoadTransmissionLineBuffer_CECSproj.tif",sep=""))
+
+rdtr.allstate.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/RoadTransmissionLineBuffer_CECSproj.tif",sep=""))
+rdtr.crop.cecs.rast<-crop(rdtr.allstate.cecs.rast,cecs.rast)
+rdtr.cropext.cecs.rast<-extend(rdtr.crop.cecs.rast,cecs.rast)
+writeRaster(rdtr.cropext.cecs.rast,paste(loc.data,"WUIVegetationClassifications/RoadTransmissionLineBuffer_CECSproj.tif",sep=""),overwrite=TRUE)
+
+
+#this would probably be faster than regions but need to figure out how to implement loop
+#because the regions seem to work okay we'll do that.
+# huc8.vect<-vect(paste(loc.scripts,"ReferenceFiles/HUC8.shp",sep=""))
+# huc8.proj.vect<-check.crs.match(cecs.rast,huc8.vect)
+# huc8.crop.vect<-crop(huc8.proj.vect,ca.proj.vect)
+# test.vect<-huc8.crop.vect[1]
+# test.proj.vect<-check.crs.match(cecs.rast,test.vect)
+# test.crop.rast<-crop(cecs.rast,test.proj.vect)
+# test.crop.vect<-crop(rdtr.crop.vect,test.proj.vect)
+# rdtr.test.crop.rast<-rasterize(test.crop.vect,test.crop.rast)
+
 
 # #---------------- Just Roads (for WHP, flame length, and shrubs) ----#
 #500 foot buffer but function expects meters (CECS CRS)
@@ -122,7 +245,6 @@ road.buff.cecs.vect<-buffer(road.cecs.vect,width=500*0.3048)
 road.buff.cecs.simp.vect<-aggregate(road.buff.cecs.vect)
 road.buff.cecs.proj.vect<-check.crs.match(cecs.rast,road.buff.cecs.simp.vect)
 writeVector(road.buff.cecs.proj.vect,paste(loc.data,"WUIVegetationClassifications/RoadBuffer_CECSproj.shp",sep=""))
-
 
 # #---------------- do roads and utilities for WHP projection----------#
 
@@ -141,12 +263,102 @@ rdtr.buff.whp.simp.vect<-aggregate(rdtr.buff.whp.vect)
 rdtr.buff.whp.proj.vect<-check.crs.match(whp.rast,rdtr.buff.whp.simp.vect)
 writeVector(rdtr.buff.whp.proj.vect,paste(loc.data,"WUIVegetationClassifications/RoadTransmissionLineBuffer_WHPproj.shp",sep=""))
 
+
+rdtr.buff.whp.proj.vect<-vect(paste(loc.data,"WUIVegetationClassifications/RoadTransmissionLineBuffer_WHPproj.shp",sep=""))
+
+
+#now try it with a region (Sierra takes 17 min)
+timer.start<-Sys.time()
+#pull in a region
+region.vect<-vect(paste(loc.scripts,"ReferenceFiles/Region_Sierra.shp",sep=""))
+#project it to CECS or WHP
+region.proj.vect<-check.crs.match(whp.rast,region.vect)
+#crop the raster (cecs or whp) to that region
+region.crop.rast<-crop(whp.rast,region.proj.vect)
+#crop the road/transmission lines to that region
+region.crop.vect<-crop(rdtr.buff.whp.proj.vect,region.proj.vect)
+#then rasterize
+rdtr.test.crop.rast<-rasterize(region.crop.vect,region.crop.rast)
+#and save in a new object
+rdtr.sierra.rast<-rdtr.test.crop.rast
+timer.end<-Sys.time()
+time.total<-timer.end-timer.start
+print(time.total)
+#dim(test.crop.rast)/dim(whp.rast)
+#[1] 0.6090444 0.4848000 1.0000000
+#> 
+
+
+#now try it with a region (5 min for socal)
+timer.start<-Sys.time()
+#pull in a region
+region.vect<-vect(paste(loc.scripts,"ReferenceFiles/Region_SouthernCA.shp",sep=""))
+#project it to CECS or WHP
+region.proj.vect<-check.crs.match(whp.rast,region.vect)
+#crop the raster (cecs or whp) to that region
+region.crop.rast<-crop(whp.rast,region.proj.vect)
+#crop the road/transmission lines to that region
+region.crop.vect<-crop(rdtr.buff.whp.proj.vect,region.proj.vect)
+#then rasterize
+rdtr.test.crop.rast<-rasterize(region.crop.vect,region.crop.rast)
+#and save in a new object
+rdtr.south.rast<-rdtr.test.crop.rast
+timer.end<-Sys.time()
+time.total<-timer.end-timer.start
+print(time.total)
+
+
+#now try it with a region (9.8 min for Northern CA)
+timer.start<-Sys.time()
+#pull in a region
+region.vect<-vect(paste(loc.scripts,"ReferenceFiles/Region_NorthernCA.shp",sep=""))
+#project it to CECS or WHP
+region.proj.vect<-check.crs.match(whp.rast,region.vect)
+#crop the raster (cecs or whp) to that region
+region.crop.rast<-crop(whp.rast,region.proj.vect)
+#crop the road/transmission lines to that region
+region.crop.vect<-crop(rdtr.buff.whp.proj.vect,region.proj.vect)
+#then rasterize
+rdtr.test.crop.rast<-rasterize(region.crop.vect,region.crop.rast)
+#and save in a new object
+rdtr.north.rast<-rdtr.test.crop.rast
+timer.end<-Sys.time()
+time.total<-timer.end-timer.start
+print(time.total)
+
+
+#now try it with a region (7.9 min)
+timer.start<-Sys.time()
+#pull in a region
+region.vect<-vect(paste(loc.scripts,"ReferenceFiles/Region_CentralCoast.shp",sep=""))
+#project it to CECS or WHP
+region.proj.vect<-check.crs.match(whp.rast,region.vect)
+#crop the raster (cecs or whp) to that region
+region.crop.rast<-crop(whp.rast,region.proj.vect)
+#crop the road/transmission lines to that region
+region.crop.vect<-crop(rdtr.buff.whp.proj.vect,region.proj.vect)
+#then rasterize
+rdtr.test.crop.rast<-rasterize(region.crop.vect,region.crop.rast)
+#and save in a new object
+rdtr.central.rast<-rdtr.test.crop.rast
+timer.end<-Sys.time()
+time.total<-timer.end-timer.start
+print(time.total)
+
+rdtr.allstate.whp.rast<-mosaic(rdtr.central.rast,rdtr.sierra.rast,rdtr.south.rast,rdtr.north.rast,fun="max")
+
+writeRaster(rdtr.allstate.whp.rast,paste(loc.data,"WUIVegetationClassifications/RoadTransmissionLineBuffer_WHPproj.tif",sep=""))
+
+rdtr.allstate.whp.rast<-rast(paste(loc.data,"WUIVegetationClassifications/RoadTransmissionLineBuffer_WHPproj.tif",sep=""))
+rdtr.crop.whp.rast<-crop(rdtr.allstate.whp.rast,whp.rast)
+rdtr.cropext.whp.rast<-extend(rdtr.crop.whp.rast,whp.rast)
+writeRaster(rdtr.cropext.whp.rast,paste(loc.data,"WUIVegetationClassifications/RoadTransmissionLineBuffer_WHPproj.tif",sep=""),overwrite=TRUE)
+
 #for WHP calcs (WHP CRS)
 road.buff.whp.vect<-buffer(road.whp.vect,width=500*0.3048)
 road.buff.whp.simp.vect<-aggregate(road.buff.whp.vect)
 road.buff.whp.proj.vect<-check.crs.match(whp.rast,road.buff.whp.simp.vect)
 writeVector(road.buff.whp.proj.vect,paste(loc.data,"WUIVegetationClassifications/RoadBuffer_WHPproj.shp",sep=""))
-
 
 ############################################################
 

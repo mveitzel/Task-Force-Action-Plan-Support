@@ -334,6 +334,7 @@ subset.raster<-function(input.rast,name.rast,mask,mask.name,boundary.vect,bounda
 # }
 
 read.and.prepare.boundary.vector<-function(bdry.shape,bdry.name,ref.rast){
+	print("Starting read.and.prepare.boundary.vector")
   boundary.vect<-vect(bdry.shape)
   #returns layers with both projected to first argument's CRS
   boundary.vect.proj<-check.crs.match(ref.rast,boundary.vect)
@@ -343,6 +344,7 @@ read.and.prepare.boundary.vector<-function(bdry.shape,bdry.name,ref.rast){
 
 #this function just reads in a vector file and checks CRS
 read.vector.and.check.crs<-function(bdr.vect,vect.shape,vect.name){
+  print("Starting read.vector.and.check.crs")
 	new.vect<-vect(vect.shape)
   print(paste(vect.name," read in and processed.",sep=""))
   #returns layers with the second projected to first argument's CRS
@@ -380,6 +382,7 @@ read.and.check.crs.patch.vector<-function(ptch.shape,ptch.name,ptch.layer,ref.la
 
 #If you are summarizing vectors at the scale of a boundary poly, inter.vect/name and bound.vect/name will be repeated
 intersect.and.aggregate.vectors<-function(inter.vect,inter.name,pch.vect,pch.name,ag.name,ag.code,bound.vect,bound.name){
+  print("Starting intersect.and.aggregate.vectors")
 	#first intersect the patch variable with a boundary polygon (e.g. region) or a zonal summary polygon (e.g. HUC)
 	intersected.patch.vect<-intersect(inter.vect,pch.vect)
 	print(paste(inter.name," intersected with ", pch.name, sep=""))
@@ -396,9 +399,10 @@ intersect.and.aggregate.vectors<-function(inter.vect,inter.name,pch.vect,pch.nam
 #summary unit.  this only requires a single raster and outputs a single SpatVector with zonal results
 #calculating 'mean' is hard-coded in
 zonal.calculations<-function(rster.rast,zonal.sum.name,zonal.sum.vect){
+  print("Starting zonal.calculations")
   summaryzonal.time<- system.time(zonal.calcs.vect<-zonal(rster.rast,zonal.sum.vect,fun="mean",as.polygons=TRUE,na.rm=TRUE) )
   print(paste("Zonal stats calculated for ",names(rster.rast), " using ", zonal.sum.name, sep=""))
-  print(summaryzonal.time/60)
+  print(paste("Time to calculate zonal: ",round(summaryzonal.time[[1]]/60)," minutes", sep=""))
  
   return(zonal.calcs.vect)
 }
@@ -407,7 +411,9 @@ zonal.calculations<-function(rster.rast,zonal.sum.name,zonal.sum.vect){
 global.calculations<-function(rst.rast,rst.name,bound.vect,bound.name,dffnm){
 	print("Starting global.calculations")
 	sub.rast<-subset.raster(rst.rast,rst.name,NA,NA,bound.vect,bound.name)
-	global.avg<-as.numeric(global(sub.rast,"mean",na.rm=TRUE))
+	summaryglobal.time<-system.time(global.avg<-as.numeric(global(sub.rast,"mean",na.rm=TRUE)))
+	print(paste("global stats calculated for ",names(rst.rast), " using ", bound.name, sep=""))
+  print(paste("Time to calculate global: ",round(summaryglobal.time[[1]]/60)," minutes", sep=""))
 	global.sum.vect<-bound.vect
 	global.sum.vect[,dffnm]<-global.avg
 	return(global.sum.vect)
@@ -440,7 +446,7 @@ run.zonal.statistics.one.metric<-function(){
 #this function filters patches for e.g. treatment types and date ranges
 
 filter.patches<-function(treat.prp.vect,pol.targ,start,end=NA){
-
+  print("Starting filter.patches")
   #choose which list of activity types to filter treatments by.  Use NA if just subsetting by year
   if(!is.na(pol.targ)){
 	  if(pol.targ!="Suppression Support"){
@@ -581,13 +587,13 @@ mask.subset.by.land.class<-function(rast,sbst,msks,wui,wild){
       print(names(pri.rast))
       crosstab.time<- system.time(crosstab.result<-crosstab(c(pri.rast,trt.rast)) )
       print(paste("Crosstab calc complete for ",pri.name," for policy objective ",pol.name," within ",bdry.nm,sep=""))
-      print(crosstab.time/60)
+      print(paste("Time to calculate crosstab: ",round(crosstab.time[[1]]/60)," minutes", sep=""))
       result<-as.data.frame(crosstab.result)
       #convert from 30-m pixels to acres 
       result$area<-result$Freq*30*30*0.000247105
 #      print(result)
       prop.pri<-result$area[result[,pri.name]==1]/sum(result$area)
-      print(c(result$area[result[,pri.name]==1],sum(result$area),prop.pri))
+      #print(c(result$area[result[,pri.name]==1],sum(result$area),prop.pri))
       return(c(result$area[result[,pri.name]==1],sum(result$area),prop.pri))
     }
 

@@ -4,7 +4,7 @@
 
 timer.start<-Sys.time()
 
-datestamp<-"2025Aug10"
+datestamp<-"2025Aug13"
 
 #scripts and important reference layers are in the github repo
 loc.scripts<-"D:/GitRepos/BattlesLabRepos/Task-Force-Action-Plan-Support/"
@@ -25,6 +25,11 @@ cecs.rast<-rast(paste(loc.data,"CECS_Data/CECS_CAWide_Vulner_TreeDieoff_SPI-2_20
 # whp is the same projection as state boundaries/TF regions, WHR/veg classifications
 whp.rast <- rast(paste(loc.data,"PriorityLayers/whp_classified_20240906.tif",sep="")) 
 
+ca.vect<-vect(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""))
+ca.whp.vect<-check.crs.match(whp.rast,ca.vect)
+ca.cecs.vect<-check.crs.match(cecs.rast,ca.vect)
+
+
 #######################################################################
 # PREP STRATIFICATION LAYERS (WUI/Wildland, Ecosystem, utility/roads) #
 #######################################################################
@@ -37,7 +42,7 @@ if(recalculate.masks){
   #veg and wui/wildland masks
   #right now this is just the wui/wildland masks
   mask.time<-system.time(source(paste(loc.scripts,"FunctionLibraries/CalculateWUI_Veg_Masks.R",sep="")))
-  print(paste("Time to recalculate masks: ",mask.time[[1]]/60, sep=""))
+  print(paste("Time to recalculate masks: ",round(mask.time[[1]]/60)," minutes", sep=""))
 
 } else {
   #read in the raster files
@@ -55,11 +60,18 @@ if(recalculate.masks){
   forest.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_FOREST_CECS.tif",sep=""))
   shrub.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_SHRUB_CECS.tif",sep=""))
 
+  #For some reason WHR extends beyond CA boundaries  
+  forest.whp.rast<-mask(forest.whp.rast,ca.whp.vect)
+  forest.cecs.rast<-mask(forest.cecs.rast,ca.cecs.vect)
+  shrub.whp.rast<-mask(shrub.whp.rast,ca.whp.vect)
+  shrub.cecs.rast<-mask(shrub.cecs.rast,ca.cecs.vect)
+
   #read in the road and road+transmission line buffers
-  rdtr.buff.cecs.vect<-vect(paste(loc.data,"WUIVegetationClassifications/RoadTransmissionLineBuffer_CECSproj.shp",sep=""))
-  rdtr.buff.whp.vect<-vect(paste(loc.data,"WUIVegetationClassifications/RoadTransmissionLineBuffer_WHPproj.shp",sep=""))
-  road.buff.cecs.vect<-vect(paste(loc.data,"WUIVegetationClassifications/RoadBuffer_CECSproj.shp",sep=""))
-  road.buff.whp.vect<-vect(paste(loc.data,"WUIVegetationClassifications/RoadBuffer_WHPproj.shp",sep=""))
+  rdtr.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/RoadTransmissionLineBuffer_CECSproj.tif",sep=""))
+  rdtr.buff.whp.rast<-rast(paste(loc.data,"WUIVegetationClassifications/RoadTransmissionLineBuffer_WHPproj.tif",sep=""))
+  #note that these are just for calculating the shrub priority layer
+  road.buff.cecs.rast<-vect(paste(loc.data,"WUIVegetationClassifications/RoadBuffer_CECSproj.shp",sep=""))
+  road.buff.whp.rast<-vect(paste(loc.data,"WUIVegetationClassifications/RoadBuffer_WHPproj.shp",sep=""))
 }
 
 
@@ -78,7 +90,7 @@ recalculate.priority.layers<-FALSE
 if(recalculate.priority.layers){
   #recalculate all the different priority layers
   pri.time<-system.time(source(paste(loc.scripts,"FunctionLibraries/CalculatePriorityLayers.R",sep="")))
-  print(paste("Time to recalculate priority layers: ",pri.time[[1]]/60, sep=""))
+  print(paste("Time to recalculate priority layers: ",round(pri.time[[1]]/60)," minutes", sep=""))
 }else{
   #read in rasters
   whp.priority.rast<-rast(paste(loc.data,"PriorityLayers/FinalPriorityLayers/WHPpriority_WHP.tif",sep=""))
@@ -90,45 +102,57 @@ if(recalculate.priority.layers){
   sh.priority.rast<-rast(paste(loc.data,"PriorityLayers/FinalPriorityLayers/ShrubRoadPriority_WHP.tif",sep=""))
 }
 
-plots<-TRUE
+plots<-FALSE
 
 if(plots){
   png("PriorityLayerImages/WildfireHazardPotential.png",width=5.5,height=6, units="in",res=150)
-  plot(whp.priority.rast, main="CALFIRE Wildfire Hazard Potential\n4 (high) or 5 (very high)")
+  plot(whp.priority.rast, main="Wildfire Hazard Potential 4 (high) or 5 (very high)",col=c("#E9E5C3","#855914"))
+  polys(ca.whp.vect,border="#855914")
   dev.off()
   png("PriorityLayerImages/DroughtVulnerability.png",width=5.5,height=6, units="in",res=150)
-  plot(dv.priority.rast, main="CECS Drought Vulnerability index 10,000 or greater")
+  plot(dv.priority.rast, main="Drought Vulnerability index 10,000 or greater",col=c("#E9E5C3","#855914"))
+  polys(ca.cecs.vect,border="#855914")
   dev.off()
   png("PriorityLayerImages/FlameLength.png",width=5.5,height=6, units="in",res=150)
-  plot(fl.priority.rast, main="CECS Flame Length (FLAMMAP), 8 ft or greater")
+  plot(fl.priority.rast, main="Flame Length (FLAMMAP), 8 ft or greater",col=c("#E9E5C3","#855914"))
+  polys(ca.cecs.vect,border="#855914")
   dev.off()
   png("PriorityLayerImages/CriticalHabitat.png",width=5.5,height=6, units="in",res=150)
-  plot(cr.priority.rast, main="CDFW ACE Species Diversity rating 4 or 5")
+  plot(cr.priority.rast, main="ACE Species Diversity rating 4 or 5",col=c("#E9E5C3","#855914"))
+  polys(ca.whp.vect,border="#855914")
   dev.off()
   png("PriorityLayerImages/Hydropower.png",width=5.5,height=6, units="in",res=150)
-  plot(hy.priority.rast, main="Bales & Guo Watersheds feeding powerhouses\n30 KW and greater")
+  plot(hy.priority.rast, main="Watersheds feeding powerhouses\n30 KW and greater",col=c("#E9E5C3","#855914"))
+  polys(ca.whp.vect,border="#855914")
   dev.off()
   png("PriorityLayerImages/DebrisFlow.png",width=5.5,height=6, units="in",res=150)
-  plot(de.priority.rast, main="CGS Debris Flow likelihood top 20% of risk")
+  plot(de.priority.rast, main="Debris Flow likelihood top 20% of risk",col=c("#E9E5C3","#855914"))
+  polys(ca.whp.vect,border="#855914")
   dev.off()
   png("PriorityLayerImages/ShrubRoad.png",width=5.5,height=6, units="in",res=150)
-  plot(sh.priority.rast, main="CALFIRE WHR Shrub type within 500 ft of CALTRANS roads")
+  plot(sh.priority.rast, main="Shrub veg type within 500 ft of CALTRANS roads",col=c("#E9E5C3","#855914"))
+  polys(ca.whp.vect,border="#855914")
   dev.off()
 
   png("MaskImages/Forest.png",width=5.5,height=6, units="in",res=150)
-  plot(forest.whp.rast, main="CALFIRE WHR Forest (WHP crs)")
+  plot(forest.whp.rast, main="CALFIRE WHR Forest",col="#855914")
+  polys(ca.whp.vect,border="#855914")
   dev.off()
   png("MaskImages/Shrub.png",width=5.5,height=6, units="in",res=150)
-  plot(shrub.whp.rast, main="CALFIRE WHR Shrub (WHP crs)")
+  plot(shrub.whp.rast, main="CALFIRE WHR Shrub",col="#855914")
+  polys(ca.whp.vect,border="#855914")
   dev.off()
   png("MaskImages/Wildland.png",width=5.5,height=6, units="in",res=150)
-  plot(wild.whp.rast, main="Wildland: CALFIRE 'Other' + CECS 'Other' (WHP crs)")
+  plot(wild.whp.rast, main="Wildland: CALFIRE 'Influence & Other' + CECS 'Other'",col="#855914")
+  polys(ca.whp.vect,border="#855914")
   dev.off()
   png("MaskImages/WUI.png",width=5.5,height=6, units="in",res=150)
-  plot(wui.whp.rast, main="CALFIRE WUI footprint (interface,intermix, influence, WHP crs)")
+  plot(wui.whp.rast, main="CALFIRE WUI footprint (interface,intermix)",col="#855914")
+  polys(ca.whp.vect,border="#855914")
   dev.off()
   png("MaskImages/RoadTransmissionLine.png",width=5.5,height=6, units="in",res=150)
-  plot(rdtr.buff.whp.vect, col="blue", main="OSM roads + Utility Transmission lines (WHP crs)")
+  plot(rdtr.buff.whp.rast, main="CALTRANS roads + Utility Transmission lines",col="#855914")
+  polys(ca.whp.vect,border="#855914")
   dev.off()
 
 }
@@ -170,33 +194,191 @@ if(conditions.mask.areas){
   mask.areas[2,]<-c("Shrub","CECS",as.numeric(global(shrub.cecs.rast,"notNA")*30*30*0.000247105))
   mask.areas[3,]<-c("WUI","CECS",as.numeric(global(wui.cecs.rast,"notNA")*30*30*0.000247105))
   mask.areas[4,]<-c("Wildland","CECS",as.numeric(global(wild.cecs.rast,"notNA")*30*30*0.000247105))
-  mask.areas[5,]<-c("Utility/Road","CECS",expanse(rdtr.buff.cecs.vect)*0.000247105)
+  mask.areas[5,]<-c("Utility/Road","CECS",as.numeric(global(rdtr.buff.cecs.rast,"notNA")*30*30*0.000247105))
   mask.areas[6,]<-c("Forest","WHP",as.numeric(global(forest.whp.rast,"notNA")*30*30*0.000247105))
   mask.areas[7,]<-c("Shrub","WHP",as.numeric(global(shrub.whp.rast,"notNA")*30*30*0.000247105))
   mask.areas[8,]<-c("WUI","WHP",as.numeric(global(wui.whp.rast,"notNA")*30*30*0.000247105))
   mask.areas[9,]<-c("Wildland","WHP",as.numeric(global(wild.whp.rast,"notNA")*30*30*0.000247105))
-  mask.areas[10,]<-c("Utility/Road","WHP",expanse(rdtr.buff.whp.vect)*0.000247105) #these seem wildly off
+  mask.areas[10,]<-c("Utility/Road","WHP",as.numeric(global(rdtr.buff.whp.rast,"notNA")*30*30*0.000247105))
   #mask.areas[11,]<-c("FRAP Other","CECS",) #do these when you get a chance to rerun the make veg masks code
   #mask.areas[12,]<-c("FRAP Other","WHP",) #do these when you get a chance to rerun the make veg masks code
 
   write.csv(mask.areas,paste("MaskAreas_",datestamp,".csv",sep=""))
+
+  all.priority.areas<-data.frame(Priority=character(),Region=character(),Proportion=numeric(),stringsAsFactors=FALSE)
+
+  temp<-sh.priority.rast*shrub.whp.rast
+  priority.rast<-temp
+  priority.rast[priority.rast==0]<-NA
+  priority<-as.numeric(global(priority.rast,"notNA"))
+  total<-as.numeric(global(temp,"notNA"))
+  all.priority.areas[1,]<-c("ShrubVulnerability","AllCA",priority/total)
+
+  temp<-dv.priority.rast*forest.cecs.rast
+  priority.rast<-temp
+  priority.rast[priority.rast==0]<-NA
+  priority<-as.numeric(global(priority.rast,"notNA"))
+  total<-as.numeric(global(temp,"notNA"))
+  all.priority.areas[2,]<-c("DroughtVulnerability","AllCA",priority/total)
+
+  temp<-cr.priority.rast
+  priority.rast<-temp
+  priority.rast[priority.rast==0]<-NA
+  priority<-as.numeric(global(priority.rast,"notNA"))
+  total<-as.numeric(global(temp,"notNA"))
+  all.priority.areas[3,]<-c("CriticalHabitat","AllCA",priority/total)
+
+  temp<-de.priority.rast
+  priority.rast<-temp
+  priority.rast[priority.rast==0]<-NA
+  priority<-as.numeric(global(priority.rast,"notNA"))
+  total<-as.numeric(global(temp,"notNA"))
+  all.priority.areas[4,]<-c("DebrisFlow","AllCA",priority/total)
+
+  temp<-hy.priority.rast
+  priority.rast<-temp
+  priority.rast[priority.rast==0]<-NA
+  priority<-as.numeric(global(priority.rast,"notNA"))
+  total<-as.numeric(global(temp,"notNA"))
+  all.priority.areas[5,]<-c("Hydropower","AllCA",priority/total)
+
+  temp<-whp.priority.rast*wui.whp.rast
+  priority.rast<-temp
+  priority.rast[priority.rast==0]<-NA
+  priority<-as.numeric(global(priority.rast,"notNA"))
+  total<-as.numeric(global(temp,"notNA"))
+  all.priority.areas[6,]<-c("WHP-WUI","AllCA",priority/total)
+
+ temp<-whp.priority.rast*wild.whp.rast
+  priority.rast<-temp
+  priority.rast[priority.rast==0]<-NA
+  priority<-as.numeric(global(priority.rast,"notNA"))
+  total<-as.numeric(global(temp,"notNA"))
+  all.priority.areas[7,]<-c("WHP-Wild","AllCA",priority/total)
+
+ temp<-whp.priority.rast*rdtr.buff.whp.rast
+  priority.rast<-temp
+  priority.rast[priority.rast==0]<-NA
+  priority<-as.numeric(global(priority.rast,"notNA"))
+  total<-as.numeric(global(temp,"notNA"))
+  all.priority.areas[8,]<-c("WHP-Utilities","AllCA",priority/total)
+
+  #For socal:
+  sc.vect<-vect(paste(loc.scripts,"ReferenceFiles/Region_SouthernCA.shp",sep=""))
+  sc.whp.vect<-check.crs.match(whp.rast,sc.vect)
+  sc.cecs.vect<-check.crs.match(cecs.rast,sc.vect)
+
+
+  sh.priority.sc.rast<-crop(sh.priority.rast,sc.whp.vect)
+  sh.priority.sc.rast<-mask(sh.priority.sc.rast,sc.whp.vect)
+  shrub.sc.whp.rast<-crop(shrub.whp.rast,sc.whp.vect)
+  shrub.sc.whp.rast<-mask(shrub.sc.whp.rast,sc.whp.vect)
+  temp<-sh.priority.sc.rast*shrub.sc.whp.rast
+  priority.rast<-temp
+  priority.rast[priority.rast==0]<-NA
+  priority<-as.numeric(global(priority.rast,"notNA"))
+  total<-as.numeric(global(temp,"notNA"))
+  all.priority.areas[9,]<-c("ShrubVulnerability","SoCal",priority/total)
+
+  dv.priority.sc.rast<-crop(dv.priority.rast,sc.cecs.vect)
+  dv.priority.sc.rast<-mask(dv.priority.sc.rast,sc.cecs.vect)
+  forest.sc.cecs.rast<-crop(forest.cecs.rast,sc.cecs.vect)
+  forest.sc.cecs.rast<-mask(forest.sc.cecs.rast,sc.cecs.vect)
+  temp<-dv.priority.sc.rast*forest.sc.cecs.rast
+  priority.rast<-temp
+  priority.rast[priority.rast==0]<-NA
+  priority<-as.numeric(global(priority.rast,"notNA"))
+  total<-as.numeric(global(temp,"notNA"))
+  all.priority.areas[10,]<-c("DroughtVulnerability","SoCal",priority/total)
+
+  cr.priority.sc.rast<-crop(cr.priority.rast,sc.whp.vect)
+  cr.priority.sc.rast<-mask(cr.priority.sc.rast,sc.whp.vect)
+  temp<-cr.priority.sc.rast
+  priority.rast<-temp
+  priority.rast[priority.rast==0]<-NA
+  priority<-as.numeric(global(priority.rast,"notNA"))
+  total<-as.numeric(global(temp,"notNA"))
+  all.priority.areas[11,]<-c("CriticalHabitat","SoCal",priority/total)
+
+  de.priority.sc.rast<-crop(de.priority.rast,sc.whp.vect)
+  de.priority.sc.rast<-mask(de.priority.sc.rast,sc.whp.vect)
+  temp<-de.priority.sc.rast
+  priority.rast<-temp
+  priority.rast[priority.rast==0]<-NA
+  priority<-as.numeric(global(priority.rast,"notNA"))
+  total<-as.numeric(global(temp,"notNA"))
+  all.priority.areas[12,]<-c("DebrisFlow","SoCal",priority/total)
+
+  hy.priority.sc.rast<-crop(hy.priority.rast,sc.whp.vect)
+  hy.priority.sc.rast<-mask(hy.priority.sc.rast,sc.whp.vect)
+  temp<-hy.priority.sc.rast
+  priority.rast<-temp
+  priority.rast[priority.rast==0]<-NA
+  priority<-as.numeric(global(priority.rast,"notNA"))
+  total<-as.numeric(global(temp,"notNA"))
+  all.priority.areas[13,]<-c("Hydropower","SoCal",priority/total)
+
+  whp.priority.sc.rast<-crop(whp.priority.rast,sc.whp.vect)
+  whp.priority.sc.rast<-mask(whp.priority.sc.rast,sc.whp.vect)
+  wui.sc.whp.rast<-crop(wui.whp.rast,sc.whp.vect)
+  wui.sc.whp.rast<-mask(wui.sc.whp.rast,sc.whp.vect)
+  temp<-whp.priority.sc.rast*wui.sc.whp.rast
+  priority.rast<-temp
+  priority.rast[priority.rast==0]<-NA
+  priority<-as.numeric(global(priority.rast,"notNA"))
+  total<-as.numeric(global(temp,"notNA"))
+  all.priority.areas[14,]<-c("WHP-WUI","SoCal",priority/total)
+
+  wild.sc.whp.rast<-crop(wild.whp.rast,sc.whp.vect)
+  wild.sc.whp.rast<-mask(wild.sc.whp.rast,sc.whp.vect)
+  temp<-whp.priority.sc.rast*wild.sc.whp.rast
+  priority.rast<-temp
+  priority.rast[priority.rast==0]<-NA
+  priority<-as.numeric(global(priority.rast,"notNA"))
+  total<-as.numeric(global(temp,"notNA"))
+  all.priority.areas[15,]<-c("WHP-Wild","SoCal",priority/total)
+
+  rdtr.buff.sc.whp.rast<-crop(rdtr.buff.whp.rast,sc.whp.vect)
+  rdtr.buff.sc.whp.rast<-mask(rdtr.buff.sc.whp.rast,sc.whp.vect)
+  temp<-whp.priority.sc.rast*rdtr.buff.sc.whp.rast
+  priority.rast<-temp
+  priority.rast[priority.rast==0]<-NA
+  priority<-as.numeric(global(priority.rast,"notNA"))
+  total<-as.numeric(global(temp,"notNA"))
+  all.priority.areas[16,]<-c("WHP-Utilities","SoCal",priority/total)
+
+  write.csv(all.priority.areas,paste("AllPriorityAreas_",datestamp,"AllCA.csv",sep=""))
+
+#could do this elegantly as a crosstab
+#    crosstb.result<-crosstab.calc(sh.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i])
+#    targeted.effort.results[count,]<-c(boundary.name[i],policy.target,metric.name,crosstb.result)
+#    write.csv(targeted.effort.results,paste("TargetedEffortResults_",datestamp,".csv",sep=""))
+
+#or this calc could be a lot faster than the crosstab... 
+
 }
 
 ####################################################################
 # PREP BOUNDARY LAYERS (Statewide and Task Force Regions)        ###
 ####################################################################
 
-
-#loop through all california, and the four regions
-# boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""),
+##loop through the four regions
+# boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/Region_SouthernCA.shp",sep=""),
 #                   paste(loc.scripts,"ReferenceFiles/Region_Sierra.shp",sep=""),
 #                   paste(loc.scripts,"ReferenceFiles/Region_NorthernCA.shp",sep=""),
-#                   paste(loc.scripts,"ReferenceFiles/Region_SouthernCA.shp",sep=""),
 #                   paste(loc.scripts,"ReferenceFiles/Region_CentralCoast.shp",sep=""))
-# boundary.name<-c("CA","Sierra","North","South","Central")
+# boundary.name<-c("South","Sierra","North","Central")
 
-boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""))
-boundary.name<-c("CA")
+#loop through all california, and the four regions
+ boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""),
+                   paste(loc.scripts,"ReferenceFiles/Region_Sierra.shp",sep=""),
+                   paste(loc.scripts,"ReferenceFiles/Region_NorthernCA.shp",sep=""),
+                   paste(loc.scripts,"ReferenceFiles/Region_SouthernCA.shp",sep=""),
+                   paste(loc.scripts,"ReferenceFiles/Region_CentralCoast.shp",sep=""))
+ boundary.name<-c("CA","Sierra","North","South","Central")
+
+#boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""))
+#boundary.name<-c("CA")
 
 
 #read in patch layer in order to then clip as needed in the loop
@@ -209,7 +391,7 @@ patch.layer<-c("appended_poly")
 #treat.vect<-read.and.check.crs.patch.vector(patch.shape[1],patch.name[1],patch.layer[1]) 
 #with no reprojection, it's in whp
 read.time<-system.time(treat.vect<-read.and.check.crs.patch.vector(patch.shape[1],patch.name[1],patch.layer[1],whp.rast))
-print(paste("Time to read in treatments: ",read.time[[1]]/60, sep=""))
+print(paste("Time to read in treatments: ",round(read.time[[1]]/60)," minutes", sep=""))
 
 
 #######################################################
@@ -232,7 +414,7 @@ for(i in 1:length(boundary.name)){
 
     #remember for CECS layers to reproject the treatment vectors
     crop.time<-system.time(treat.prep.vect<-crop.vector.by.boundary.and.recalc.area(prepped.boundary.whp.vect,boundary.name[i],treat.vect,patch.name[1]))
-    print(paste("Time to crop and recalc areas of treatments: ",crop.time[[1]]/60, sep=""))
+    print(paste("Time to crop and recalc areas of treatments: ",round(crop.time[[1]]/60)," minutes", sep=""))
     start.year<-"2020"
     end.year<-"2024"
 
@@ -279,12 +461,12 @@ for(i in 1:length(boundary.name)){
     metric.name<-"ShrubVulnerability"
     #subset treatments by policy objective
     filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start,NA))
-    print(paste("Time to filter treatments: ",filter.time[[1]]/60, sep=""))
+    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minutes", sep=""))
     #check CRS match with WHP projection
     treat.proj.vect<-check.crs.match(whp.rast,treat.subs.vect,"near")
     #rasterize treatment layer first
     rasterize.time<-system.time(treat.rast<-rasterize(treat.proj.vect,shrub.whp.rast)) #just use shrub extent to start with
-    print(paste("Time to rasterize treatments: ",rasterize.time[[1]]/60, sep=""))
+    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minutes", sep=""))
 
 
     #then stratify as necessary - subset treatments for shrub only (spatial subset)
@@ -302,12 +484,12 @@ for(i in 1:length(boundary.name)){
     metric.name<-"DroughtVulnerability"
     #subset treatments by policy objective
     filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start,NA))
-    print(paste("Time to filter treatments: ",filter.time[[1]]/60, sep=""))
+    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minutes", sep=""))
     #check CRS match with CECS projection
     treat.proj.vect<-check.crs.match(cecs.rast,treat.subs.vect,"near")
     #rasterize treatment layer first
     rasterize.time<-system.time(treat.rast<-rasterize(treat.proj.vect,cecs.rast))
-    print(paste("Time to rasterize treatments: ",rasterize.time[[1]]/60, sep=""))
+    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minutes", sep=""))
     #then stratify as necessary - subset treatments for forest only (spatial subset)
     treat.strat.rast<-treat.rast*forest.cecs.rast #using the CECS projection version
     
@@ -323,12 +505,12 @@ for(i in 1:length(boundary.name)){
     metric.name<-"WildfireHazardPotentialWildland"
     #treatment type/activity type filter
     filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start,NA))
-    print(paste("Time to filter treatments: ",filter.time[[1]]/60, sep=""))
+    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minutes", sep=""))
     #check CRS match with WHP projection
     treat.proj.vect<-check.crs.match(whp.rast,treat.subs.vect,"near")
     #rasterize treatment layer first
     rasterize.time<-system.time(treat.rast<-rasterize(treat.proj.vect,whp.rast))
-    print(paste("Time to rasterize treatments: ",rasterize.time[[1]]/60, sep=""))
+    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minutes", sep=""))
     #then stratify as necessary - subset treatments for wildland only (spatial subset)
     treat.strat.rast<-treat.rast*wild.whp.rast #using the WHP projection version
 
@@ -343,12 +525,12 @@ for(i in 1:length(boundary.name)){
     metric.name<-"FlameLengthAbove8FtWildland"
     #treatment type/activity type filter
     filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start,NA))
-    print(paste("Time to filter treatments: ",filter.time[[1]]/60, sep=""))
+    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minutes", sep=""))
     #check CRS match with CECS projection 
     treat.proj.vect<-check.crs.match(cecs.rast,treat.subs.vect,"near")
     #rasterize treatment layer first
     rasterize.time<-system.time(treat.rast<-rasterize(treat.proj.vect,cecs.rast))
-    print(paste("Time to rasterize treatments: ",rasterize.time[[1]]/60, sep=""))
+    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minutes", sep=""))
     #then stratify as necessary - subset treatments for wildland only (spatial subset)
     treat.strat.rast<-treat.rast*wild.cecs.rast #using the CECS projection version
 
@@ -365,12 +547,12 @@ for(i in 1:length(boundary.name)){
     metric.name<-"WildfireHazardPotentialWUI"
     #treatment type/activity type filter
     filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start,NA))
-    print(paste("Time to filter treatments: ",filter.time[[1]]/60, sep=""))
+    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minutes", sep=""))
     #check CRS match with WHP projection
     treat.proj.vect<-check.crs.match(whp.rast,treat.subs.vect,"near")
     #rasterize treatment layer first
     rasterize.time<-system.time(treat.rast<-rasterize(treat.proj.vect,whp.rast))
-    print(paste("Time to rasterize treatments: ",rasterize.time[[1]]/60, sep=""))
+    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minutes", sep=""))
     #then stratify as necessary - subset treatments for wui only (spatial subset)
     treat.strat.rast<-treat.rast*wui.whp.rast #using the WHP projection version
 
@@ -385,12 +567,12 @@ for(i in 1:length(boundary.name)){
     metric.name<-"FlameLengthAbove8FtWUI"
     #treatment type/activity type filter
     filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start,NA))
-    print(paste("Time to filter treatments: ",filter.time[[1]]/60, sep=""))
+    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minutes", sep=""))
     #check CRS match with CECS projection
     treat.proj.vect<-check.crs.match(cecs.rast,treat.subs.vect,"near")
     #rasterize treatment layer first
     rasterize.time<-system.time(treat.rast<-rasterize(treat.proj.vect,cecs.rast))
-    print(paste("Time to rasterize treatments: ",rasterize.time[[1]]/60, sep=""))
+    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minutes", sep=""))
     #then stratify as necessary - subset treatments for wui only (spatial subset)
     treat.strat.rast<-treat.rast*wui.cecs.rast #using the CECS projection version
 
@@ -407,14 +589,14 @@ for(i in 1:length(boundary.name)){
     metric.name<-"WildfireHazardPotentialUtility"
     #treatment type/activity type filter
     filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start,NA))
-    print(paste("Time to filter treatments: ",filter.time[[1]]/60, sep=""))
+    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minutes", sep=""))
     #check CRS match with WHP projection
     treat.proj.vect<-check.crs.match(whp.rast,treat.subs.vect,"near")
-    #subset by utility corridors
-    treat.strat.vect<-intersect(treat.proj.vect,rdtr.buff.whp.vect) #use the whp layer version
     #rasterize treatment layer
-    rasterize.time<-system.time(treat.strat.rast<-rasterize(treat.strat.vect,whp.rast))
-    print(paste("Time to rasterize treatments: ",rasterize.time[[1]]/60, sep=""))
+    rasterize.time<-system.time(treat.rast<-rasterize(treat.proj.vect,whp.rast))
+    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minutes", sep=""))
+    #subset by utility corridors
+    treat.strat.rast<-treat.rast*rdtr.buff.whp.rast #using the WHP projection version
   
     #Do crosstab
     crosstab.result<-crosstab.calc(whp.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i])
@@ -427,15 +609,14 @@ for(i in 1:length(boundary.name)){
     metric.name<-"FlameLengthAbove8FtUtilities"
     #treatment type/activity type filter
     filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start,NA))
-    print(paste("Time to filter treatments: ",filter.time[[1]]/60, sep=""))
+    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minutes", sep=""))
     #check CRS match with CECS projection
     treat.proj.vect<-check.crs.match(cecs.rast,treat.subs.vect,"near")
-    rdtr.buff.proj.cecs.vect<-check.crs.match(cecs.rast,rdtr.buff.cecs.vect,"near")
-    #subset by utility corridors
-    treat.strat.vect<-intersect(treat.proj.vect,rdtr.buff.proj.cecs.vect) #use the CECS layer version
     #rasterize treatment layer 
-    rasterize.time<-system.time(treat.strat.rast<-rasterize(treat.strat.vect,cecs.rast))
-    print(paste("Time to rasterize treatments: ",rasterize.time[[1]]/60, sep=""))
+    rasterize.time<-system.time(treat.rast<-rasterize(treat.proj.vect,cecs.rast))
+    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minutes", sep=""))
+    #subset by utility corridors
+    treat.strat.rast<-treat.rast*rdtr.buff.cecs.rast #using the CECS projection version
 
     #Do crosstab
     crosstab.result<-crosstab.calc(fl.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i])
@@ -449,10 +630,10 @@ for(i in 1:length(boundary.name)){
     metric.name<-"CriticalHabitat"
     #subset treatments by policy objective
     filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start,NA))
-    print(paste("Time to filter treatments: ",filter.time[[1]]/60, sep=""))
+    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minutes", sep=""))
     #rasterize treatment layer
     rasterize.time<-system.time(treat.strat.rast<-rasterize(treat.subs.vect,whp.rast))
-    print(paste("Time to rasterize treatments: ",rasterize.time[[1]]/60, sep=""))
+    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minutes", sep=""))
     
     #Do crosstab
     crosstab.result<-crosstab.calc(cr.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i])
@@ -466,10 +647,10 @@ for(i in 1:length(boundary.name)){
     metric.name<-"Hydropower"
     #subset treatments by policy objective
     filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start,NA))
-    print(paste("Time to filter treatments: ",filter.time[[1]]/60, sep=""))
+    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minutes", sep=""))
     #rasterize treatment layer
     rasterize.time<-system.time(treat.strat.rast<-rasterize(treat.subs.vect,whp.rast))
-    print(paste("Time to rasterize treatments: ",rasterize.time[[1]]/60, sep=""))
+    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minutes", sep=""))
     
     #Do crosstab
     crosstab.result<-crosstab.calc(hy.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i])
@@ -483,10 +664,10 @@ for(i in 1:length(boundary.name)){
     metric.name<-"DebrisFlow"
     #subset treatments by policy objective
     filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start,NA))
-    print(paste("Time to filter treatments: ",filter.time[[1]]/60, sep=""))
+    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minutes", sep=""))
     #rasterize treatment layer
     rasterize.time<-system.time(treat.strat.rast<-rasterize(treat.subs.vect,whp.rast))
-    print(paste("Time to rasterize treatments: ",rasterize.time[[1]]/60, sep=""))
+    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minutes", sep=""))
     
     #Do crosstab
     crosstab.result<-crosstab.calc(de.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i])
