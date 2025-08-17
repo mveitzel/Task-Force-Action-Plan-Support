@@ -31,17 +31,33 @@ end.year<-"2024"
 start<-paste(start.year,"-09-30",sep="")
 end<-paste(end.year,"-10-01",sep="")
 
-metrics<-c(
-			#"DroughtVulnerability"
-			#, 
-			#"FlameLengthWUI"
-			#,
-			#"FlameLengthWildland"
-			#,
-			"FlameLengthUtilities"
-			,
-			"Shrub-GrassRatio"
-			)
+metrics<-c( "FlameLengthWUI",
+			"FlameLengthLandscape",
+			"FlameLengthUtilities",
+			"FlameLengthRoads",
+			"DroughtVulnerability", 
+			"Shrub-GrassRatio")
+
+
+############ END GLOBAL PARAMETERS #################
+
+
+##########################################################
+##########################################################
+########### READ IN AND PROCESS RASTERS ##############
+
+calculate.metrics<-FALSE
+
+if(calculate.metrics){
+    rast.time<-system.time(source(paste(loc.scripts,"FunctionLibraries/CalculateMetricDiffs.R",sep="")))
+	print(paste("Time to process and difference rasters: ",round(rast.time[[1]]/60)," minutes", sep=""))
+}
+
+
+########### END READ IN AND PROCESS RASTERS ##############
+##########################################################
+##########################################################
+
 
 ########### READ IN AND PROCESS VECTORS ##############
 
@@ -71,7 +87,7 @@ vect.shape<-c(paste(loc.scripts,"ReferenceFiles/HUC12.shp",sep=""))
 vect.name<-c("HUC12")
 
 patch.name<-c("Treatments","Fires")
-patch.shape<-c(paste(loc.data,"ITS_2025Jul25_Polygons/appended.gdb",sep=""),paste(loc.data,"FireFootprints/fire24_1.gdb",sep=""))
+patch.shape<-c(paste(loc.data,"ITS_2025Aug16_Data/appended.gdb",sep=""),paste(loc.data,"FireFootprints/fire24_1.gdb",sep=""))
 patch.layer<-c("appended_poly","firep24_1")
 
 read.time<-system.time(treatments<-read.and.check.crs.patch.vector(patch.shape[1],patch.name[1],patch.layer[1],reference.rast))
@@ -128,213 +144,11 @@ for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each
 	#############################################
 
 	for(i in 1:length(metrics)){
+		#choose the correct metric
 		metric.name<-metrics[i]
-		############ END GLOBAL PARAMETERS #################
-
-
-		#this section contains the specifics for each metric, including
-		#the CECS conversion factor and the actual function calls to 
-		# the raster differencing calculation
-
-		##########################################################
-		##########################################################
-		########### READ IN AND PROCESS RASTERS ##############
-
-
-
-
-		#---------- FLAME LENGTH (WUI) RASTER CALCS -------------------#
-
-		if(metric.name=="FlameLengthWUI"){
-			vint<-"250614"
-			metric<-"Fire_FlamMap_FL"
-			xlabel<-"Average decrease in flame length (ft)"
-			#'units are 0.01 m' so divide by 100, but want ft so multiply by 3.28084
-			conversion<-(0.0328084)
-
-			before.yr.name<-generate.CECS.filename(metric,start.year,vint)
-			after.yr.name<-generate.CECS.filename(metric,end.year,vint)
-
-			before.rast<-read.in.raster(loc.data,before.yr.name,metric.name)
-			after.rast<-read.in.raster(loc.data,after.yr.name,metric.name)
-
-			before.proj.rast<-check.crs.match(reference.rast,before.rast)
-			after.proj.rast<-check.crs.match(reference.rast,after.rast)
-
-			diff.rast<-diff.rasters(start.year,before.proj.rast,end.year,after.proj.rast,metric.name)
-
-			#	mask for WUI
-			# do I want to use subset.raster here?
-			wui.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/FRAP24_WUIOnly_CECS.tif",sep=""))
-			diff.masked.rast<-diff.rast*wui.cecs.rast
-			print("Raster masked for WUI")
-
-			diff<-multiply.conversion.factor(metric.name,diff.masked.rast,conversion)
-		}
-
-		#------------ end flame length (WUI) raster calcs -----------#
-
-		#---------- FLAME LENGTH (WILDLAND) RASTER CALCS -------------------#
-
-		if(metric.name=="FlameLengthWildland"){
-			vint<-"250614"
-			metric<-"Fire_FlamMap_FL"
-			xlabel<-"Average decrease in flame length (ft)"
-			#'units are 0.01 m' so divide by 100, but want ft so multiply by 3.28084
-			conversion<-(0.0328084)
-
-			before.yr.name<-generate.CECS.filename(metric,start.year,vint)
-			after.yr.name<-generate.CECS.filename(metric,end.year,vint)
-
-			before.rast<-read.in.raster(loc.data,before.yr.name,metric.name)
-			after.rast<-read.in.raster(loc.data,after.yr.name,metric.name)
-
-			before.proj.rast<-check.crs.match(reference.rast,before.rast)
-			after.proj.rast<-check.crs.match(reference.rast,after.rast)
-
-			diff.rast<-diff.rasters(start.year,before.proj.rast,end.year,after.proj.rast,metric.name)
-
-			#	mask for WUI
-			# do I want to use subset.raster here?
-			wild.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/FRAP24_WildlandOnly_CECS.tif",sep=""))
-			diff.masked.rast<-diff.rast*wild.cecs.rast
-			print("Raster masked for Wildland")
-
-			diff<-multiply.conversion.factor(metric.name,diff.masked.rast,conversion)
-		}
-
-		#------------ end flame length (Wildland) raster calcs -----------#
-
-		#---------- FLAME LENGTH (UTILITIES) RASTER CALCS -------------------#
-
-		if(metric.name=="FlameLengthUtilities"){
-			vint<-"250614"
-			metric<-"Fire_FlamMap_FL"
-			xlabel<-"Average decrease in flame length (ft)"
-			#'units are 0.01 m' so divide by 100, but want ft so multiply by 3.28084
-			conversion<-(0.0328084)
-
-			before.yr.name<-generate.CECS.filename(metric,start.year,vint)
-			after.yr.name<-generate.CECS.filename(metric,end.year,vint)
-
-			before.rast<-read.in.raster(loc.data,before.yr.name,metric.name)
-			after.rast<-read.in.raster(loc.data,after.yr.name,metric.name)
-
-			before.proj.rast<-check.crs.match(reference.rast,before.rast)
-			after.proj.rast<-check.crs.match(reference.rast,after.rast)
-
-			diff.rast<-diff.rasters(start.year,before.proj.rast,end.year,after.proj.rast,metric.name)
-
-			#	mask for WUI
-			# do I want to use subset.raster here?
-			rdtr.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/RoadTransmissionLineBuffer_CECSproj.tif",sep=""))
-			diff.masked.rast<-diff.rast*rdtr.buff.cecs.rast
-			print("Raster masked for Utilities")
-
-			diff<-multiply.conversion.factor(metric.name,diff.masked.rast,conversion)
-		}
-
-		#------------ end flame length (Utilities) raster calcs -----------#
-
-
-		#---------- DROUGHT VULNERABILITY RASTER CALCS -------------------#
-
-		if(metric.name=="DroughtVulnerability"){
-			vint<-"250614"
-			metric<-"Vulner_TreeDieoff_SPI-2"
-			xlabel<-"Average decrease in Drought Vulnerability"
-			conversion<-NA
-
-			before.yr.name<-generate.CECS.filename(metric,start.year,vint)
-			after.yr.name<-generate.CECS.filename(metric,end.year,vint)
-
-			before.rast<-read.in.raster(loc.data,before.yr.name,metric.name)
-			after.rast<-read.in.raster(loc.data,after.yr.name,metric.name)
-
-			before.proj.rast<-check.crs.match(reference.rast,before.rast)
-			after.proj.rast<-check.crs.match(reference.rast,after.rast)
-
-			diff.rast<-diff.rasters(start.year,before.proj.rast,end.year,after.proj.rast,metric.name)
-
-			#	mask for forest
-			# do I want to use subset.raster here?
-			forest.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_FOREST_CECS.tif",sep=""))
-			diff.masked.rast<-diff.rast*forest.cecs.rast
-			print("Raster masked for forest")
-
-			diff<-multiply.conversion.factor(metric.name,diff.masked.rast,conversion)
-
-		}
-
-		#------------ end drought vulnerability raster calcs -----------#
-
-
-
-		#---------- SHRUB-GRASS RATIO CALCS -------------------#
-
-		if(metric.name=="Shrub-GrassRatio"){
-			vint<-"250418"
-			metric.shrub<-"Veg_ShrubFrac"
-			metric.grass<-"Veg_HerbFrac"
-			xlabel<-"Average decrease in Shrub-Grass Ratio"
-			conversion<-NA #the conversion factor for the individual proportions are 1/10000, but we're doing a ratio so they cancel
-
-			before.yr.shrub.name<-generate.CECS.filename(metric.shrub,start.year,vint)
-			after.yr.shrub.name<-generate.CECS.filename(metric.shrub,end.year,vint)
-			before.yr.grass.name<-generate.CECS.filename(metric.grass,start.year,vint)
-			after.yr.grass.name<-generate.CECS.filename(metric.grass,end.year,vint)
-
-			before.shrub.rast<-read.in.raster(loc.data,before.yr.shrub.name,metric.name)
-			after.shrub.rast<-read.in.raster(loc.data,after.yr.shrub.name,metric.name)
-			before.grass.rast<-read.in.raster(loc.data,before.yr.grass.name,metric.name)
-			after.grass.rast<-read.in.raster(loc.data,after.yr.grass.name,metric.name)
-
-			#where the grass proportion is zero, we don't want to divide by it.
-			#but we don't want to substitute an arbitrarily small value that will mess up
-			#the mean values.  So find the minimum value that isn't zero
-			mask.before.grass.rast<-before.grass.rast
-			mask.before.grass.rast[before.grass.rast<=0]<-NA
-			bef.grass.min<-as.numeric(global(mask.before.grass.rast,"min",na.rm=TRUE))
-			#and do the same for the 'after' grass raster, though likely it's the same
-			mask.after.grass.rast<-after.grass.rast
-			mask.after.grass.rast[after.grass.rast<=0]<-NA
-			aft.grass.min<-as.numeric(global(mask.after.grass.rast,"min",na.rm=TRUE))
-
-			before.grass.prepped.rast<-before.grass.rast
-			before.grass.prepped.rast[before.grass.prepped.rast<=0]<-bef.grass.min
-			after.grass.prepped.rast<-after.grass.rast
-			after.grass.prepped.rast[after.grass.prepped.rast<=0]<-aft.grass.min
-
-			#now it should be safe to divide by the grass layers
-			before.rast<-before.shrub.rast/before.grass.prepped.rast
-			after.rast<-after.shrub.rast/after.grass.prepped.rast
-
-			#just checking on how many of these produce infinite values based on division by 0
-			#before pulling the trick with replacing with lowest nonzero value, it was about 0.3-0.4%
-		 	#global(is.infinite(after.rast),"sum")/global(after.rast,"notNA")
-		 	#global(is.infinite(before.rast),"sum")/global(after.rast,"notNA")
-
-			before.proj.rast<-check.crs.match(reference.rast,before.rast)
-			after.proj.rast<-check.crs.match(reference.rast,after.rast)
-
-			diff.rast<-diff.rasters(start.year,before.proj.rast,end.year,after.proj.rast,metric.name)
-
-			#   mask for shrub
-			shrub.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_SHRUB_CECS.tif",sep=""))
-			diff.masked.rast<-diff.rast*shrub.cecs.rast
-
-			diff<-multiply.conversion.factor(metric.name,diff.masked.rast,conversion)
-
-		}
-
-		#------------ end shrub-grass ratio calcs -----------#
-
-
-
-		########### END READ IN AND PROCESS RASTERS ##############
-		##########################################################
-		##########################################################
-
+		#read in the appropriate raster
+		print(paste("Reading: ",loc.data,"Diff_",metric.name,".tif",sep=""))
+		diff.rast<-rast(paste(loc.data,"IntermediateRasters/DiffRasters/Diff_",metric.name,".tif",sep=""))
 
 
 		# #################### ZONAL CALCULATIONS #######################

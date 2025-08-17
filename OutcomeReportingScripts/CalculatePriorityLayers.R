@@ -108,8 +108,8 @@
 
   #Intersect the 'shrub' mask with the 'roads' buffer and then infill with '0'
   # in fact, just rasterize it based on the shrub raster so that the extent automatically matches
-  road.whp.rast<-rasterize(road.buff.whp.vect,shrub.whp.rast)
-  shrub.road.whp.rast<-road.whp.rast*shrub.whp.rast
+  #road.whp.rast<-rasterize(road.buff.whp.vect,shrub.whp.rast)
+  shrub.road.whp.rast<-road.buff.whp.rast*shrub.whp.rast
   sh.pri.rast<-shrub.road.whp.rast
   sh.pri.rast[is.na(sh.pri.rast)]<-0
   writeRaster(sh.pri.rast,paste(loc.data,"PriorityLayers/FinalPriorityLayers/ShrubRoadPriority_WHP.tif",sep=""))

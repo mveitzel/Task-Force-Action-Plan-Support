@@ -4,7 +4,7 @@
 
 timer.start<-Sys.time()
 
-datestamp<-"2025Aug13"
+datestamp<-"2025Aug16"
 
 #scripts and important reference layers are in the github repo
 loc.scripts<-"D:/GitRepos/BattlesLabRepos/Task-Force-Action-Plan-Support/"
@@ -31,48 +31,49 @@ ca.cecs.vect<-check.crs.match(cecs.rast,ca.vect)
 
 
 #######################################################################
-# PREP STRATIFICATION LAYERS (WUI/Wildland, Ecosystem, utility/roads) #
+# PREP STRATIFICATION LAYERS (WUI/landscape, Ecosystem, utility/roads) #
 #######################################################################
 
-#Does one need to recalculate vegetation and wui masks?
+#Does one need to recalculate vegetation, road/utility, and wui masks?
 recalculate.masks<-FALSE
 
 if(recalculate.masks){
   #source the file that has all the raster and vector calculations to create
-  #veg and wui/wildland masks
-  #right now this is just the wui/wildland masks
+  #veg, utility, road, and wui/landscape masks
   mask.time<-system.time(source(paste(loc.scripts,"FunctionLibraries/CalculateWUI_Veg_Masks.R",sep="")))
   print(paste("Time to recalculate masks: ",round(mask.time[[1]]/60)," minutes", sep=""))
-
-} else {
-  #read in the raster files
-  wui.whp.rast<-rast(paste(loc.scripts,"ReferenceFiles/FRAP24_WUIOnly_WHP.tif",sep=""))
-  wild.whp.rast<-rast(paste(loc.scripts,"ReferenceFiles/FRAP24_WildlandOnly_WHP.tif",sep=""))
-  #the CECS-compatible one probably won't get used much by the whole group, so keeping those
-  #files locally rather than in the GitHub repo.  if it needs to be recalculated, use recalculate.masks<-TRUE
-  wild.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/FRAP24_WildlandOnly_CECS.tif",sep=""))
-  wui.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/FRAP24_WUIOnly_CECS.tif",sep=""))
-
-  #read in the veg classification masks (Forest and Shrub from CALFIRE WHR reclassifications, same crs as WHP)
-  forest.whp.rast<-rast(paste(loc.scripts,"ReferenceFiles/WHR13_RECLASS_FOREST.tif",sep=""))
-  shrub.whp.rast<-rast(paste(loc.scripts,"ReferenceFiles/WHR13_RECLASS_SHRUB.tif",sep=""))
-  #read in the CECS-projected forest and shrub classifications
-  forest.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_FOREST_CECS.tif",sep=""))
-  shrub.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_SHRUB_CECS.tif",sep=""))
-
-  #For some reason WHR extends beyond CA boundaries  
-  forest.whp.rast<-mask(forest.whp.rast,ca.whp.vect)
-  forest.cecs.rast<-mask(forest.cecs.rast,ca.cecs.vect)
-  shrub.whp.rast<-mask(shrub.whp.rast,ca.whp.vect)
-  shrub.cecs.rast<-mask(shrub.cecs.rast,ca.cecs.vect)
-
-  #read in the road and road+transmission line buffers
-  rdtr.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/RoadTransmissionLineBuffer_CECSproj.tif",sep=""))
-  rdtr.buff.whp.rast<-rast(paste(loc.data,"WUIVegetationClassifications/RoadTransmissionLineBuffer_WHPproj.tif",sep=""))
-  #note that these are just for calculating the shrub priority layer
-  road.buff.cecs.rast<-vect(paste(loc.data,"WUIVegetationClassifications/RoadBuffer_CECSproj.shp",sep=""))
-  road.buff.whp.rast<-vect(paste(loc.data,"WUIVegetationClassifications/RoadBuffer_WHPproj.shp",sep=""))
 }
+
+#some object names are different, so go ahead and reread them in even if you did recreate them
+#read in the raster files
+wui.whp.rast<-rast(paste(loc.scripts,"ReferenceFiles/FRAP24_WUIOnly_WHP.tif",sep=""))
+wild.whp.rast<-rast(paste(loc.scripts,"ReferenceFiles/FRAP24_WildlandOnly_WHP.tif",sep=""))
+#the CECS-compatible one probably won't get used much by the whole group, so keeping those
+#files locally rather than in the GitHub repo.  if it needs to be recalculated, use recalculate.masks<-TRUE
+wild.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/FRAP24_WildlandOnly_CECS.tif",sep=""))
+wui.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/FRAP24_WUIOnly_CECS.tif",sep=""))
+
+land.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/FRAP24_Landscape_CECS.tif",sep=""))
+land.whp.rast<-rast(paste(loc.data,"WUIVegetationClassifications/FRAP24_Landscape_WHP.tif",sep=""))
+
+#read in the veg classification masks (Forest and Shrub from CALFIRE WHR reclassifications, same crs as WHP)
+forest.whp.rast<-rast(paste(loc.scripts,"ReferenceFiles/WHR13_RECLASS_FOREST.tif",sep=""))
+shrub.whp.rast<-rast(paste(loc.scripts,"ReferenceFiles/WHR13_RECLASS_SHRUB.tif",sep=""))
+#read in the CECS-projected forest and shrub classifications
+forest.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_FOREST_CECS.tif",sep=""))
+shrub.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_SHRUB_CECS.tif",sep=""))
+#and grass and woodland, for completeness
+grass.whp.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_GRASS.tif",sep=""))
+wood.whp.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_WOODLAND.tif",sep=""))
+grass.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_GRASS_CECS.tif",sep=""))
+wood.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_WOODLAND_CECS.tif",sep=""))
+
+#read in the road and transmission line buffers
+tran.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/TransmissionLineBuffer_CECSproj.tif",sep=""))
+tran.buff.whp.rast<-rast(paste(loc.data,"WUIVegetationClassifications/TransmissionLineBuffer_WHPproj.tif",sep=""))
+#note that these are just for calculating the shrub priority layer
+road.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/RoadBuffer_CECSproj.tif",sep=""))
+road.buff.whp.rast<-rast(paste(loc.data,"WUIVegetationClassifications/RoadBuffer_WHPproj.tif",sep=""))
 
 
 ####################################################################
@@ -106,58 +107,74 @@ plots<-FALSE
 
 if(plots){
   png("PriorityLayerImages/WildfireHazardPotential.png",width=5.5,height=6, units="in",res=150)
-  plot(whp.priority.rast, main="Wildfire Hazard Potential 4 (high) or 5 (very high)",col=c("#E9E5C3","#855914"))
-  polys(ca.whp.vect,border="#855914")
+  plot(whp.priority.rast, main="Wildfire Hazard Potential 4 (high) or 5 (very high)",col=c("#E9E5C3","#5A3B00"))
+  polys(ca.whp.vect,border="#5A3B00")
   dev.off()
   png("PriorityLayerImages/DroughtVulnerability.png",width=5.5,height=6, units="in",res=150)
-  plot(dv.priority.rast, main="Drought Vulnerability index 10,000 or greater",col=c("#E9E5C3","#855914"))
-  polys(ca.cecs.vect,border="#855914")
+  plot(dv.priority.rast, main="Drought Vulnerability index 10,000 or greater",col=c("#E9E5C3","#5A3B00"))
+  polys(ca.cecs.vect,border="#5A3B00")
   dev.off()
   png("PriorityLayerImages/FlameLength.png",width=5.5,height=6, units="in",res=150)
-  plot(fl.priority.rast, main="Flame Length (FLAMMAP), 8 ft or greater",col=c("#E9E5C3","#855914"))
-  polys(ca.cecs.vect,border="#855914")
+  plot(fl.priority.rast, main="Flame Length (FLAMMAP), 8 ft or greater",col=c("#E9E5C3","#5A3B00"))
+  polys(ca.cecs.vect,border="#5A3B00")
   dev.off()
   png("PriorityLayerImages/CriticalHabitat.png",width=5.5,height=6, units="in",res=150)
-  plot(cr.priority.rast, main="ACE Species Diversity rating 4 or 5",col=c("#E9E5C3","#855914"))
-  polys(ca.whp.vect,border="#855914")
+  plot(cr.priority.rast, main="ACE Species Diversity rating 4 or 5",col=c("#E9E5C3","#5A3B00"))
+  polys(ca.whp.vect,border="#5A3B00")
   dev.off()
   png("PriorityLayerImages/Hydropower.png",width=5.5,height=6, units="in",res=150)
-  plot(hy.priority.rast, main="Watersheds feeding powerhouses\n30 KW and greater",col=c("#E9E5C3","#855914"))
-  polys(ca.whp.vect,border="#855914")
+  plot(hy.priority.rast, main="Watersheds feeding powerhouses\n30 KW and greater",col=c("#E9E5C3","#5A3B00"))
+  polys(ca.whp.vect,border="#5A3B00")
   dev.off()
   png("PriorityLayerImages/DebrisFlow.png",width=5.5,height=6, units="in",res=150)
-  plot(de.priority.rast, main="Debris Flow likelihood top 20% of risk",col=c("#E9E5C3","#855914"))
-  polys(ca.whp.vect,border="#855914")
+  plot(de.priority.rast, main="Debris Flow likelihood top 20% of risk",col=c("#E9E5C3","#5A3B00"))
+  polys(ca.whp.vect,border="#5A3B00")
   dev.off()
   png("PriorityLayerImages/ShrubRoad.png",width=5.5,height=6, units="in",res=150)
-  plot(sh.priority.rast, main="Shrub veg type within 500 ft of CALTRANS roads",col=c("#E9E5C3","#855914"))
-  polys(ca.whp.vect,border="#855914")
+  plot(sh.priority.rast, main="Shrub veg type within 500 ft of CALTRANS roads",col=c("#E9E5C3","#5A3B00"))
+  polys(ca.whp.vect,border="#5A3B00")
   dev.off()
 
   png("MaskImages/Forest.png",width=5.5,height=6, units="in",res=150)
-  plot(forest.whp.rast, main="CALFIRE WHR Forest",col="#855914")
-  polys(ca.whp.vect,border="#855914")
+  plot(forest.whp.rast, main="CALFIRE WHR Forest",col="#5A3B00")
+  polys(ca.whp.vect,border="#5A3B00")
   dev.off()
   png("MaskImages/Shrub.png",width=5.5,height=6, units="in",res=150)
-  plot(shrub.whp.rast, main="CALFIRE WHR Shrub",col="#855914")
-  polys(ca.whp.vect,border="#855914")
+  plot(shrub.whp.rast, main="CALFIRE WHR Shrub",col="#5A3B00")
+  polys(ca.whp.vect,border="#5A3B00")
   dev.off()
-  png("MaskImages/Wildland.png",width=5.5,height=6, units="in",res=150)
-  plot(wild.whp.rast, main="Wildland: CALFIRE 'Influence & Other' + CECS 'Other'",col="#855914")
-  polys(ca.whp.vect,border="#855914")
+  png("MaskImages/Grass.png",width=5.5,height=6, units="in",res=150)
+  plot(grass.whp.rast, main="CALFIRE WHR Grass",col="#5A3B00")
+  polys(ca.whp.vect,border="#5A3B00")
+  dev.off()
+  png("MaskImages/Woodland.png",width=5.5,height=6, units="in",res=150)
+  plot(wood.whp.rast, main="CALFIRE WHR Woodland",col="#5A3B00")
+  polys(ca.whp.vect,border="#5A3B00")
+  dev.off()
+#  png("MaskImages/Wildland.png",width=5.5,height=6, units="in",res=150)
+#  plot(wild.whp.rast, main="Wildland: CALFIRE 'Influence & Other' + CECS 'Other'",col="#5A3B00")
+#  polys(ca.whp.vect,border="#5A3B00")
+#  dev.off()
+  png("MaskImages/Landscape.png",width=5.5,height=6, units="in",res=150)
+  plot(land.whp.rast, main="Landscape: NOT agriculture, urban, and water",col="#5A3B00")
+  polys(ca.whp.vect,border="#5A3B00")
   dev.off()
   png("MaskImages/WUI.png",width=5.5,height=6, units="in",res=150)
-  plot(wui.whp.rast, main="CALFIRE WUI footprint (interface,intermix)",col="#855914")
-  polys(ca.whp.vect,border="#855914")
+  plot(wui.whp.rast, main="CALFIRE WUI footprint (interface,intermix)",col="#5A3B00")
+  polys(ca.whp.vect,border="#5A3B00")
   dev.off()
-  png("MaskImages/RoadTransmissionLine.png",width=5.5,height=6, units="in",res=150)
-  plot(rdtr.buff.whp.rast, main="CALTRANS roads + Utility Transmission lines",col="#855914")
-  polys(ca.whp.vect,border="#855914")
+  png("MaskImages/TransmissionLine.png",width=5.5,height=6, units="in",res=150)
+  plot(tran.buff.whp.rast, main="Utility Transmission lines",col="#5A3B00")
+  polys(ca.whp.vect,border="#5A3B00")
+  dev.off()
+  png("MaskImages/Road.png",width=5.5,height=6, units="in",res=150)
+  plot(road.buff.whp.rast, main="CALTRANS roads",col="#5A3B00")
+  polys(ca.whp.vect,border="#5A3B00")
   dev.off()
 
 }
 
-conditions.mask.areas<-FALSE
+conditions.mask.areas<-TRUE
 
 if(conditions.mask.areas){
   current.conditions<-data.frame(PolicyTarget=character(),Priority=character(), Source=character(), Threshold=character(),
@@ -174,13 +191,13 @@ if(conditions.mask.areas){
   temp[is.na(temp)]<-0
   current.conditions[3,]<-c("Forest Health","Drought Vulnerability", "CECS","Vulnerability Index >10,000",
         as.numeric(global(temp,"sum")*30*30*0.000247105))
-  current.conditions[4,]<-c("Shrubland Health","Road Proximity","CALFIRE WHR & OSM Roads","500 ft road buffer in shrublands", 
+  current.conditions[4,]<-c("Shrubland Health","Road Proximity","CALFIRE WHR & CALTRANS Roads","500 ft road buffer in shrublands", 
         as.numeric(global(sh.priority.rast,"sum")*30*30*0.000247105))
   current.conditions[5,]<-c("Water","Hydropower","Bales & Guo","Watersheds w/powerhouses >= 30KW",
         as.numeric(global(hy.priority.rast,"sum")*30*30*0.000247105))
   temp<-de.priority.rast
   temp[is.na(temp)]<-0
-  current.conditions[6,]<-c("Water","CGS","Debris Flow Potential","Watersheds with risk in the top 40%", 
+  current.conditions[6,]<-c("Water","Debris Flow Potential","CGS","Watersheds with risk in the top 40%", 
         as.numeric(global(temp,"sum")*30*30*0.000247105))
   temp<-cr.priority.rast
   temp[is.na(temp)]<-0
@@ -192,19 +209,26 @@ if(conditions.mask.areas){
   mask.areas<-data.frame(Mask=character(),CRS=character(),Area=numeric(),stringsAsFactors=FALSE)
   mask.areas[1,]<-c("Forest","CECS",as.numeric(global(forest.cecs.rast,"notNA")*30*30*0.000247105))
   mask.areas[2,]<-c("Shrub","CECS",as.numeric(global(shrub.cecs.rast,"notNA")*30*30*0.000247105))
-  mask.areas[3,]<-c("WUI","CECS",as.numeric(global(wui.cecs.rast,"notNA")*30*30*0.000247105))
-  mask.areas[4,]<-c("Wildland","CECS",as.numeric(global(wild.cecs.rast,"notNA")*30*30*0.000247105))
-  mask.areas[5,]<-c("Utility/Road","CECS",as.numeric(global(rdtr.buff.cecs.rast,"notNA")*30*30*0.000247105))
-  mask.areas[6,]<-c("Forest","WHP",as.numeric(global(forest.whp.rast,"notNA")*30*30*0.000247105))
-  mask.areas[7,]<-c("Shrub","WHP",as.numeric(global(shrub.whp.rast,"notNA")*30*30*0.000247105))
-  mask.areas[8,]<-c("WUI","WHP",as.numeric(global(wui.whp.rast,"notNA")*30*30*0.000247105))
-  mask.areas[9,]<-c("Wildland","WHP",as.numeric(global(wild.whp.rast,"notNA")*30*30*0.000247105))
-  mask.areas[10,]<-c("Utility/Road","WHP",as.numeric(global(rdtr.buff.whp.rast,"notNA")*30*30*0.000247105))
-  #mask.areas[11,]<-c("FRAP Other","CECS",) #do these when you get a chance to rerun the make veg masks code
-  #mask.areas[12,]<-c("FRAP Other","WHP",) #do these when you get a chance to rerun the make veg masks code
-
+  mask.areas[3,]<-c("Woodland","CECS",as.numeric(global(wood.cecs.rast,"notNA")*30*30*0.000247105))
+  mask.areas[4,]<-c("Grass","CECS",as.numeric(global(grass.cecs.rast,"notNA")*30*30*0.000247105))
+  mask.areas[5,]<-c("WUI","CECS",as.numeric(global(wui.cecs.rast,"notNA")*30*30*0.000247105))
+  mask.areas[6,]<-c("Landscape","CECS",as.numeric(global(land.cecs.rast,"notNA")*30*30*0.000247105))
+  mask.areas[7,]<-c("Utility","CECS",as.numeric(global(tran.buff.cecs.rast,"notNA")*30*30*0.000247105))
+  mask.areas[8,]<-c("Road","CECS",as.numeric(global(road.buff.cecs.rast,"notNA")*30*30*0.000247105))
+  mask.areas[9,]<-c("Forest","WHP",as.numeric(global(forest.whp.rast,"notNA")*30*30*0.000247105))
+  mask.areas[10,]<-c("Shrub","WHP",as.numeric(global(shrub.whp.rast,"notNA")*30*30*0.000247105))
+  mask.areas[11,]<-c("Woodland","WHP",as.numeric(global(wood.whp.rast,"notNA")*30*30*0.000247105))
+  mask.areas[12,]<-c("Grass","WHP",as.numeric(global(grass.whp.rast,"notNA")*30*30*0.000247105))
+  mask.areas[13,]<-c("WUI","WHP",as.numeric(global(wui.whp.rast,"notNA")*30*30*0.000247105))
+  mask.areas[14,]<-c("Landscape","WHP",as.numeric(global(land.whp.rast,"notNA")*30*30*0.000247105))
+  mask.areas[15,]<-c("Utility","WHP",as.numeric(global(tran.buff.whp.rast,"notNA")*30*30*0.000247105))
+  mask.areas[16,]<-c("Road","WHP",as.numeric(global(road.buff.whp.rast,"notNA")*30*30*0.000247105))
+  
   write.csv(mask.areas,paste("MaskAreas_",datestamp,".csv",sep=""))
+}
 
+priority.areas<-FALSE
+if(priority.areas){
   all.priority.areas<-data.frame(Priority=character(),Region=character(),Proportion=numeric(),stringsAsFactors=FALSE)
 
   temp<-sh.priority.rast*shrub.whp.rast
@@ -348,6 +372,7 @@ if(conditions.mask.areas){
   all.priority.areas[16,]<-c("WHP-Utilities","SoCal",priority/total)
 
   write.csv(all.priority.areas,paste("AllPriorityAreas_",datestamp,"AllCA.csv",sep=""))
+}
 
 #could do this elegantly as a crosstab
 #    crosstb.result<-crosstab.calc(sh.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i])
@@ -356,7 +381,6 @@ if(conditions.mask.areas){
 
 #or this calc could be a lot faster than the crosstab... 
 
-}
 
 ####################################################################
 # PREP BOUNDARY LAYERS (Statewide and Task Force Regions)        ###
@@ -383,7 +407,7 @@ if(conditions.mask.areas){
 
 #read in patch layer in order to then clip as needed in the loop
 patch.name<-c("Treatments")
-patch.shape<-c(paste(loc.data,"ITS_2025Jul25_Polygons/appended.gdb",sep=""))
+patch.shape<-c(paste(loc.data,"ITS_2025Aug16_Data/appended.gdb",sep=""))
 patch.layer<-c("appended_poly")
 #just leave ref.rast out and it won't reproject it.
 #for treatment vectors, we'll be projecting them per dataset
