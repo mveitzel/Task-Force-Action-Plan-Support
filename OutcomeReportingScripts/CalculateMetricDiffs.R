@@ -31,8 +31,8 @@
 
 	diff<-multiply.conversion.factor(metrics[1],diff.masked.rast,conversion)
 
-	print(paste(loc.data,"Writing IntermediateRasters/DiffRasters/Diff_",metrics[1],".tif",sep=""))
-	writeRaster(diff,paste(loc.data,"IntermediateRasters/DiffRasters/Diff_",metrics[1],".tif",sep=""))
+	print(paste(loc.data,"Writing IntermediateFiles/DiffRasters/Diff_",metrics[1],".tif",sep=""))
+	writeRaster(diff,paste(loc.data,"IntermediateFiles/DiffRasters/Diff_",metrics[1],".tif",sep=""))
 
 #------------ end flame length (WUI) raster calcs -----------#
 
@@ -63,8 +63,8 @@
 
 	diff<-multiply.conversion.factor(metrics[2],diff.masked.rast,conversion)
 
-	print(paste(loc.data,"Writing IntermediateRasters/DiffRasters/Diff_",metrics[2],".tif",sep=""))
-	writeRaster(diff,paste(loc.data,"IntermediateRasters/DiffRasters/Diff_",metrics[2],".tif",sep=""),overwrite=TRUE)
+	print(paste(loc.data,"Writing IntermediateFiles/DiffRasters/Diff_",metrics[2],".tif",sep=""))
+	writeRaster(diff,paste(loc.data,"IntermediateFiles/DiffRasters/Diff_",metrics[2],".tif",sep=""),overwrite=TRUE)
 
 #------------ end flame length (Wildland) raster calcs -----------#
 
@@ -94,8 +94,8 @@
 	print("Raster masked for Utilities")
 
 	diff<-multiply.conversion.factor(metrics[3],diff.masked.rast,conversion)
-	print(paste(loc.data,"Writing IntermediateRasters/DiffRasters/Diff_",metrics[3],".tif",sep=""))
-	writeRaster(diff,paste(loc.data,"IntermediateRasters/DiffRasters/Diff_",metrics[3],".tif",sep=""))
+	print(paste(loc.data,"Writing IntermediateFiles/DiffRasters/Diff_",metrics[3],".tif",sep=""))
+	writeRaster(diff,paste(loc.data,"IntermediateFiles/DiffRasters/Diff_",metrics[3],".tif",sep=""))
 
 
 #------------ end flame length (Utilities) raster calcs -----------#
@@ -127,8 +127,8 @@
 	print("Raster masked for roads")
 
 	diff<-multiply.conversion.factor(metrics[4],diff.masked.rast,conversion)
-	print(paste(loc.data,"Writing IntermediateRasters/DiffRasters/Diff_",metrics[4],".tif",sep=""))
-	writeRaster(diff,paste(loc.data,"IntermediateRasters/DiffRasters/Diff_",metrics[4],".tif",sep=""))
+	print(paste(loc.data,"Writing IntermediateFiles/DiffRasters/Diff_",metrics[4],".tif",sep=""))
+	writeRaster(diff,paste(loc.data,"IntermediateFiles/DiffRasters/Diff_",metrics[4],".tif",sep=""))
 
 
 #------------ end flame length (Roads) raster calcs -----------#
@@ -159,8 +159,8 @@
 	print("Raster masked for forest")
 
 	diff<-multiply.conversion.factor(metrics[5],diff.masked.rast,conversion)
-	print(paste(loc.data,"Writing IntermediateRasters/DiffRasters/Diff_",metrics[5],".tif",sep=""))
-	writeRaster(diff,paste(loc.data,"IntermediateRasters/DiffRasters/Diff_",metrics[5],".tif",sep=""))
+	print(paste(loc.data,"Writing IntermediateFiles/DiffRasters/Diff_",metrics[5],".tif",sep=""))
+	writeRaster(diff,paste(loc.data,"IntermediateFiles/DiffRasters/Diff_",metrics[5],".tif",sep=""))
 
 
 #------------ end drought vulnerability raster calcs -----------#
@@ -258,8 +258,8 @@
 	print("Raster masked for shrub")
 
 	diff<-multiply.conversion.factor(metrics[6],diff.masked.rast,conversion)
-	print(paste(loc.data,"Writing IntermediateRasters/DiffRasters/Diff_",metrics[6],".tif",sep=""))
-	writeRaster(diff,paste(loc.data,"IntermediateRasters/DiffRasters/Diff_",metrics[6],".tif",sep=""),overwrite=TRUE)
+	print(paste(loc.data,"Writing IntermediateFiles/DiffRasters/Diff_",metrics[6],".tif",sep=""))
+	writeRaster(diff,paste(loc.data,"IntermediateFiles/DiffRasters/Diff_",metrics[6],".tif",sep=""),overwrite=TRUE)
 
 
 #------------ end shrub-grass ratio calcs -----------#

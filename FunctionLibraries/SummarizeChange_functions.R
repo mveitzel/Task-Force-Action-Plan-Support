@@ -402,7 +402,7 @@ zonal.calculations<-function(rster.rast,zonal.sum.name,zonal.sum.vect){
   print("Starting zonal.calculations")
   summaryzonal.time<- system.time(zonal.calcs.vect<-zonal(rster.rast,zonal.sum.vect,fun="mean",as.polygons=TRUE,na.rm=TRUE) )
   print(paste("Zonal stats calculated for ",names(rster.rast), " using ", zonal.sum.name, sep=""))
-  print(paste("Time to calculate zonal: ",round(summaryzonal.time[[1]]/60)," minutes", sep=""))
+  print(paste("Time to calculate zonal: ",round(summaryzonal.time[[1]]/60)," minute(s)", sep=""))
  
   return(zonal.calcs.vect)
 }
@@ -413,7 +413,7 @@ global.calculations<-function(rst.rast,rst.name,bound.vect,bound.name,dffnm){
 	sub.rast<-subset.raster(rst.rast,rst.name,NA,NA,bound.vect,bound.name)
 	summaryglobal.time<-system.time(global.avg<-as.numeric(global(sub.rast,"mean",na.rm=TRUE)))
 	print(paste("global stats calculated for ",names(rst.rast), " using ", bound.name, sep=""))
-  print(paste("Time to calculate global: ",round(summaryglobal.time[[1]]/60)," minutes", sep=""))
+  print(paste("Time to calculate global: ",round(summaryglobal.time[[1]]/60)," minute(s)", sep=""))
 	global.sum.vect<-bound.vect
 	global.sum.vect[,dffnm]<-global.avg
 	return(global.sum.vect)
@@ -445,7 +445,7 @@ run.zonal.statistics.one.metric<-function(){
 
 #this function filters patches for e.g. treatment types and date ranges
 
-filter.patches<-function(treat.prp.vect,pol.targ,start,end=NA){
+filter.patches<-function(treat.prp.vect,pol.targ,start.yr,end.yr="present"){
   print("Starting filter.patches")
   #choose which list of activity types to filter treatments by.  Use NA if just subsetting by year
   if(!is.na(pol.targ)){
@@ -462,13 +462,13 @@ filter.patches<-function(treat.prp.vect,pol.targ,start,end=NA){
 	      trt.subs.vect<-treat.prp.vect
     }
 
-  if(!is.na(end)){
-      trtmnts<-trt.subs.vect[format(as.Date(trt.subs.vect$ACTIVITY_END),"%Y-%m-%d")>=start &
-           format(as.Date(trt.subs.vect$ACTIVITY_END),"%Y-%m-%d")<=end ,]
-      print(paste("Subsetted between ",start," and ",end,sep=""))
+  if(end.yr!="present"){
+      trtmnts<-trt.subs.vect[format(as.Date(trt.subs.vect$ACTIVITY_END),"%Y-%m-%d")>=start.yr &
+           format(as.Date(trt.subs.vect$ACTIVITY_END),"%Y-%m-%d")<=end.yr ,]
+      print(paste("Subsetted between ",start.yr," and ",end.yr,sep=""))
     }else{
-      trtmnts<-trt.subs.vect[format(as.Date(trt.subs.vect$ACTIVITY_END),"%Y-%m-%d")>=start,]
-      print(paste("Subsetted starting at ",start," through present",sep=""))
+      trtmnts<-trt.subs.vect[format(as.Date(trt.subs.vect$ACTIVITY_END),"%Y-%m-%d")>=start.yr,]
+      print(paste("Subsetted starting at ",start.yr," through present",sep=""))
     }
   return(trtmnts)
 }
@@ -587,7 +587,7 @@ mask.subset.by.land.class<-function(rast,sbst,msks,wui,wild){
       print(names(pri.rast))
       crosstab.time<- system.time(crosstab.result<-crosstab(c(pri.rast,trt.rast)) )
       print(paste("Crosstab calc complete for ",pri.name," for policy objective ",pol.name," within ",bdry.nm,sep=""))
-      print(paste("Time to calculate crosstab: ",round(crosstab.time[[1]]/60)," minutes", sep=""))
+      print(paste("Time to calculate crosstab: ",round(crosstab.time[[1]]/60)," minute(s)", sep=""))
       result<-as.data.frame(crosstab.result)
       #convert from 30-m pixels to acres 
       result$area<-result$Freq*30*30*0.000247105

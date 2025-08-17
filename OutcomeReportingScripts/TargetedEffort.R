@@ -25,6 +25,8 @@ cecs.rast<-rast(paste(loc.data,"CECS_Data/CECS_CAWide_Vulner_TreeDieoff_SPI-2_20
 # whp is the same projection as state boundaries/TF regions, WHR/veg classifications
 whp.rast <- rast(paste(loc.data,"PriorityLayers/whp_classified_20240906.tif",sep="")) 
 
+reference.rast<-rast(paste(loc.data,"CECS_Data/CECS_CAWide_Vulner_TreeDieoff_SPI-2_2020_V250418.tif",sep=""))
+
 ca.vect<-vect(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""))
 ca.whp.vect<-check.crs.match(whp.rast,ca.vect)
 ca.cecs.vect<-check.crs.match(cecs.rast,ca.vect)
@@ -41,7 +43,7 @@ if(recalculate.masks){
   #source the file that has all the raster and vector calculations to create
   #veg, utility, road, and wui/landscape masks
   mask.time<-system.time(source(paste(loc.scripts,"FunctionLibraries/CalculateWUI_Veg_Masks.R",sep="")))
-  print(paste("Time to recalculate masks: ",round(mask.time[[1]]/60)," minutes", sep=""))
+  print(paste("Time to recalculate masks: ",round(mask.time[[1]]/60)," minute(s)", sep=""))
 }
 
 #some object names are different, so go ahead and reread them in even if you did recreate them
@@ -91,7 +93,7 @@ recalculate.priority.layers<-FALSE
 if(recalculate.priority.layers){
   #recalculate all the different priority layers
   pri.time<-system.time(source(paste(loc.scripts,"FunctionLibraries/CalculatePriorityLayers.R",sep="")))
-  print(paste("Time to recalculate priority layers: ",round(pri.time[[1]]/60)," minutes", sep=""))
+  print(paste("Time to recalculate priority layers: ",round(pri.time[[1]]/60)," minute(s)", sep=""))
 }else{
   #read in rasters
   whp.priority.rast<-rast(paste(loc.data,"PriorityLayers/FinalPriorityLayers/WHPpriority_WHP.tif",sep=""))
@@ -415,7 +417,7 @@ patch.layer<-c("appended_poly")
 #treat.vect<-read.and.check.crs.patch.vector(patch.shape[1],patch.name[1],patch.layer[1]) 
 #with no reprojection, it's in whp
 read.time<-system.time(treat.vect<-read.and.check.crs.patch.vector(patch.shape[1],patch.name[1],patch.layer[1],whp.rast))
-print(paste("Time to read in treatments: ",round(read.time[[1]]/60)," minutes", sep=""))
+print(paste("Time to read in treatments: ",round(read.time[[1]]/60)," minute(s)", sep=""))
 
 
 #######################################################
@@ -438,13 +440,13 @@ for(i in 1:length(boundary.name)){
 
     #remember for CECS layers to reproject the treatment vectors
     crop.time<-system.time(treat.prep.vect<-crop.vector.by.boundary.and.recalc.area(prepped.boundary.whp.vect,boundary.name[i],treat.vect,patch.name[1]))
-    print(paste("Time to crop and recalc areas of treatments: ",round(crop.time[[1]]/60)," minutes", sep=""))
+    print(paste("Time to crop and recalc areas of treatments: ",round(crop.time[[1]]/60)," minute(s)", sep=""))
     start.year<-"2020"
     end.year<-"2024"
 
     #water year
-    start<-paste(start.year,"-09-30",sep="")
-    end<-paste(end.year,"-10-01",sep="")
+    start.y<-paste(start.year,"-09-30",sep="")
+    end.y<-paste(end.year,"-10-01",sep="")
 
     calculate.areas<-FALSE
 
@@ -454,7 +456,7 @@ for(i in 1:length(boundary.name)){
        perims<-list()
        treat.filt.vect<-list()
        for(i in 1:length(activity.list)){
-         temp<-filter.patches(treat.prep.vect,names(activity.list)[i],start,NA)
+         temp<-filter.patches(treat.prep.vect,names(activity.list)[i],start.y,NA)
          treat.filt.vect[[names(activity.list)[i]]]<-aggregate(temp) #aggregated here
           #convert to acres
          areas[[names(activity.list)[i]]]<-expanse(treat.filt.vect[[names(activity.list)[i]]],unit="ha")*2.47105
@@ -464,12 +466,12 @@ for(i in 1:length(boundary.name)){
       treat.areas$PolicyTarget<-rownames(treat.areas)
       names(treat.areas)<-c("Area_ac","PolicyTarget")
       rownames(treat.areas)<-NULL
-      write.csv(treat.areas,paste("TreatmentAreasByPolicyTarget_",start,"_",end,"_",datestamp,".csv",sep=""))
+      write.csv(treat.areas,paste("TreatmentAreasByPolicyTarget_",start.y,"_",end,"_",datestamp,".csv",sep=""))
       # treat.perims<-as.data.frame(unlist(perims))
       # treat.perims$PolicyTarget<-rownames(treat.perims)
       # names(treat.perims)<-c("Perim_m","PolicyTarget")
       # rownames(treat.perims)<-NULL
-      # write.csv(treat.perims,paste("TreatmentPerimsByPolicyTarget_",start,"_",end,"_",datestamp,".csv",sep=""))
+      # write.csv(treat.perims,paste("TreatmentPerimsByPolicyTarget_",start.y,"_",end,"_",datestamp,".csv",sep=""))
 
     }
 
@@ -481,17 +483,22 @@ for(i in 1:length(boundary.name)){
 
     #---------------- High-Risk Shrubs -------------------------#
 
-    policy.target<-"Shrubland Health"
+    policy.target<-"ShrublandHealth"
     metric.name<-"ShrubVulnerability"
     #subset treatments by policy objective
-    filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start,NA))
-    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minutes", sep=""))
+    filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start.y,NA))
+    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minute(s)", sep=""))
+
+#function to do this, takes policy target and metric name and boundary name to construct vector file name,
+#name of the raster to rasterize by & check projection for, name of the mask (including none), 
+#name of the priority layer
+#
+    # read in correct vector
     #check CRS match with WHP projection
     treat.proj.vect<-check.crs.match(whp.rast,treat.subs.vect,"near")
     #rasterize treatment layer first
     rasterize.time<-system.time(treat.rast<-rasterize(treat.proj.vect,shrub.whp.rast)) #just use shrub extent to start with
-    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minutes", sep=""))
-
+    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minute(s)", sep=""))
 
     #then stratify as necessary - subset treatments for shrub only (spatial subset)
     treat.strat.rast<-treat.rast*shrub.whp.rast #using the WHP projection version
@@ -500,20 +507,25 @@ for(i in 1:length(boundary.name)){
     crosstb.result<-crosstab.calc(sh.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i])
     targeted.effort.results[count,]<-c(boundary.name[i],policy.target,metric.name,crosstb.result)
     write.csv(targeted.effort.results,paste("TargetedEffortResults_",datestamp,".csv",sep=""))
+
+    #write raster.proportion.calc function to compare speed with crosstab
+
+#
+
     count<-count+1
 
     #---------------- Drought Vulnerability, forest -------------------------#
 
-    policy.target<-"Forest Health"
+    policy.target<-"ForestHealth"
     metric.name<-"DroughtVulnerability"
     #subset treatments by policy objective
-    filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start,NA))
-    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minutes", sep=""))
+    filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start.y,NA))
+    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minute(s)", sep=""))
     #check CRS match with CECS projection
     treat.proj.vect<-check.crs.match(cecs.rast,treat.subs.vect,"near")
     #rasterize treatment layer first
     rasterize.time<-system.time(treat.rast<-rasterize(treat.proj.vect,cecs.rast))
-    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minutes", sep=""))
+    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minute(s)", sep=""))
     #then stratify as necessary - subset treatments for forest only (spatial subset)
     treat.strat.rast<-treat.rast*forest.cecs.rast #using the CECS projection version
     
@@ -525,16 +537,16 @@ for(i in 1:length(boundary.name)){
 
     # #---------------- WHP, Wildland ---------------------------#
 
-    policy.target<-"Wildland Fire Risk"
+    policy.target<-"WildlandFireRisk"
     metric.name<-"WildfireHazardPotentialWildland"
     #treatment type/activity type filter
-    filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start,NA))
-    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minutes", sep=""))
+    filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start.y,NA))
+    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minute(s)", sep=""))
     #check CRS match with WHP projection
     treat.proj.vect<-check.crs.match(whp.rast,treat.subs.vect,"near")
     #rasterize treatment layer first
     rasterize.time<-system.time(treat.rast<-rasterize(treat.proj.vect,whp.rast))
-    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minutes", sep=""))
+    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minute(s)", sep=""))
     #then stratify as necessary - subset treatments for wildland only (spatial subset)
     treat.strat.rast<-treat.rast*wild.whp.rast #using the WHP projection version
 
@@ -545,16 +557,16 @@ for(i in 1:length(boundary.name)){
     count<-count+1
 
     #-----------------FLAME LENGTH, WILDLAND--------------#
-    policy.target<-"Wildland Fire Risk"
+    policy.target<-"WildlandFireRisk"
     metric.name<-"FlameLengthAbove8FtWildland"
     #treatment type/activity type filter
-    filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start,NA))
-    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minutes", sep=""))
+    filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start.y,NA))
+    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minute(s)", sep=""))
     #check CRS match with CECS projection 
     treat.proj.vect<-check.crs.match(cecs.rast,treat.subs.vect,"near")
     #rasterize treatment layer first
     rasterize.time<-system.time(treat.rast<-rasterize(treat.proj.vect,cecs.rast))
-    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minutes", sep=""))
+    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minute(s)", sep=""))
     #then stratify as necessary - subset treatments for wildland only (spatial subset)
     treat.strat.rast<-treat.rast*wild.cecs.rast #using the CECS projection version
 
@@ -567,16 +579,16 @@ for(i in 1:length(boundary.name)){
  
     #---------------- WHP, WUI ---------------------------#
 
-    policy.target<-"WUI Fire Risk"
+    policy.target<-"WUIFireRisk"
     metric.name<-"WildfireHazardPotentialWUI"
     #treatment type/activity type filter
-    filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start,NA))
-    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minutes", sep=""))
+    filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start.y,NA))
+    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minute(s)", sep=""))
     #check CRS match with WHP projection
     treat.proj.vect<-check.crs.match(whp.rast,treat.subs.vect,"near")
     #rasterize treatment layer first
     rasterize.time<-system.time(treat.rast<-rasterize(treat.proj.vect,whp.rast))
-    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minutes", sep=""))
+    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minute(s)", sep=""))
     #then stratify as necessary - subset treatments for wui only (spatial subset)
     treat.strat.rast<-treat.rast*wui.whp.rast #using the WHP projection version
 
@@ -587,16 +599,16 @@ for(i in 1:length(boundary.name)){
     count<-count+1
 
     #-----------------FLAME LENGTH, WUI--------------#
-    policy.target<-"WUI Fire Risk"
+    policy.target<-"WUIFireRisk"
     metric.name<-"FlameLengthAbove8FtWUI"
     #treatment type/activity type filter
-    filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start,NA))
-    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minutes", sep=""))
+    filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start.y,NA))
+    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minute(s)", sep=""))
     #check CRS match with CECS projection
     treat.proj.vect<-check.crs.match(cecs.rast,treat.subs.vect,"near")
     #rasterize treatment layer first
     rasterize.time<-system.time(treat.rast<-rasterize(treat.proj.vect,cecs.rast))
-    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minutes", sep=""))
+    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minute(s)", sep=""))
     #then stratify as necessary - subset treatments for wui only (spatial subset)
     treat.strat.rast<-treat.rast*wui.cecs.rast #using the CECS projection version
 
@@ -609,16 +621,16 @@ for(i in 1:length(boundary.name)){
 
     #---------------- WHP, Utility corridors ---------------------------#
 
-    policy.target<-"Fire Risk in Utility Corridors"
+    policy.target<-"FireRiskinUtilityCorridors"
     metric.name<-"WildfireHazardPotentialUtility"
     #treatment type/activity type filter
-    filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start,NA))
-    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minutes", sep=""))
+    filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start.y,NA))
+    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minute(s)", sep=""))
     #check CRS match with WHP projection
     treat.proj.vect<-check.crs.match(whp.rast,treat.subs.vect,"near")
     #rasterize treatment layer
     rasterize.time<-system.time(treat.rast<-rasterize(treat.proj.vect,whp.rast))
-    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minutes", sep=""))
+    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minute(s)", sep=""))
     #subset by utility corridors
     treat.strat.rast<-treat.rast*rdtr.buff.whp.rast #using the WHP projection version
   
@@ -629,16 +641,16 @@ for(i in 1:length(boundary.name)){
     count<-count+1
 
     #-----------------FLAME LENGTH, Utility corridors --------------#
-    policy.target<-"Fire Risk in Utility Corridors"
+    policy.target<-"FireRiskinUtilityCorridors"
     metric.name<-"FlameLengthAbove8FtUtilities"
     #treatment type/activity type filter
-    filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start,NA))
-    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minutes", sep=""))
+    filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start.y,NA))
+    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minute(s)", sep=""))
     #check CRS match with CECS projection
     treat.proj.vect<-check.crs.match(cecs.rast,treat.subs.vect,"near")
     #rasterize treatment layer 
     rasterize.time<-system.time(treat.rast<-rasterize(treat.proj.vect,cecs.rast))
-    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minutes", sep=""))
+    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minute(s)", sep=""))
     #subset by utility corridors
     treat.strat.rast<-treat.rast*rdtr.buff.cecs.rast #using the CECS projection version
 
@@ -653,11 +665,11 @@ for(i in 1:length(boundary.name)){
     policy.target<-"Habitat"
     metric.name<-"CriticalHabitat"
     #subset treatments by policy objective
-    filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start,NA))
-    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minutes", sep=""))
+    filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start.y,NA))
+    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minute(s)", sep=""))
     #rasterize treatment layer
     rasterize.time<-system.time(treat.strat.rast<-rasterize(treat.subs.vect,whp.rast))
-    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minutes", sep=""))
+    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minute(s)", sep=""))
     
     #Do crosstab
     crosstab.result<-crosstab.calc(cr.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i])
@@ -670,11 +682,11 @@ for(i in 1:length(boundary.name)){
     policy.target<-"Water"
     metric.name<-"Hydropower"
     #subset treatments by policy objective
-    filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start,NA))
-    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minutes", sep=""))
+    filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start.y,NA))
+    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minute(s)", sep=""))
     #rasterize treatment layer
     rasterize.time<-system.time(treat.strat.rast<-rasterize(treat.subs.vect,whp.rast))
-    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minutes", sep=""))
+    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minute(s)", sep=""))
     
     #Do crosstab
     crosstab.result<-crosstab.calc(hy.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i])
@@ -687,11 +699,11 @@ for(i in 1:length(boundary.name)){
     policy.target<-"Water"
     metric.name<-"DebrisFlow"
     #subset treatments by policy objective
-    filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start,NA))
-    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minutes", sep=""))
+    filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start.y,NA))
+    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minute(s)", sep=""))
     #rasterize treatment layer
     rasterize.time<-system.time(treat.strat.rast<-rasterize(treat.subs.vect,whp.rast))
-    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minutes", sep=""))
+    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minute(s)", sep=""))
     
     #Do crosstab
     crosstab.result<-crosstab.calc(de.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i])

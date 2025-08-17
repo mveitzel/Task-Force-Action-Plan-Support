@@ -17,6 +17,11 @@ source(paste(loc.scripts,"FunctionLibraries/SummarizeChange_functions.R",sep="")
 
 reference.rast<-rast(paste(loc.data,"CECS_Data/CECS_CAWide_Vulner_TreeDieoff_SPI-2_2020_V250418.tif",sep=""))
 
+# CECS layers all have the same CRS and extent
+cecs.rast<-rast(paste(loc.data,"CECS_Data/CECS_CAWide_Vulner_TreeDieoff_SPI-2_2020_V250614.tif",sep=""))
+# whp is the same projection as state boundaries/TF regions, WHR/veg classifications
+whp.rast <- rast(paste(loc.data,"PriorityLayers/whp_classified_20240906.tif",sep="")) 
+
 ############### GLOBAL PARAMETERS ###################
 
 #date stamp of this set of results - appended to all outputs to avoid overwriting older versions
@@ -28,8 +33,8 @@ start.year<-"2020"
 end.year<-"2024"
 
 #water year
-start<-paste(start.year,"-09-30",sep="")
-end<-paste(end.year,"-10-01",sep="")
+start.y<-paste(start.year,"-09-30",sep="")
+end.y<-paste(end.year,"-10-01",sep="")
 
 metrics<-c( "FlameLengthWUI",
 			"FlameLengthLandscape",
@@ -50,7 +55,7 @@ calculate.metrics<-FALSE
 
 if(calculate.metrics){
     rast.time<-system.time(source(paste(loc.scripts,"FunctionLibraries/CalculateMetricDiffs.R",sep="")))
-	print(paste("Time to process and difference rasters: ",round(rast.time[[1]]/60)," minutes", sep=""))
+	print(paste("Time to process and difference rasters: ",round(rast.time[[1]]/60)," minute(s)", sep=""))
 }
 
 
@@ -80,9 +85,6 @@ boundary.name<-c("South")
 #                   paste(loc.scripts,"ReferenceFiles/Region_CentralCoast.shp",sep=""))
 # boundary.name<-c("CA","South","Sierra","North","Central")
 
-#boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/Region_Sierra.shp",sep=""))
-#boundary.name<-c("Sierra")
-
 vect.shape<-c(paste(loc.scripts,"ReferenceFiles/HUC12.shp",sep=""))
 vect.name<-c("HUC12")
 
@@ -91,9 +93,9 @@ patch.shape<-c(paste(loc.data,"ITS_2025Aug16_Data/appended.gdb",sep=""),paste(lo
 patch.layer<-c("appended_poly","firep24_1")
 
 read.time<-system.time(treatments<-read.and.check.crs.patch.vector(patch.shape[1],patch.name[1],patch.layer[1],reference.rast))
-print(paste("Time to read treatments: ",round(read.time[[1]]/60)," minutes", sep=""))
+print(paste("Time to read treatments: ",round(read.time[[1]]/60)," minute(s)", sep=""))
 read.time<-system.time(fires<-read.and.check.crs.patch.vector(patch.shape[2],patch.name[2],patch.layer[2],reference.rast))
-print(paste("Time to read fires: ",round(read.time[[1]]/60)," minutes", sep=""))
+print(paste("Time to read fires: ",round(read.time[[1]]/60)," minute(s)", sep=""))
 
 #these are necessary because to do the aggregation, you need to intersect both vectors, and then
 # have a column name (agg.code) to do the aggregation/dissolve on.
@@ -113,27 +115,32 @@ for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each
 		prepped.boundary.vect$Region<-"AllCA"
 	}	
 
+#pull this out into its own looped script
+
 #	read.time<-system.time(zonal.summary.area.vect<-read.vector.and.check.crs(prepped.boundary.vect,vect.shape,vect.name))
-#	print(paste("Time to read zonal summary area: ",round(read.time[[1]]/60)," minutes", sep=""))
+#	print(paste("Time to read zonal summary area: ",round(read.time[[1]]/60)," minute(s)", sep=""))
 #	prep.time<-system.time(prepped.zonal.summary.area.vect<-crop.vector.by.boundary.and.recalc.area(prepped.boundary.vect,boundary.name[k],zonal.summary.area.vect,vect.name))
-#	print(paste("Time to prep zonal summary area: ",round(prep.time[[1]]/60)," minutes", sep=""))
+#	print(paste("Time to prep zonal summary area: ",round(prep.time[[1]]/60)," minute(s)", sep=""))
 
 #in theory, here I should also filter treatments and therefore the aggregating vectors should be inside the loop
 #but it takes a very long time
+#add the filtering, based on the metric
 
 	agg.time<-system.time(agg.fires.vect.region<-intersect.and.aggregate.vectors(
 		prepped.boundary.vect,boundary.name[k],fires,patch.name[2],agg.name[1],agg.code[1],prepped.boundary.vect,boundary.name[k]))
-	print(paste("Time to aggregate fires by region: ",round(agg.time[[1]]/60)," minutes", sep=""))
+	print(paste("Time to aggregate fires by region: ",round(agg.time[[1]]/60)," minute(s)", sep=""))
 #	agg.time<-system.time(agg.fires.vect.huc<-intersect.and.aggregate.vectors(
 #		prepped.zonal.summary.area.vect,vect.name,fires,patch.name[2],agg.name[2],agg.code[2],prepped.boundary.vect,boundary.name[k]))
-#	print(paste("Time to aggregate fires by HUC12: ",round(agg.time[[1]]/60)," minutes", sep=""))
+#	print(paste("Time to aggregate fires by HUC12: ",round(agg.time[[1]]/60)," minute(s)", sep=""))
 	agg.time<-system.time(agg.treatments.vect.region<-intersect.and.aggregate.vectors(
 		prepped.boundary.vect,boundary.name[k],treatments,patch.name[1],agg.name[1],agg.code[1],prepped.boundary.vect,boundary.name[k]))
-	print(paste("Time to aggregate treatments by region: ",round(agg.time[[1]]/60)," minutes", sep=""))
+	print(paste("Time to aggregate treatments by region: ",round(agg.time[[1]]/60)," minute(s)", sep=""))
 #	agg.time<-system.time(agg.treatments.vect.huc<-intersect.and.aggregate.vectors(
 #		prepped.zonal.summary.area.vect,vect.name,treatments,patch.name[1],agg.name[2],agg.code[2],prepped.boundary.vect,boundary.name[k]))
-#	print(paste("Time to aggregate treatments by HUC12: ",round(agg.time[[1]]/60)," minutes", sep=""))
+#	print(paste("Time to aggregate treatments by HUC12: ",round(agg.time[[1]]/60)," minute(s)", sep=""))
 
+
+#and in its place, put in a list of filenames so it knows which ones to pull for which analyses
 
 	########### END READ IN AND PROCESS VECTORS ##############
 
@@ -148,7 +155,7 @@ for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each
 		metric.name<-metrics[i]
 		#read in the appropriate raster
 		print(paste("Reading: ",loc.data,"Diff_",metric.name,".tif",sep=""))
-		diff.rast<-rast(paste(loc.data,"IntermediateRasters/DiffRasters/Diff_",metric.name,".tif",sep=""))
+		diff.rast<-rast(paste(loc.data,"IntermediateFiles/DiffRasters/Diff_",metric.name,".tif",sep=""))
 
 
 		# #################### ZONAL CALCULATIONS #######################
