@@ -21,11 +21,14 @@
   ##          Set any thresholds, add any buffers, etc
   # the layer was vetted using the 2012-2014 drought, trees that did die then had a drought
   # vulnerability higher than 10,000
+  # John Battles compared the distribution of drought vulnerability values to relative Stand Density Index Max values, and 
+  #found that the "Imminent Mortality" range (>= 60 rSDImax) is the top 14.5%.  So the top 14.5% of DV values correspond to
+  #a threshold of 7310
   dv.priority.rast<-dv.proj.rast
-  dv.priority.rast[dv.proj.rast> 10000]<-1
+  dv.priority.rast[dv.proj.rast>= 7310]<-1
   dv.priority.rast[dv.priority.rast!=1]<-0
   dv.priority.rast[is.na(dv.priority.rast)]<-0
-  writeRaster(dv.priority.rast,paste(loc.data,"PriorityLayers/FinalPriorityLayers/DroughtVulnerabilityPriority_CECS.tif",sep=""))
+  writeRaster(dv.priority.rast,paste(loc.data,"PriorityLayers/FinalPriorityLayers/DroughtVulnerabilityPriority_CECS.tif",sep=""),overwrite=TRUE)
 
   # #---------- Flame Length read in and process---------*
 

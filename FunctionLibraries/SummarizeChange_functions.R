@@ -582,6 +582,22 @@ mask.subset.by.land.class<-function(rast,sbst,msks,wui,wild){
 }
 
 
+#to get a total here, instead of treatments for trt.rast, put in the mask raster name
+raster.math.proportion.calc<-function(pri.rast,pri.name,trt.rast,pol.name,bdry.nm){
+	print(names(pri.rast))
+  total.area<-pri.rast*trt.rast
+  priority.rast<-total.area
+  priority.rast[priority.rast==0]<-NA
+  print("Calculating global sum of priority area within total area")
+  #convert from 30-m pixels to acres 
+  priority<-as.numeric(global(priority.rast,"notNA"))*30*30*0.000247105
+  print("Calculating global sum of total area")
+  #convert from 30-m pixels to acres 
+  total<-as.numeric(global(total.area,"notNA"))*30*30*0.000247105
+  print(paste("Raster math calc complete for ",pri.name," for policy objective ",pol.name," within ",bdry.nm,sep=""))
+  return(c(priority,total,priority/total))
+}
+
     crosstab.calc<-function(pri.rast,pri.name,trt.rast,pol.name,bdry.nm){
       names(pri.rast)<-pri.name
       print(names(pri.rast))
@@ -596,6 +612,56 @@ mask.subset.by.land.class<-function(rast,sbst,msks,wui,wild){
       #print(c(result$area[result[,pri.name]==1],sum(result$area),prop.pri))
       return(c(result$area[result[,pri.name]==1],sum(result$area),prop.pri))
     }
+
+
+
+#function to do this, takes policy target and metric name and boundary name to construct vector file name,
+#name of the raster to rasterize by & check projection for, name of the mask (including none), 
+#name of the priority layershrub.whp.rast
+#doesn't return anything but writes to the file.
+#if there's no mask, use 'none' for the mask name and leave the last argument blank.
+rasterize.mask.calculate.proportions<-function(pr.rast,m.name,pol.t,b.name,ref.rast,msk.name="none",msk.rast=NULL){
+    print("Starting rasterize.mask.calculate.proportions")
+    #read in the appropriate pre-filtered, pre-aggregated vector file
+    agg.treat.vect<-vect(paste(loc.data,"IntermediateFiles/AggregatedVectors/Treatments_",
+      b.name,"_",pol.t,"_",start.year,"-present.shp",sep=""))
+    print(paste(loc.data,"IntermediateFiles/AggregatedVectors/Treatments_",
+      b.name,"_",pol.t,"_",start.year,"-present.shp Read in",sep=""))
+    #check CRS match with appropriate projection
+    treat.proj.vect<-check.crs.match(ref.rast,agg.treat.vect)
+    #rasterize treatment layer first
+    print("Rasterizing treatments")
+    rasterize.time<-system.time(treat.rast<-rasterize(treat.proj.vect,ref.rast)) 
+    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minute(s)", sep=""))
+
+    if(msk.name!="none"){
+      print("Stratifying using mask")
+      #then stratify as necessary - subset treatments for appripriate mask
+      treat.strat.rast<-treat.rast*msk.rast #using the appropriate projection version
+      print("Completed stratification using mask")
+    } else {
+      treat.strat.rast<-treat.rast
+      print("No mask specified")
+    }
+
+    print("Starting raster math calculation of priority proportions in treatments")
+    rast.math.time<-system.time(rastmath.result<-raster.math.proportion.calc(pr.rast, m.name,treat.strat.rast,pol.t , b.name))
+    print(paste("Time to do raster math for treatments: ",round(rast.math.time[[1]]/60)," minute(s)", sep=""))
+    print(rastmath.result)
+    targeted.effort.results[count,]<-c(b.name,pol.t,m.name,msk.name,"Treatments",rastmath.result)
+    write.csv(targeted.effort.results,paste("TargetedEffortResults_",datestamp,".csv",sep=""))
+    print("Wrote treatment area & priority proportions results to file")
+    count<-count+1
+    
+    print(paste("Starting raster math calculation of priority proportions in ",msk.name,sep=""))
+    rast.math.time<-system.time(rastmath.total.result<-raster.math.proportion.calc(pr.rast, m.name,msk.rast,pol.t , b.name))
+    print(paste("Time to do raster math for ",msk.name,": ",round(rast.math.time[[1]]/60)," minute(s)", sep=""))
+    print(rastmath.total.result)
+    targeted.effort.results[count,]<-c(b.name,pol.t,m.name,msk.name,"TotalArea",rastmath.total.result)
+    write.csv(targeted.effort.results,paste("TargetedEffortResults_",datestamp,".csv",sep=""))
+    print(paste("Wrote ",msk.name," & priority proportions results to file",sep=""))
+    count<-count+1
+  }
 
 ################ END FUNCTIONS #######################
 ##########################################################

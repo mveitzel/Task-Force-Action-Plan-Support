@@ -4,7 +4,7 @@
 
 timer.start<-Sys.time()
 
-datestamp<-"2025Aug16"
+datestamp<-"2025Aug18"
 
 #scripts and important reference layers are in the github repo
 loc.scripts<-"D:/GitRepos/BattlesLabRepos/Task-Force-Action-Plan-Support/"
@@ -195,7 +195,7 @@ if(conditions.mask.areas){
         as.numeric(global(temp,"sum")*30*30*0.000247105))
   temp<-dv.priority.rast
   temp[is.na(temp)]<-0
-  current.conditions[3,]<-c("Forest Health","Drought Vulnerability", "CECS","Vulnerability Index >10,000",
+  current.conditions[3,]<-c("Forest Health","Drought Vulnerability", "CECS","Vulnerability Index >=7,310",
         as.numeric(global(temp,"sum")*30*30*0.000247105))
   current.conditions[4,]<-c("Shrubland Health","Road Proximity","CALFIRE WHR & CALTRANS Roads","500 ft road buffer in shrublands", 
         as.numeric(global(sh.priority.rast,"sum")*30*30*0.000247105))
@@ -232,161 +232,6 @@ if(conditions.mask.areas){
   
   write.csv(mask.areas,paste("MaskAreas_",datestamp,".csv",sep=""))
 }
-
-priority.areas<-FALSE
-if(priority.areas){
-  all.priority.areas<-data.frame(Priority=character(),Region=character(),Proportion=numeric(),stringsAsFactors=FALSE)
-
-  temp<-sh.priority.rast*shrub.whp.rast
-  priority.rast<-temp
-  priority.rast[priority.rast==0]<-NA
-  priority<-as.numeric(global(priority.rast,"notNA"))
-  total<-as.numeric(global(temp,"notNA"))
-  all.priority.areas[1,]<-c("ShrubVulnerability","AllCA",priority/total)
-
-  temp<-dv.priority.rast*forest.cecs.rast
-  priority.rast<-temp
-  priority.rast[priority.rast==0]<-NA
-  priority<-as.numeric(global(priority.rast,"notNA"))
-  total<-as.numeric(global(temp,"notNA"))
-  all.priority.areas[2,]<-c("DroughtVulnerability","AllCA",priority/total)
-
-  temp<-cr.priority.rast
-  priority.rast<-temp
-  priority.rast[priority.rast==0]<-NA
-  priority<-as.numeric(global(priority.rast,"notNA"))
-  total<-as.numeric(global(temp,"notNA"))
-  all.priority.areas[3,]<-c("CriticalHabitat","AllCA",priority/total)
-
-  temp<-de.priority.rast
-  priority.rast<-temp
-  priority.rast[priority.rast==0]<-NA
-  priority<-as.numeric(global(priority.rast,"notNA"))
-  total<-as.numeric(global(temp,"notNA"))
-  all.priority.areas[4,]<-c("DebrisFlow","AllCA",priority/total)
-
-  temp<-hy.priority.rast
-  priority.rast<-temp
-  priority.rast[priority.rast==0]<-NA
-  priority<-as.numeric(global(priority.rast,"notNA"))
-  total<-as.numeric(global(temp,"notNA"))
-  all.priority.areas[5,]<-c("Hydropower","AllCA",priority/total)
-
-  temp<-whp.priority.rast*wui.whp.rast
-  priority.rast<-temp
-  priority.rast[priority.rast==0]<-NA
-  priority<-as.numeric(global(priority.rast,"notNA"))
-  total<-as.numeric(global(temp,"notNA"))
-  all.priority.areas[6,]<-c("WHP-WUI","AllCA",priority/total)
-
- temp<-whp.priority.rast*wild.whp.rast
-  priority.rast<-temp
-  priority.rast[priority.rast==0]<-NA
-  priority<-as.numeric(global(priority.rast,"notNA"))
-  total<-as.numeric(global(temp,"notNA"))
-  all.priority.areas[7,]<-c("WHP-Wild","AllCA",priority/total)
-
- temp<-whp.priority.rast*rdtr.buff.whp.rast
-  priority.rast<-temp
-  priority.rast[priority.rast==0]<-NA
-  priority<-as.numeric(global(priority.rast,"notNA"))
-  total<-as.numeric(global(temp,"notNA"))
-  all.priority.areas[8,]<-c("WHP-Utilities","AllCA",priority/total)
-
-  #For socal:
-  sc.vect<-vect(paste(loc.scripts,"ReferenceFiles/Region_SouthernCA.shp",sep=""))
-  sc.whp.vect<-check.crs.match(whp.rast,sc.vect)
-  sc.cecs.vect<-check.crs.match(cecs.rast,sc.vect)
-
-
-  sh.priority.sc.rast<-crop(sh.priority.rast,sc.whp.vect)
-  sh.priority.sc.rast<-mask(sh.priority.sc.rast,sc.whp.vect)
-  shrub.sc.whp.rast<-crop(shrub.whp.rast,sc.whp.vect)
-  shrub.sc.whp.rast<-mask(shrub.sc.whp.rast,sc.whp.vect)
-  temp<-sh.priority.sc.rast*shrub.sc.whp.rast
-  priority.rast<-temp
-  priority.rast[priority.rast==0]<-NA
-  priority<-as.numeric(global(priority.rast,"notNA"))
-  total<-as.numeric(global(temp,"notNA"))
-  all.priority.areas[9,]<-c("ShrubVulnerability","SoCal",priority/total)
-
-  dv.priority.sc.rast<-crop(dv.priority.rast,sc.cecs.vect)
-  dv.priority.sc.rast<-mask(dv.priority.sc.rast,sc.cecs.vect)
-  forest.sc.cecs.rast<-crop(forest.cecs.rast,sc.cecs.vect)
-  forest.sc.cecs.rast<-mask(forest.sc.cecs.rast,sc.cecs.vect)
-  temp<-dv.priority.sc.rast*forest.sc.cecs.rast
-  priority.rast<-temp
-  priority.rast[priority.rast==0]<-NA
-  priority<-as.numeric(global(priority.rast,"notNA"))
-  total<-as.numeric(global(temp,"notNA"))
-  all.priority.areas[10,]<-c("DroughtVulnerability","SoCal",priority/total)
-
-  cr.priority.sc.rast<-crop(cr.priority.rast,sc.whp.vect)
-  cr.priority.sc.rast<-mask(cr.priority.sc.rast,sc.whp.vect)
-  temp<-cr.priority.sc.rast
-  priority.rast<-temp
-  priority.rast[priority.rast==0]<-NA
-  priority<-as.numeric(global(priority.rast,"notNA"))
-  total<-as.numeric(global(temp,"notNA"))
-  all.priority.areas[11,]<-c("CriticalHabitat","SoCal",priority/total)
-
-  de.priority.sc.rast<-crop(de.priority.rast,sc.whp.vect)
-  de.priority.sc.rast<-mask(de.priority.sc.rast,sc.whp.vect)
-  temp<-de.priority.sc.rast
-  priority.rast<-temp
-  priority.rast[priority.rast==0]<-NA
-  priority<-as.numeric(global(priority.rast,"notNA"))
-  total<-as.numeric(global(temp,"notNA"))
-  all.priority.areas[12,]<-c("DebrisFlow","SoCal",priority/total)
-
-  hy.priority.sc.rast<-crop(hy.priority.rast,sc.whp.vect)
-  hy.priority.sc.rast<-mask(hy.priority.sc.rast,sc.whp.vect)
-  temp<-hy.priority.sc.rast
-  priority.rast<-temp
-  priority.rast[priority.rast==0]<-NA
-  priority<-as.numeric(global(priority.rast,"notNA"))
-  total<-as.numeric(global(temp,"notNA"))
-  all.priority.areas[13,]<-c("Hydropower","SoCal",priority/total)
-
-  whp.priority.sc.rast<-crop(whp.priority.rast,sc.whp.vect)
-  whp.priority.sc.rast<-mask(whp.priority.sc.rast,sc.whp.vect)
-  wui.sc.whp.rast<-crop(wui.whp.rast,sc.whp.vect)
-  wui.sc.whp.rast<-mask(wui.sc.whp.rast,sc.whp.vect)
-  temp<-whp.priority.sc.rast*wui.sc.whp.rast
-  priority.rast<-temp
-  priority.rast[priority.rast==0]<-NA
-  priority<-as.numeric(global(priority.rast,"notNA"))
-  total<-as.numeric(global(temp,"notNA"))
-  all.priority.areas[14,]<-c("WHP-WUI","SoCal",priority/total)
-
-  wild.sc.whp.rast<-crop(wild.whp.rast,sc.whp.vect)
-  wild.sc.whp.rast<-mask(wild.sc.whp.rast,sc.whp.vect)
-  temp<-whp.priority.sc.rast*wild.sc.whp.rast
-  priority.rast<-temp
-  priority.rast[priority.rast==0]<-NA
-  priority<-as.numeric(global(priority.rast,"notNA"))
-  total<-as.numeric(global(temp,"notNA"))
-  all.priority.areas[15,]<-c("WHP-Wild","SoCal",priority/total)
-
-  rdtr.buff.sc.whp.rast<-crop(rdtr.buff.whp.rast,sc.whp.vect)
-  rdtr.buff.sc.whp.rast<-mask(rdtr.buff.sc.whp.rast,sc.whp.vect)
-  temp<-whp.priority.sc.rast*rdtr.buff.sc.whp.rast
-  priority.rast<-temp
-  priority.rast[priority.rast==0]<-NA
-  priority<-as.numeric(global(priority.rast,"notNA"))
-  total<-as.numeric(global(temp,"notNA"))
-  all.priority.areas[16,]<-c("WHP-Utilities","SoCal",priority/total)
-
-  write.csv(all.priority.areas,paste("AllPriorityAreas_",datestamp,"AllCA.csv",sep=""))
-}
-
-#could do this elegantly as a crosstab
-#    crosstb.result<-crosstab.calc(sh.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i])
-#    targeted.effort.results[count,]<-c(boundary.name[i],policy.target,metric.name,crosstb.result)
-#    write.csv(targeted.effort.results,paste("TargetedEffortResults_",datestamp,".csv",sep=""))
-
-#or this calc could be a lot faster than the crosstab... 
-
 
 ####################################################################
 # PREP BOUNDARY LAYERS (Statewide and Task Force Regions)        ###
@@ -436,6 +281,7 @@ if(aggregate.vectors){
 
 #set up the data frame for the outputs
 targeted.effort.results<-data.frame(Boundary=character(),PolicyTarget=character(),Metric=character(),
+                                    MaskName=character(),AreaType=character(),
                                     PriorityArea=numeric(),TotalTreatmentArea=numeric(),
                                     ProportionOfTreatments=numeric(),stringsAsFactors=FALSE)
 
@@ -450,259 +296,193 @@ for(i in 1:length(boundary.name)){
 
     policy.target<-"ShrublandHealth"
     metric.name<-"ShrubVulnerability"
+    mask.name<-"Shrub"
+    r.rast<-whp.rast
+    m.rast<-shrub.whp.rast
+    p.rast<-sh.priority.rast
 
-#function to do this, takes policy target and metric name and boundary name to construct vector file name,
-#name of the raster to rasterize by & check projection for, name of the mask (including none), 
-#name of the priority layer
-#
-    #read in the appropriate pre-filtered, pre-aggregated vector file
-    agg.treat.vect<-vect(paste(loc.data,"IntermediateFiles/AggregatedVectors/Treatments_",
-      boundary.name[i],"_",policy.target,"_",start.year,"-present.shp",sep=""))
-
-    #check CRS match with WHP projection
-    treat.proj.vect<-check.crs.match(whp.rast,agg.treat.vect)
-    #rasterize treatment layer first
-    rasterize.time<-system.time(treat.rast<-rasterize(treat.proj.vect,whp.rast)) 
-    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minute(s)", sep=""))
-
-    #then stratify as necessary - subset treatments for shrub only (spatial subset)
-    treat.strat.rast<-treat.rast*shrub.whp.rast #using the WHP projection version
-
-#to get a total here, instead of treatments for trt.rast, put in the mask raster name
-raster.math.proportion.calc<-function(pri.rast,pri.name,trt.rast,pol.name,bdry.nm){
-  total.area<-pri.rast*trt.rast
-  priority.rast<-total.area
-  priority.rast[priority.rast==0]<-NA
-  print("Calculating global sum of priority area within total area")
-  #convert from 30-m pixels to acres 
-  priority<-as.numeric(global(priority.rast,"notNA"))*30*30*0.000247105
-  print("Calculating global sum of total area")
-  #convert from 30-m pixels to acres 
-  total<-as.numeric(global(total.area,"notNA"))*30*30*0.000247105
-  print(paste("Raster math calc complete for ",pri.name," for policy objective ",pol.name," within ",bdry.nm,sep=""))
-  return(c(priority,total,priority/total))
-}
-
-rast.math.time<-system.time(rastmath.result<-raster.math.proportion.calc(sh.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i]))
-    print(paste("Time to do raster math: ",round(rast.math.time[[1]]/60)," minute(s)", sep=""))
-    print(rastmath.result)
-rast.math.time<-system.time(rastmath.total.result<-raster.math.proportion.calc(sh.priority.rast, metric.name,shrub.whp.rast,policy.target , boundary.name[i]))
-    print(paste("Time to do raster math: ",round(rast.math.time[[1]]/60)," minute(s)", sep=""))
-    print(rastmath.result)
-
-
-    #Do crosstab
-    crosstab.result<-crosstab.calc(sh.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i])
-print(crosstab.result)
-
-    targeted.effort.results[count,]<-c(boundary.name[i],policy.target,metric.name,crosstb.result)
-    write.csv(targeted.effort.results,paste("TargetedEffortResults_",datestamp,".csv",sep=""))
-
-    #write raster.proportion.calc function to compare speed with crosstab
-
-#
-
-    count<-count+1
+    rast.calcs.time<-system.time(rasterize.mask.calculate.proportions(p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
+    print(paste("Total time to do raster math for ",policy.target," using ",metric.name," in ",mask.name,": ",round(rast.calcs.time[[1]]/60)," minute(s)", sep=""))
 
     #---------------- Drought Vulnerability, forest -------------------------#
 
     policy.target<-"ForestHealth"
     metric.name<-"DroughtVulnerability"
-    #subset treatments by policy objective
-    filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start.y,NA))
-    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minute(s)", sep=""))
-    #check CRS match with CECS projection
-    treat.proj.vect<-check.crs.match(cecs.rast,treat.subs.vect,"near")
-    #rasterize treatment layer first
-    rasterize.time<-system.time(treat.rast<-rasterize(treat.proj.vect,cecs.rast))
-    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minute(s)", sep=""))
-    #then stratify as necessary - subset treatments for forest only (spatial subset)
-    treat.strat.rast<-treat.rast*forest.cecs.rast #using the CECS projection version
-    
-    #Do crosstab
-    crosstab.result<-crosstab.calc(dv.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i])
-    targeted.effort.results[count,]<-c(boundary.name[i],policy.target,metric.name,crosstab.result)
-    write.csv(targeted.effort.results,paste("TargetedEffortResults_",datestamp,".csv",sep=""))
-    count<-count+1
+    mask.name<-"Forest"
+    r.rast<-cecs.rast
+    m.rast<-forest.cecs.rast
+    p.rast<-dv.priority.rast
 
-    # #---------------- WHP, Wildland ---------------------------#
+    rast.calcs.time<-system.time(rasterize.mask.calculate.proportions(p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
+    print(paste("Total time to do raster math for ",policy.target," using ",metric.name," in ",mask.name,": ",round(rast.calcs.time[[1]]/60)," minute(s)", sep=""))
+
+    # #---------------- WHP, Landscape ---------------------------#
 
     policy.target<-"WildlandFireRisk"
     metric.name<-"WildfireHazardPotentialWildland"
-    #treatment type/activity type filter
-    filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start.y,NA))
-    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minute(s)", sep=""))
-    #check CRS match with WHP projection
-    treat.proj.vect<-check.crs.match(whp.rast,treat.subs.vect,"near")
-    #rasterize treatment layer first
-    rasterize.time<-system.time(treat.rast<-rasterize(treat.proj.vect,whp.rast))
-    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minute(s)", sep=""))
-    #then stratify as necessary - subset treatments for wildland only (spatial subset)
-    treat.strat.rast<-treat.rast*wild.whp.rast #using the WHP projection version
-
-    #Do crosstab
-    crosstab.result<-crosstab.calc(whp.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i])
-    targeted.effort.results[count,]<-c(boundary.name[i],policy.target,metric.name,crosstab.result)
-    write.csv(targeted.effort.results,paste("TargetedEffortResults_",datestamp,".csv",sep=""))
-    count<-count+1
+    mask.name<-"Landscape"
+    r.rast<-whp.rast
+    m.rast<-land.whp.rast
+    p.rast<-whp.priority.rast
+    rast.calcs.time<-system.time(rasterize.mask.calculate.proportions(p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
+    print(paste("Total time to do raster math for ",policy.target," using ",metric.name," in ",mask.name,": ",round(rast.calcs.time[[1]]/60)," minute(s)", sep=""))
 
     #-----------------FLAME LENGTH, WILDLAND--------------#
     policy.target<-"WildlandFireRisk"
     metric.name<-"FlameLengthAbove8FtWildland"
-    #treatment type/activity type filter
-    filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start.y,NA))
-    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minute(s)", sep=""))
-    #check CRS match with CECS projection 
-    treat.proj.vect<-check.crs.match(cecs.rast,treat.subs.vect,"near")
-    #rasterize treatment layer first
-    rasterize.time<-system.time(treat.rast<-rasterize(treat.proj.vect,cecs.rast))
-    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minute(s)", sep=""))
-    #then stratify as necessary - subset treatments for wildland only (spatial subset)
-    treat.strat.rast<-treat.rast*wild.cecs.rast #using the CECS projection version
+    mask.name<-"Landscape"
+    r.rast<-cecs.rast
+    m.rast<-land.cecs.rast
+    p.rast<-fl.priority.rast
 
-    #Do crosstab
-    crosstab.result<-crosstab.calc(fl.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i])
-    targeted.effort.results[count,]<-c(boundary.name[i],policy.target,metric.name,crosstab.result)
-    write.csv(targeted.effort.results,paste("TargetedEffortResults_",datestamp,".csv",sep=""))
-    count<-count+1
-
+    rast.calcs.time<-system.time(rasterize.mask.calculate.proportions(p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
+    print(paste("Total time to do raster math for ",policy.target," using ",metric.name," in ",mask.name,": ",round(rast.calcs.time[[1]]/60)," minute(s)", sep=""))
  
-    #---------------- WHP, WUI ---------------------------#
+    # #---------------- WHP, WUI ---------------------------#
 
-    policy.target<-"WUIFireRisk"
-    metric.name<-"WildfireHazardPotentialWUI"
-    #treatment type/activity type filter
-    filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start.y,NA))
-    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minute(s)", sep=""))
-    #check CRS match with WHP projection
-    treat.proj.vect<-check.crs.match(whp.rast,treat.subs.vect,"near")
-    #rasterize treatment layer first
-    rasterize.time<-system.time(treat.rast<-rasterize(treat.proj.vect,whp.rast))
-    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minute(s)", sep=""))
-    #then stratify as necessary - subset treatments for wui only (spatial subset)
-    treat.strat.rast<-treat.rast*wui.whp.rast #using the WHP projection version
-
-    #Do crosstab
-    crosstab.result<-crosstab.calc(whp.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i])
-    targeted.effort.results[count,]<-c(boundary.name[i],policy.target,metric.name,crosstab.result)
-    write.csv(targeted.effort.results,paste("TargetedEffortResults_",datestamp,".csv",sep=""))
-    count<-count+1
+    policy.target<-"WildlandFireRisk"
+    metric.name<-"WildfireHazardPotentialWildland"
+    mask.name<-"WUI"
+    r.rast<-whp.rast
+    m.rast<-wui.whp.rast
+    p.rast<-whp.priority.rast
+    rast.calcs.time<-system.time(rasterize.mask.calculate.proportions(p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
+    print(paste("Total time to do raster math for ",policy.target," using ",metric.name," in ",mask.name,": ",round(rast.calcs.time[[1]]/60)," minute(s)", sep=""))
 
     #-----------------FLAME LENGTH, WUI--------------#
-    policy.target<-"WUIFireRisk"
-    metric.name<-"FlameLengthAbove8FtWUI"
-    #treatment type/activity type filter
-    filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start.y,NA))
-    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minute(s)", sep=""))
-    #check CRS match with CECS projection
-    treat.proj.vect<-check.crs.match(cecs.rast,treat.subs.vect,"near")
-    #rasterize treatment layer first
-    rasterize.time<-system.time(treat.rast<-rasterize(treat.proj.vect,cecs.rast))
-    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minute(s)", sep=""))
-    #then stratify as necessary - subset treatments for wui only (spatial subset)
-    treat.strat.rast<-treat.rast*wui.cecs.rast #using the CECS projection version
+    policy.target<-"WildlandFireRisk"
+    metric.name<-"FlameLengthAbove8FtWildland"
+    mask.name<-"WUI"
+    r.rast<-cecs.rast
+    m.rast<-wui.cecs.rast
+    p.rast<-fl.priority.rast
 
-    #Do crosstab
-    crosstab.result<-crosstab.calc(fl.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i])
-    targeted.effort.results[count,]<-c(boundary.name[i],policy.target,metric.name,crosstab.result)
-    write.csv(targeted.effort.results,paste("TargetedEffortResults_",datestamp,".csv",sep=""))
-    count<-count+1
+    rast.calcs.time<-system.time(rasterize.mask.calculate.proportions(p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
+    print(paste("Total time to do raster math for ",policy.target," using ",metric.name," in ",mask.name,": ",round(rast.calcs.time[[1]]/60)," minute(s)", sep=""))
+
+    # #---------------- WHP, Roads ---------------------------#
+
+    policy.target<-"WildlandFireRisk"
+    metric.name<-"WildfireHazardPotentialWildland"
+    mask.name<-"Roads"
+    r.rast<-whp.rast
+    m.rast<-road.whp.rast
+    p.rast<-whp.priority.rast
+    rast.calcs.time<-system.time(rasterize.mask.calculate.proportions(p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
+    print(paste("Total time to do raster math for ",policy.target," using ",metric.name," in ",mask.name,": ",round(rast.calcs.time[[1]]/60)," minute(s)", sep=""))
+
+    #-----------------FLAME LENGTH, roads--------------#
+    policy.target<-"WildlandFireRisk"
+    metric.name<-"FlameLengthAbove8FtWildland"
+    mask.name<-"Roads"
+    r.rast<-cecs.rast
+    m.rast<-road.cecs.rast
+    p.rast<-fl.priority.rast
+
+    rast.calcs.time<-system.time(rasterize.mask.calculate.proportions(p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
+    print(paste("Total time to do raster math for ",policy.target," using ",metric.name," in ",mask.name,": ",round(rast.calcs.time[[1]]/60)," minute(s)", sep=""))
 
 
-    #---------------- WHP, Utility corridors ---------------------------#
+    # #---------------- WHP, Utilities ---------------------------#
 
-    policy.target<-"FireRiskinUtilityCorridors"
-    metric.name<-"WildfireHazardPotentialUtility"
-    #treatment type/activity type filter
-    filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start.y,NA))
-    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minute(s)", sep=""))
-    #check CRS match with WHP projection
-    treat.proj.vect<-check.crs.match(whp.rast,treat.subs.vect,"near")
-    #rasterize treatment layer
-    rasterize.time<-system.time(treat.rast<-rasterize(treat.proj.vect,whp.rast))
-    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minute(s)", sep=""))
-    #subset by utility corridors
-    treat.strat.rast<-treat.rast*rdtr.buff.whp.rast #using the WHP projection version
-  
-    #Do crosstab
-    crosstab.result<-crosstab.calc(whp.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i])
-    targeted.effort.results[count,]<-c(boundary.name[i],policy.target,metric.name,crosstab.result)
-    write.csv(targeted.effort.results,paste("TargetedEffortResults_",datestamp,".csv",sep=""))
-    count<-count+1
+    policy.target<-"WildlandFireRisk"
+    metric.name<-"WildfireHazardPotentialWildland"
+    mask.name<-"Utilities"
+    r.rast<-whp.rast
+    m.rast<-tran.whp.rast
+    p.rast<-whp.priority.rast
+    rast.calcs.time<-system.time(rasterize.mask.calculate.proportions(p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
+    print(paste("Total time to do raster math for ",policy.target," using ",metric.name," in ",mask.name,": ",round(rast.calcs.time[[1]]/60)," minute(s)", sep=""))
 
-    #-----------------FLAME LENGTH, Utility corridors --------------#
-    policy.target<-"FireRiskinUtilityCorridors"
-    metric.name<-"FlameLengthAbove8FtUtilities"
-    #treatment type/activity type filter
-    filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start.y,NA))
-    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minute(s)", sep=""))
-    #check CRS match with CECS projection
-    treat.proj.vect<-check.crs.match(cecs.rast,treat.subs.vect,"near")
-    #rasterize treatment layer 
-    rasterize.time<-system.time(treat.rast<-rasterize(treat.proj.vect,cecs.rast))
-    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minute(s)", sep=""))
-    #subset by utility corridors
-    treat.strat.rast<-treat.rast*rdtr.buff.cecs.rast #using the CECS projection version
+    #-----------------FLAME LENGTH, Utilities --------------#
+    policy.target<-"WildlandFireRisk"
+    metric.name<-"FlameLengthAbove8FtWildland"
+    mask.name<-"Utilities"
+    r.rast<-cecs.rast
+    m.rast<-tran.cecs.rast
+    p.rast<-fl.priority.rast
 
-    #Do crosstab
-    crosstab.result<-crosstab.calc(fl.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i])
-    targeted.effort.results[count,]<-c(boundary.name[i],policy.target,metric.name,crosstab.result)
-    write.csv(targeted.effort.results,paste("TargetedEffortResults_",datestamp,".csv",sep=""))
-    count<-count+1
+    rast.calcs.time<-system.time(rasterize.mask.calculate.proportions(p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
+    print(paste("Total time to do raster math for ",policy.target," using ",metric.name," in ",mask.name,": ",round(rast.calcs.time[[1]]/60)," minute(s)", sep=""))
+
+   # #---------------- WHP, Forest ---------------------------#
+
+    policy.target<-"WildlandFireRisk"
+    metric.name<-"WildfireHazardPotentialWildland"
+    mask.name<-"Forest"
+    r.rast<-whp.rast
+    m.rast<-forest.whp.rast
+    p.rast<-whp.priority.rast
+    rast.calcs.time<-system.time(rasterize.mask.calculate.proportions(p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
+    print(paste("Total time to do raster math for ",policy.target," using ",metric.name," in ",mask.name,": ",round(rast.calcs.time[[1]]/60)," minute(s)", sep=""))
+
+   # #---------------- WHP, Shrub ---------------------------#
+
+    policy.target<-"WildlandFireRisk"
+    metric.name<-"WildfireHazardPotentialWildland"
+    mask.name<-"Shrub"
+    r.rast<-whp.rast
+    m.rast<-shrub.whp.rast
+    p.rast<-whp.priority.rast
+    rast.calcs.time<-system.time(rasterize.mask.calculate.proportions(p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
+    print(paste("Total time to do raster math for ",policy.target," using ",metric.name," in ",mask.name,": ",round(rast.calcs.time[[1]]/60)," minute(s)", sep=""))
+
+
+   # #---------------- WHP, grass ---------------------------#
+
+    policy.target<-"WildlandFireRisk"
+    metric.name<-"WildfireHazardPotentialWildland"
+    mask.name<-"Grass"
+    r.rast<-whp.rast
+    m.rast<-grass.whp.rast
+    p.rast<-whp.priority.rast
+    rast.calcs.time<-system.time(rasterize.mask.calculate.proportions(p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
+    print(paste("Total time to do raster math for ",policy.target," using ",metric.name," in ",mask.name,": ",round(rast.calcs.time[[1]]/60)," minute(s)", sep=""))
+
+   # #---------------- WHP, woodland ---------------------------#
+
+    policy.target<-"WildlandFireRisk"
+    metric.name<-"WildfireHazardPotentialWildland"
+    mask.name<-"Woodland"
+    r.rast<-whp.rast
+    m.rast<-wood.whp.rast
+    p.rast<-whp.priority.rast
+    rast.calcs.time<-system.time(rasterize.mask.calculate.proportions(p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
+    print(paste("Total time to do raster math for ",policy.target," using ",metric.name," in ",mask.name,": ",round(rast.calcs.time[[1]]/60)," minute(s)", sep=""))
+
 
     #---------------- Critical Habitat -------------------------#
 
     policy.target<-"Habitat"
     metric.name<-"CriticalHabitat"
-    #subset treatments by policy objective
-    filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start.y,NA))
-    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minute(s)", sep=""))
-    #rasterize treatment layer
-    rasterize.time<-system.time(treat.strat.rast<-rasterize(treat.subs.vect,whp.rast))
-    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minute(s)", sep=""))
-    
-    #Do crosstab
-    crosstab.result<-crosstab.calc(cr.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i])
-    targeted.effort.results[count,]<-c(boundary.name[i],policy.target,metric.name,crosstab.result)
-    write.csv(targeted.effort.results,paste("TargetedEffortResults_",datestamp,".csv",sep=""))
-    count<-count+1
+    mask.name<-"none"
+    r.rast<-whp.rast
+    p.rast<-cr.priority.rast
+    rast.calcs.time<-system.time(rasterize.mask.calculate.proportions(p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name))
+    print(paste("Total time to do raster math for ",policy.target," using ",metric.name," in ",mask.name,": ",round(rast.calcs.time[[1]]/60)," minute(s)", sep=""))
 
     #---------------- Hydropower -------------------------#
 
     policy.target<-"Water"
     metric.name<-"Hydropower"
-    #subset treatments by policy objective
-    filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start.y,NA))
-    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minute(s)", sep=""))
-    #rasterize treatment layer
-    rasterize.time<-system.time(treat.strat.rast<-rasterize(treat.subs.vect,whp.rast))
-    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minute(s)", sep=""))
-    
-    #Do crosstab
-    crosstab.result<-crosstab.calc(hy.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i])
-    targeted.effort.results[count,]<-c(boundary.name[i],policy.target,metric.name,crosstab.result)
-    write.csv(targeted.effort.results,paste("TargetedEffortResults_",datestamp,".csv",sep=""))
-    count<-count+1
+    mask.name<-"none"
+    r.rast<-whp.rast
+    p.rast<-hy.priority.rast
+    rast.calcs.time<-system.time(rasterize.mask.calculate.proportions(p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name))
+    print(paste("Total time to do raster math for ",policy.target," using ",metric.name," in ",mask.name,": ",round(rast.calcs.time[[1]]/60)," minute(s)", sep=""))
 
     #---------------- Debris Flow Risk -------------------------#
 
     policy.target<-"Water"
     metric.name<-"DebrisFlow"
-    #subset treatments by policy objective
-    filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start.y,NA))
-    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minute(s)", sep=""))
-    #rasterize treatment layer
-    rasterize.time<-system.time(treat.strat.rast<-rasterize(treat.subs.vect,whp.rast))
-    print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minute(s)", sep=""))
-    
-    #Do crosstab
-    crosstab.result<-crosstab.calc(de.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i])
-    targeted.effort.results[count,]<-c(boundary.name[i],policy.target,metric.name,crosstab.result)
-    write.csv(targeted.effort.results,paste("TargetedEffortResults_",datestamp,".csv",sep=""))
-    count<-count+1
+    mask.name<-"none"
+    r.rast<-whp.rast
+    p.rast<-de.priority.rast
+    rast.calcs.time<-system.time(rasterize.mask.calculate.proportions(p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name))
+    print(paste("Total time to do raster math for ",policy.target," using ",metric.name," in ",mask.name,": ",round(rast.calcs.time[[1]]/60)," minute(s)", sep=""))
 
     #---------------- acres of fuel breaks -------------------------#
-      ### Manually, aspatially calculate?
+      ### Manually, aspatially calculate
 
 }
 
