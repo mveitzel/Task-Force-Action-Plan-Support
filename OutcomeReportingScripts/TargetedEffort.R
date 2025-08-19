@@ -25,7 +25,7 @@ cecs.rast<-rast(paste(loc.data,"CECS_Data/CECS_CAWide_Vulner_TreeDieoff_SPI-2_20
 # whp is the same projection as state boundaries/TF regions, WHR/veg classifications
 whp.rast <- rast(paste(loc.data,"PriorityLayers/whp_classified_20240906.tif",sep="")) 
 
-reference.rast<-rast(paste(loc.data,"CECS_Data/CECS_CAWide_Vulner_TreeDieoff_SPI-2_2020_V250418.tif",sep=""))
+reference.rast<-rast(paste(loc.data,"CECS_Data/CECS_CAWide_Vulner_TreeDieoff_SPI-2_2020_V250614.tif",sep=""))
 
 ca.vect<-vect(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""))
 ca.whp.vect<-check.crs.match(whp.rast,ca.vect)
@@ -61,6 +61,10 @@ land.whp.rast<-rast(paste(loc.data,"WUIVegetationClassifications/FRAP24_Landscap
 #read in the veg classification masks (Forest and Shrub from CALFIRE WHR reclassifications, same crs as WHP)
 forest.whp.rast<-rast(paste(loc.scripts,"ReferenceFiles/WHR13_RECLASS_FOREST.tif",sep=""))
 shrub.whp.rast<-rast(paste(loc.scripts,"ReferenceFiles/WHR13_RECLASS_SHRUB.tif",sep=""))
+
+shrub.whp.rast<-crop(shrub.whp.rast,whp.rast)
+forest.whp.rast<-crop(forest.whp.rast,whp.rast)
+
 #read in the CECS-projected forest and shrub classifications
 forest.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_FOREST_CECS.tif",sep=""))
 shrub.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_SHRUB_CECS.tif",sep=""))
@@ -94,7 +98,7 @@ if(recalculate.priority.layers){
   #recalculate all the different priority layers
   pri.time<-system.time(source(paste(loc.scripts,"FunctionLibraries/CalculatePriorityLayers.R",sep="")))
   print(paste("Time to recalculate priority layers: ",round(pri.time[[1]]/60)," minute(s)", sep=""))
-}else{
+}
   #read in rasters
   whp.priority.rast<-rast(paste(loc.data,"PriorityLayers/FinalPriorityLayers/WHPpriority_WHP.tif",sep=""))
   dv.priority.rast<-rast(paste(loc.data,"PriorityLayers/FinalPriorityLayers/DroughtVulnerabilityPriority_CECS.tif",sep=""))
@@ -103,7 +107,7 @@ if(recalculate.priority.layers){
   hy.priority.rast<-rast(paste(loc.data,"PriorityLayers/FinalPriorityLayers/HydropowerPriority_WHP.tif",sep=""))
   de.priority.rast<-rast(paste(loc.data,"PriorityLayers/FinalPriorityLayers/DebrisFlowPriority_WHP.tif",sep=""))
   sh.priority.rast<-rast(paste(loc.data,"PriorityLayers/FinalPriorityLayers/ShrubRoadPriority_WHP.tif",sep=""))
-}
+
 
 plots<-FALSE
 
@@ -176,7 +180,7 @@ if(plots){
 
 }
 
-conditions.mask.areas<-TRUE
+conditions.mask.areas<-FALSE
 
 if(conditions.mask.areas){
   current.conditions<-data.frame(PolicyTarget=character(),Priority=character(), Source=character(), Threshold=character(),
@@ -395,30 +399,36 @@ if(priority.areas){
 #                   paste(loc.scripts,"ReferenceFiles/Region_CentralCoast.shp",sep=""))
 # boundary.name<-c("South","Sierra","North","Central")
 
-#loop through all california, and the four regions
- boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""),
-                   paste(loc.scripts,"ReferenceFiles/Region_Sierra.shp",sep=""),
-                   paste(loc.scripts,"ReferenceFiles/Region_NorthernCA.shp",sep=""),
-                   paste(loc.scripts,"ReferenceFiles/Region_SouthernCA.shp",sep=""),
-                   paste(loc.scripts,"ReferenceFiles/Region_CentralCoast.shp",sep=""))
- boundary.name<-c("CA","Sierra","North","South","Central")
+# #loop through all california, and the four regions
+#  boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""),
+#                    paste(loc.scripts,"ReferenceFiles/Region_Sierra.shp",sep=""),
+#                    paste(loc.scripts,"ReferenceFiles/Region_NorthernCA.shp",sep=""),
+#                    paste(loc.scripts,"ReferenceFiles/Region_SouthernCA.shp",sep=""),
+#                    paste(loc.scripts,"ReferenceFiles/Region_CentralCoast.shp",sep=""))
+#  boundary.name<-c("CA","Sierra","North","South","Central")
 
-#boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""))
-#boundary.name<-c("CA")
+boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""))
+boundary.name<-c("CA")
+
+#these will be necessary for if you need to recalculate the polygons
+#and for file naming conventions
+start.year<-"2020"
+end.year<-"2024"
+
+#water year
+start.y<-paste(start.year,"-09-30",sep="")
+end.y<-paste(end.year,"-10-01",sep="")
 
 
-#read in patch layer in order to then clip as needed in the loop
-patch.name<-c("Treatments")
-patch.shape<-c(paste(loc.data,"ITS_2025Aug16_Data/appended.gdb",sep=""))
-patch.layer<-c("appended_poly")
-#just leave ref.rast out and it won't reproject it.
-#for treatment vectors, we'll be projecting them per dataset
+aggregate.vectors<-FALSE
 
-#treat.vect<-read.and.check.crs.patch.vector(patch.shape[1],patch.name[1],patch.layer[1]) 
-#with no reprojection, it's in whp
-read.time<-system.time(treat.vect<-read.and.check.crs.patch.vector(patch.shape[1],patch.name[1],patch.layer[1],whp.rast))
-print(paste("Time to read in treatments: ",round(read.time[[1]]/60)," minute(s)", sep=""))
-
+#this recalculates all the possible aggregations of the vectors, needs redoing if summary unit
+#changes, or regions/boundary vectors change, or new treatments/fires need to be used
+#or if we change what the treatment type filters are
+if(aggregate.vectors){
+    vect.time<-system.time(source(paste(loc.scripts,"FunctionLibraries/CalculateAggregatedPatches.R",sep="")))
+  print(paste("Time to process and aggregate vectors: ",round(vect.time[[1]]/60)," minute(s)", sep=""))
+}
 
 #######################################################
 ######  start loop through boundary layers ############
@@ -432,79 +442,59 @@ targeted.effort.results<-data.frame(Boundary=character(),PolicyTarget=character(
 count<-1
 for(i in 1:length(boundary.name)){
 
-    prepped.boundary.whp.vect<-read.and.prepare.boundary.vector(boundary.shape[i],boundary.name[i],whp.rast)
-
-    ####################################################################
-    # PREP TREATMENT DATASET FOR BOUNDARY LAYER                        #
-    ####################################################################
-
-    #remember for CECS layers to reproject the treatment vectors
-    crop.time<-system.time(treat.prep.vect<-crop.vector.by.boundary.and.recalc.area(prepped.boundary.whp.vect,boundary.name[i],treat.vect,patch.name[1]))
-    print(paste("Time to crop and recalc areas of treatments: ",round(crop.time[[1]]/60)," minute(s)", sep=""))
-    start.year<-"2020"
-    end.year<-"2024"
-
-    #water year
-    start.y<-paste(start.year,"-09-30",sep="")
-    end.y<-paste(end.year,"-10-01",sep="")
-
-    calculate.areas<-FALSE
-
-    if(calculate.areas){
-       #getting the different areas in ha of the different policy targets
-       areas<-list()
-       perims<-list()
-       treat.filt.vect<-list()
-       for(i in 1:length(activity.list)){
-         temp<-filter.patches(treat.prep.vect,names(activity.list)[i],start.y,NA)
-         treat.filt.vect[[names(activity.list)[i]]]<-aggregate(temp) #aggregated here
-          #convert to acres
-         areas[[names(activity.list)[i]]]<-expanse(treat.filt.vect[[names(activity.list)[i]]],unit="ha")*2.47105
-         # perims[[names(activity.list)[i]]]<-perim(treat.filt.vect[[names(activity.list)[i]]])#in m
-       }
-      treat.areas<-as.data.frame(unlist(areas))
-      treat.areas$PolicyTarget<-rownames(treat.areas)
-      names(treat.areas)<-c("Area_ac","PolicyTarget")
-      rownames(treat.areas)<-NULL
-      write.csv(treat.areas,paste("TreatmentAreasByPolicyTarget_",start.y,"_",end,"_",datestamp,".csv",sep=""))
-      # treat.perims<-as.data.frame(unlist(perims))
-      # treat.perims$PolicyTarget<-rownames(treat.perims)
-      # names(treat.perims)<-c("Perim_m","PolicyTarget")
-      # rownames(treat.perims)<-NULL
-      # write.csv(treat.perims,paste("TreatmentPerimsByPolicyTarget_",start.y,"_",end,"_",datestamp,".csv",sep=""))
-
-    }
-
-
     ####################################################################
     ############# CROSSTAB CALCULATIONS      ###########################
     ####################################################################
-
 
     #---------------- High-Risk Shrubs -------------------------#
 
     policy.target<-"ShrublandHealth"
     metric.name<-"ShrubVulnerability"
-    #subset treatments by policy objective
-    filter.time<-system.time(treat.subs.vect<-filter.patches(treat.prep.vect,policy.target,start.y,NA))
-    print(paste("Time to filter treatments: ",round(filter.time[[1]]/60)," minute(s)", sep=""))
 
 #function to do this, takes policy target and metric name and boundary name to construct vector file name,
 #name of the raster to rasterize by & check projection for, name of the mask (including none), 
 #name of the priority layer
 #
-    # read in correct vector
+    #read in the appropriate pre-filtered, pre-aggregated vector file
+    agg.treat.vect<-vect(paste(loc.data,"IntermediateFiles/AggregatedVectors/Treatments_",
+      boundary.name[i],"_",policy.target,"_",start.year,"-present.shp",sep=""))
+
     #check CRS match with WHP projection
-    treat.proj.vect<-check.crs.match(whp.rast,treat.subs.vect,"near")
+    treat.proj.vect<-check.crs.match(whp.rast,agg.treat.vect)
     #rasterize treatment layer first
-    rasterize.time<-system.time(treat.rast<-rasterize(treat.proj.vect,shrub.whp.rast)) #just use shrub extent to start with
+    rasterize.time<-system.time(treat.rast<-rasterize(treat.proj.vect,whp.rast)) 
     print(paste("Time to rasterize treatments: ",round(rasterize.time[[1]]/60)," minute(s)", sep=""))
 
     #then stratify as necessary - subset treatments for shrub only (spatial subset)
     treat.strat.rast<-treat.rast*shrub.whp.rast #using the WHP projection version
-        
+
+#to get a total here, instead of treatments for trt.rast, put in the mask raster name
+raster.math.proportion.calc<-function(pri.rast,pri.name,trt.rast,pol.name,bdry.nm){
+  total.area<-pri.rast*trt.rast
+  priority.rast<-total.area
+  priority.rast[priority.rast==0]<-NA
+  print("Calculating global sum of priority area within total area")
+  #convert from 30-m pixels to acres 
+  priority<-as.numeric(global(priority.rast,"notNA"))*30*30*0.000247105
+  print("Calculating global sum of total area")
+  #convert from 30-m pixels to acres 
+  total<-as.numeric(global(total.area,"notNA"))*30*30*0.000247105
+  print(paste("Raster math calc complete for ",pri.name," for policy objective ",pol.name," within ",bdry.nm,sep=""))
+  return(c(priority,total,priority/total))
+}
+
+rast.math.time<-system.time(rastmath.result<-raster.math.proportion.calc(sh.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i]))
+    print(paste("Time to do raster math: ",round(rast.math.time[[1]]/60)," minute(s)", sep=""))
+    print(rastmath.result)
+rast.math.time<-system.time(rastmath.total.result<-raster.math.proportion.calc(sh.priority.rast, metric.name,shrub.whp.rast,policy.target , boundary.name[i]))
+    print(paste("Time to do raster math: ",round(rast.math.time[[1]]/60)," minute(s)", sep=""))
+    print(rastmath.result)
+
+
     #Do crosstab
-    crosstb.result<-crosstab.calc(sh.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i])
+    crosstab.result<-crosstab.calc(sh.priority.rast, metric.name,treat.strat.rast,policy.target , boundary.name[i])
+print(crosstab.result)
+
     targeted.effort.results[count,]<-c(boundary.name[i],policy.target,metric.name,crosstb.result)
     write.csv(targeted.effort.results,paste("TargetedEffortResults_",datestamp,".csv",sep=""))
 

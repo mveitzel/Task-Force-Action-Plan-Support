@@ -112,7 +112,7 @@
   shrub.road.whp.rast<-road.buff.whp.rast*shrub.whp.rast
   sh.pri.rast<-shrub.road.whp.rast
   sh.pri.rast[is.na(sh.pri.rast)]<-0
-  writeRaster(sh.pri.rast,paste(loc.data,"PriorityLayers/FinalPriorityLayers/ShrubRoadPriority_WHP.tif",sep=""))
+  writeRaster(sh.pri.rast,paste(loc.data,"PriorityLayers/FinalPriorityLayers/ShrubRoadPriority_WHP.tif",sep=""),overwrite=TRUE)
 
 #####################
 

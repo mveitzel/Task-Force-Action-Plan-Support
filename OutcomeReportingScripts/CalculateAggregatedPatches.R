@@ -10,23 +10,20 @@
 #use WHP CRS for this, they're all vectors and can be crs checked before running analyses
 
 #loop through all california, and the four regions
-boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""),
-                  paste(loc.scripts,"ReferenceFiles/Region_Sierra.shp",sep=""),
-                  paste(loc.scripts,"ReferenceFiles/Region_NorthernCA.shp",sep=""),
-                  paste(loc.scripts,"ReferenceFiles/Region_SouthernCA.shp",sep=""),
-                  paste(loc.scripts,"ReferenceFiles/Region_CentralCoast.shp",sep=""))
-boundary.name<-c("CA","Sierra","North","South","Central")
+ boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""),
+                   paste(loc.scripts,"ReferenceFiles/Region_Sierra.shp",sep=""),
+                   paste(loc.scripts,"ReferenceFiles/Region_NorthernCA.shp",sep=""),
+                   paste(loc.scripts,"ReferenceFiles/Region_SouthernCA.shp",sep=""),
+                   paste(loc.scripts,"ReferenceFiles/Region_CentralCoast.shp",sep=""))
+ boundary.name<-c("CA","Sierra","North","South","Central")
+
 
 policy.target<-c("WildlandFireRisk","ShrublandHealth","ForestHealth","Habitat","Water")
 #note that all the Fire Risk policy targets use the same list of activities regardless of the location
 # i.e. utilities, roads, landscape, wildland, wui.  So will filter treatments for this once.
 
-##test with socal + water
-#boundary.shape<-c(paste(paste(loc.scripts,"ReferenceFiles/Region_SouthernCA.shp",sep="")))
-#boundary.name<-c("South")
-#policy.target<-c("ShrublandHealth")
-
-#then socal + shrub health
+#enable this if you want to make a csv of the relative areas of each policy target in each boundary shape
+calculate.areas<-FALSE
 
 zsum.shape<-c(paste(loc.scripts,"ReferenceFiles/HUC12.shp",sep=""))
 zsum.name<-c("HUC12")
@@ -53,6 +50,12 @@ for(i in 1:length(boundary.name)){
 	if(boundary.name[i]=="CA"){
 		prepped.boundary.vect$Region<-"AllCA"
 	}	
+
+    if(calculate.areas){
+       #getting the different areas in ha of the different policy targets
+       areas<-list()
+       treat.filt.vect<-list()
+    }
 
 	prep.time<-system.time(prepped.zonal.summary.area.vect<-crop.vector.by.boundary.and.recalc.area(prepped.boundary.vect,boundary.name[i],zonal.summary.area.vect,zsum.name))
 	print(paste("Time to prep zonal summary area: ",round(prep.time[[1]]/60)," minute(s)", sep=""))
@@ -86,6 +89,13 @@ for(i in 1:length(boundary.name)){
 	    print(paste("Time to filter treatments (efficacy): ",round(filter.time[[1]]/60)," minute(s)", sep=""))
 
 
+	  if(calculate.areas) {
+         temp<-treat.filt.te.vect
+         treat.filt.vect[[policy.target[k] ]]<-aggregate(temp) #aggregated here
+          #convert to acres
+         areas[[policy.target[k]]]<-expanse(treat.filt.vect[[policy.target[k] ]],unit="ha")*2.47105
+       }
+
 		#"Regions/HUC12" is the display name for how patches are being aggregated, and "Region/huc12" is the column name 
 		agg.time<-system.time(agg.treatments.region.vect<-intersect.and.aggregate.vectors(
 			prepped.boundary.vect,boundary.name[i],treat.filt.te.vect,"Treatments","Regions","Region",
@@ -106,7 +116,6 @@ for(i in 1:length(boundary.name)){
 			writeVector(agg.treatments.region.vect,paste(loc.data,"IntermediateFiles/AggregatedVectors/Treatments_",
 				boundary.name[i],"_",policy.target[k],"_",start.year,"_",end.year,".shp",sep=""),overwrite=TRUE)
 
-
 			#also intersect and aggregate treatments at HUC level
 			agg.time<-system.time(agg.treatments.huc.vect<-intersect.and.aggregate.vectors(
 				prepped.zonal.summary.area.vect,zsum.name,treat.filt.ef.vect,"Treatments","HUC12","huc12",
@@ -119,4 +128,15 @@ for(i in 1:length(boundary.name)){
 
 	}
 
+	if(calculate.areas){
+      treat.areas<-as.data.frame(unlist(areas))
+      treat.areas$PolicyTarget<-rownames(treat.areas)
+      names(treat.areas)<-c("Area_ac","PolicyTarget")
+      rownames(treat.areas)<-NULL
+      write.csv(treat.areas,paste("TreatmentAreasByPolicyTarget_",boundary.name[i],"_",start.y,"_",end.y,"_",datestamp,".csv",sep=""))
+	}
+
 }
+
+
+

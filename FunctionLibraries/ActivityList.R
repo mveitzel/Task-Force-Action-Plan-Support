@@ -21,7 +21,10 @@
 	"Restoringhealthyfire"=list(metric="Acres of broadcast burn",activities=
 	  c("BROADCAST_BURN")),
 	"ShrublandHealth"=list(metric="Acres/miles of treatments near high risk roadways",activities=
-	  c("BROADCAST_BURN", "MASTICATION", "CHAIN_CRUSH", "MOWING", "HERBICIDE_APP", "INV_PLANT_REMOVAL", "LOP_AND_SCAT", "PILE_BURN", "ECO_HAB_RESTORATION", "HABITAT_REVEG", "SEEDBED_PREP", "PRESCRIB_HERBIVORY", "TREE_FELL", "THIN_MAN","DISCING")),
+	  c("BROADCAST_BURN", "MASTICATION", "MOWING", "HERBICIDE_APP", "INV_PLANT_REMOVAL", "LOP_AND_SCAT", "PILE_BURN", "ECO_HAB_RESTORATION", "HABITAT_REVEG", "SEEDBED_PREP", "PRESCRIB_HERBIVORY", "TREE_FELL", "THIN_MAN","DISCING")),
+#trying to remove CHAIN_CRUSH to see if it helps with geometry problems
+#	"ShrublandHealth"=list(metric="Acres/miles of treatments near high risk roadways",activities=
+#	  c("BROADCAST_BURN", "MASTICATION", "CHAIN_CRUSH", "MOWING", "HERBICIDE_APP", "INV_PLANT_REMOVAL", "LOP_AND_SCAT", "PILE_BURN", "ECO_HAB_RESTORATION", "HABITAT_REVEG", "SEEDBED_PREP", "PRESCRIB_HERBIVORY", "TREE_FELL", "THIN_MAN","DISCING")),
 	"RangelandHealth"=list(metric="Acres of prescribed grazing/herbivory",activities=
 	  c("BROADCAST_BURN", "PILE_BURN", "PRESCRIBED_HERBIVORY", "MOWING", "HERICIDE_APP", "INV_PLANT_REMOVAL", "SEEDBED_PREP", "SITE_PREP", "TREE_FELL", "MASTICATION", "HABITAT_REVEG", "ECO_HABITAT", "RESTORATION", "LOP_AND_SCAT")),
 	"Social-Economic Health"=list(metric="Acres of timber projects",activities=
