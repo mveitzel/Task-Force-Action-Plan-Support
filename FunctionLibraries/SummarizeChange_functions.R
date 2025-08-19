@@ -240,11 +240,14 @@ plot.results<-function(dt.dff,ttlestrng,xlbl,metnm,af.yr,bf.yr,sum.area,sumIDnm,
 #if mask and mask.name are NA, then this just crops and masks the raster to the boundary
 #(used for the global summary)
 subset.raster<-function(input.rast,name.rast,mask,mask.name,boundary.vect,boundary.name){
+	print("Starting subset.raster")
 	if(!is.na(mask)){
+		#this assumes the mask is a raster, because "near" doesn't apply to vectors
 		mask.proj<-check.crs.match(boundary.vect,mask,"near")
 		mask<-crop(mask.proj,boundary.vect)
 		print(paste("CRS checked for ",mask.name," and cropped to ",boundary.name,sep =""))
 		}else{
+			print("No mask specified; using ")
 			mask<-boundary.vect
 			mask.name<-boundary.name
 		}
@@ -254,84 +257,6 @@ subset.raster<-function(input.rast,name.rast,mask,mask.name,boundary.vect,bounda
 	return(masked.rast)
 }
 	
-
-# #TODO*** once you confirm the other functions work, remove this function
-# #This function reads in and processes the vector layers:
-# #crop.poly is the boundary polygon of your entire analysis region,
-# #whether that's the entire state, or a region, or a smaller area
-# #you need to read in the rasters (rstrs) to check the coordinate system
-# #sumPly is the spatial summary unit polygon (e.g. HUC), and the SumPlyNm 
-# #is the name of that column in the vector file (for example in the HUC 
-# #dataset, if it's a HUC10, the column name is 'huc10' and if it's a HUC12,
-# #the name is 'huc12')
-# read.in.and.process.vectors<-function(crop.poly,rstrs,sumPly,sumPlyNm){
-
-# 	#Project, crop, calculate areas, and subset by date
-
-# 	#-------------- State boundary for clipping ------------#
-# 	#               (or region, as appropriate)             #
-
-# 	cr.poly<-vect(crop.poly)
-# 	#returns layers with both projected to first argument's CRS
-# 	crop_poly_proj<-check.crs.match(rstrs$raster1,cr.poly)
-# 	print(paste(crop.poly," read in and processed.",sep=""))
-
-
-# 	#---------------- Polygons to summarize over ------------#
-
-# 	summary_poly<-vect(sumPly)
-# 	#returns layers with both projected to first argument's CRS
-# 	summary_poly_proj<-check.crs.match(rstrs$raster1,summary_poly)
-# 	summary_ID_name<-sumPlyNm
-# 	#crop to CA or regional boundary
-# 	summary_poly_proj<-crop(summary_poly_proj,crop_poly_proj)
-# 	#explicitly calculate the area of the HUC8
-# 	summary_poly_proj$huc_area<-expanse(summary_poly_proj,unit="ha")
-# 	print(paste(sumPly," read in and processed. Summary field: ",sumPlyNm,sep=""))
-
-# 	return(list(boundary=crop_poly_proj,sumPoly=summary_poly_proj))
-
-# }
-
-# #***TODO: MV suggests using the other two functions to do what this one does, and deleting this one
-# ##########EDITED VERSION TO MAKE MORE GENERAL###############
-# #When trying to process a vector for a single raster (i.e. that has not been differenced
-# #and only includes one raster layer), the read.in.and.process.vectors function would
-# #have an error because it was looking for a specific layer with the "rsters" call. 
-# #This edited function does the same thing that read.in.and.process.vectors does
-# #but calls for a single raster rather than the stack of three that results from 
-# #the differencing function. You could use this version on a differenced raster
-# #but the 'rstr' call would require "differenced.raster.result$raster1" instead of 
-# #just "differenced.raster.result" which would contain "$raster1", "$raster2", and "$diff."
-
-# read.in.and.process.vectors.single.raster<-function(crop.poly,rstr,sumPly,sumPlyNm){
-  
-#   #Project, crop, calculate areas, and subset by date
-  
-#   #-------------- State boundary for clipping ------------#
-#   #               (or region, as appropriate)             #
-  
-#   cr.poly<-vect(crop.poly)
-#   #returns layers with the second projected to first argument's CRS
-#   crop_poly_proj<-check.crs.match(rstr,cr.poly)
-#   print(paste(crop.poly," read in and processed.",sep=""))
-  
-  
-#   #---------------- Polygons to summarize over ------------#
-  
-#   summary_poly<-vect(sumPly)
-#   #returns layers the second projected to first argument's CRS
-#   summary_poly_proj<-check.crs.match(rstr,summary_poly)
-#   summary_ID_name<-sumPlyNm
-#   #crop to CA or regional boundary
-#   summary_poly_proj<-crop(summary_poly_proj,crop_poly_proj)
-#   #explicitly calculate the area of the HUC8
-#   summary_poly_proj$huc_area_ha<-expanse(summary_poly_proj,unit="ha")
-#   print(paste(sumPly," read in and processed. Summary field: ",sumPlyNm,sep=""))
-  
-#   return(list(boundary=crop_poly_proj,sumPoly=summary_poly_proj))
-  
-# }
 
 read.and.prepare.boundary.vector<-function(bdry.shape,bdry.name,ref.rast){
 	print("Starting read.and.prepare.boundary.vector")
@@ -435,13 +360,6 @@ summarize.pixels.in.area.of.interest<-function(rast.rast,rast.name,vect.vect,vec
 	return(result)
 }
 
-#The next function is where I'll write something that does zonal: huc12, huc12-intersected-with-fires, and huc12-intersected-with treatments
-#it will call the summarize.pixels function three times
-#consider whether you do the global summaries here too, thinking that would be a good idea
-
-run.zonal.statistics.one.metric<-function(){
-
-}
 
 #this function filters patches for e.g. treatment types and date ranges
 
@@ -473,118 +391,10 @@ filter.patches<-function(treat.prp.vect,pol.targ,start.yr,end.yr="present"){
   return(trtmnts)
 }
 
-# #TODO*** once you confirm the other functions work, remove this function
-# #This function actually does the zonal calculations for raster pixels that fall within
-# #the entire spatial summary area (e.g. HUC)
-# zonal.calculations<-function(rsters,prepVec){
-
-# 	 #----------- Zonal calcs for entire summary areas ------------#
-# 	 #this takes a long time
-# 	 summaryzonal.time<- system.time(zonal.stats.summarypoly<-zonal(rsters$diff,prepVec$sumPoly,fun="mean",as.polygons=TRUE,na.rm=TRUE) )
-# 	print("Zonal stats calculated for whole summary unit (raw averages)")
-# 	 print(summaryzonal.time/60)
-
-# 		return(list(zonalAll=zonal.stats.summarypoly))
-# }
-
-
-# #Including this function for posterity, though it takes a long time to run so not likely to use it
-# zonal.calculations.single.raster.exact<-function(rster,mapun,prepVec){
-#   summaryzonal.time<- system.time(zonal.stats.summarypoly<-zonal(rster,prepVec$sumPoly,fun="mean",as.polygons=TRUE,na.rm=TRUE,exact=TRUE) )
-#   print(paste("Zonal stats calculated for ",names(rster), " using ", mapun, sep=""))
-#   print(summaryzonal.time/60)
-  
-#   return(zonal.stats.summarypoly)
-# }
-
-
-
-#this function assumes we want a 'current' vegetation classification
-#for a given set of years - I'm choosing the 'before year' as the 
-#one to base the classification on
-#this is using SIG's crosswalk between CWHR type to a higher level
-#aggregation of forestland, shrubland, and grassland
-#And then using CECS Fveg to get a current veg classification
-#note that this function has not been tested, here for posterity
-#in case we want to use this strategy
-create.ecosystem.subset.masks.from.CECS<-function(ref.rast, rast.diff, b.yr,vintage,location){
-	#Mike has a CECS layer with the Fveg codes
-	CECSveg<-read.csv("CECS_Fveg_codes.csv",header=T)
-	#SIG has a crosswalk between the Fveg codes and broad veg types they summarize in tabular form
-	SIGveg<-read.csv("MAS 2 MASTER table - CWHR type crosswalk.csv",header=T)
-	#this is the link between them
-	crossw<-merge(CECSveg,SIGveg,by.x="WHR_Type",by.y="CWHR.abbreviation")
-
-	tree.codes<-crossw$Code[crossw$Veg.type=="Tree"]
-	shrub.codes<-crossw$Code[crossw$Veg.type=="Shrub"]
-	grass.codes<-crossw$Code[crossw$Veg.type=="Grass"]
-
-	#reading in Mike's layer to make sure that this is all aligned
-	eco<-rast( paste(location,"CECS_CAWide_Veg_Fveg_",b.yr,"_V",vintage,".tif",sep=""),lyrs=1)
-	eco<-check.crs.match(ref.rast)
-
-	#Now make the masks based on the codes
-	grass.only<-eco %in% grass.codes
-	print("Subset mask created for Grassland")
-	tree.only<-eco %in% tree.codes
-	print("Subset mask created for Forest")
-	shrub.only<-eco %in% shrub.codes
-	print("Subset mask created for Shrubland")
-	#and set the '0's to NA
-	grass.only[grass.only==0]<-NA
-	tree.only[tree.only==0]<-NA
-	shrub.only[shrub.only==0]<-NA
-	print("Ecosystem subsets/masks created")
-
-	return(list(tree.only=tree.only,shrub.only=shrub.only,grass.only=grass.only))
-
-}
-
-#This function does the subsetting of the rasters, leaving a new set of 
-#rasters that only include pixels that are within one of the masks - one
-#raster each for forest, shrub, grass, and WUI and non-WUI (wildland)
-#this is here in case you want to use the full set of masks that were developed
-#from the CECS dataset, and do all the subsets of a single raster
-#Note that this function has not been tested, but is here for posterity
-#in case we want to use this method
-mask.subset.by.land.class<-function(rast,sbst,msks,wui,wild){
-
-	#save the 'all ecosystem' raster in one place
-	raster.all<-rast
-
-	#subset for each ecosystem
-	if(sbst=="AllEcosystems"){
-		rast.subsetted<-raster.all
-		print(paste("Raster subset completed for ",sbst,sep=""))
-	} else if (sbst=="Forest") {
-		rasters.tree<-sapply(raster.all,subset.raster.with.raster,msks$tree.only)
-		rast.subsetted<-raster.tree
-		print(paste("Raster subset completed for ",sbst,sep=""))
-	} else if (sbst=="Grassland"){
-		rasters.grass<-sapply(raster.all,subset.raster.with.raster,msks$grass.only)
-		rast.subsetted<-raster.grass
-		print(paste("Raster subset completed for ",sbst,sep=""))
-	} else if (sbst=="Shrubland"){
-		rasters.shrub<-sapply(raster.all,subset.raster.with.raster,msks$shrub.only)
-		rast.subsetted<-raster.shrub
-		print(paste("Raster subset completed for ",sbst,sep=""))
-	} else if (sbst=="Urban-WUI") {
-		rasters.wuiurb<-sapply(raster.all,subset.raster.with.vector,wui)
-		rast.subsetted<-raster.wuiurb
-		print(paste("Raster subset completed for ",sbst,sep=""))
-	} else if (sbst=="Wildland"){
-		rasters.wuiwild<-sapply(raster.all,subset.raster.with.vector,wild)
-		rast.subsetted<-raster.wuiwild
-		print(paste("Raster subset completed for ",sbst,sep=""))
-	}
-
-	return(rast.subsetted)
-}
-
 
 #to get a total here, instead of treatments for trt.rast, put in the mask raster name
 raster.math.proportion.calc<-function(pri.rast,pri.name,trt.rast,pol.name,bdry.nm){
-	print(names(pri.rast))
+	print(pri.name)
   total.area<-pri.rast*trt.rast
   priority.rast<-total.area
   priority.rast[priority.rast==0]<-NA

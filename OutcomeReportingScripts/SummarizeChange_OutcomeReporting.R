@@ -50,7 +50,7 @@ policy.target<-c("WildlandFireRisk",
 			"WildlandFireRisk",
 			"WildlandFireRisk",
 			"WildlandFireRisk",
-			"ForestHealth"
+			"ForestHealth",
 			"ShrublandHealth")
 
 
