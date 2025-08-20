@@ -230,6 +230,7 @@ plot.results<-function(dt.dff,ttlestrng,xlbl,metnm,af.yr,bf.yr,sum.area,sumIDnm,
 	}
 }
 
+#TODO*** I think I made this one too complicated so might not be helpful
 #This function assumes you'll use a vector or raster
 #to subset or mask out parts of your input raster
 #two steps to make sure the extent of the raster is the 
@@ -247,7 +248,7 @@ subset.raster<-function(input.rast,name.rast,mask,mask.name,boundary.vect,bounda
 		mask<-crop(mask.proj,boundary.vect)
 		print(paste("CRS checked for ",mask.name," and cropped to ",boundary.name,sep =""))
 		}else{
-			print("No mask specified; using ")
+			print(paste("No mask specified; using ",boundary.name,sep=""))
 			mask<-boundary.vect
 			mask.name<-boundary.name
 		}
@@ -430,7 +431,7 @@ raster.math.proportion.calc<-function(pri.rast,pri.name,trt.rast,pol.name,bdry.n
 #name of the priority layershrub.whp.rast
 #doesn't return anything but writes to the file.
 #if there's no mask, use 'none' for the mask name and leave the last argument blank.
-rasterize.mask.calculate.proportions<-function(pr.rast,m.name,pol.t,b.name,ref.rast,msk.name="none",msk.rast=NULL){
+rasterize.mask.calculate.proportions<-function(ct,pr.rast,m.name,pol.t,b.name,ref.rast,msk.name="none",msk.rast=NULL){
     print("Starting rasterize.mask.calculate.proportions")
     #read in the appropriate pre-filtered, pre-aggregated vector file
     agg.treat.vect<-vect(paste(loc.data,"IntermediateFiles/AggregatedVectors/Treatments_",
@@ -458,19 +459,18 @@ rasterize.mask.calculate.proportions<-function(pr.rast,m.name,pol.t,b.name,ref.r
     rast.math.time<-system.time(rastmath.result<-raster.math.proportion.calc(pr.rast, m.name,treat.strat.rast,pol.t , b.name))
     print(paste("Time to do raster math for treatments: ",round(rast.math.time[[1]]/60)," minute(s)", sep=""))
     print(rastmath.result)
-    targeted.effort.results[count,]<-c(b.name,pol.t,m.name,msk.name,"Treatments",rastmath.result)
-    write.csv(targeted.effort.results,paste("TargetedEffortResults_",datestamp,".csv",sep=""))
-    print("Wrote treatment area & priority proportions results to file")
-    count<-count+1
+    targeted.effort.results[ct,]<-c(b.name,pol.t,m.name,msk.name,"Treatments",rastmath.result)
+    ct<-ct+1
     
     print(paste("Starting raster math calculation of priority proportions in ",msk.name,sep=""))
     rast.math.time<-system.time(rastmath.total.result<-raster.math.proportion.calc(pr.rast, m.name,msk.rast,pol.t , b.name))
     print(paste("Time to do raster math for ",msk.name,": ",round(rast.math.time[[1]]/60)," minute(s)", sep=""))
     print(rastmath.total.result)
-    targeted.effort.results[count,]<-c(b.name,pol.t,m.name,msk.name,"TotalArea",rastmath.total.result)
-    write.csv(targeted.effort.results,paste("TargetedEffortResults_",datestamp,".csv",sep=""))
-    print(paste("Wrote ",msk.name," & priority proportions results to file",sep=""))
-    count<-count+1
+    targeted.effort.results[ct,]<-c(b.name,pol.t,m.name,msk.name,"TotalArea",rastmath.total.result)
+    write.table(targeted.effort.results,paste("TargetedEffortResults_",datestamp,".csv",sep=""),append=TRUE,sep=",")
+    print(paste("Wrote treatments, ",msk.name,", & priority proportions results to file",sep=""))
+    ct<-ct+1
+ 		return(ct)
   }
 
 ################ END FUNCTIONS #######################

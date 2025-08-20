@@ -4,7 +4,7 @@
 
 timer.start<-Sys.time()
 
-datestamp<-"2025Aug18"
+datestamp<-"2025Aug20"
 
 #scripts and important reference layers are in the github repo
 loc.scripts<-"D:/GitRepos/BattlesLabRepos/Task-Force-Action-Plan-Support/"
@@ -73,6 +73,10 @@ grass.whp.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_
 wood.whp.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_WOODLAND.tif",sep=""))
 grass.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_GRASS_CECS.tif",sep=""))
 wood.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_WOODLAND_CECS.tif",sep=""))
+
+grass.whp.rast<-crop(grass.whp.rast,whp.rast)
+wood.whp.rast<-crop(wood.whp.rast,whp.rast)
+
 
 #read in the road and transmission line buffers
 tran.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/TransmissionLineBuffer_CECSproj.tif",sep=""))
@@ -237,12 +241,19 @@ if(conditions.mask.areas){
 # PREP BOUNDARY LAYERS (Statewide and Task Force Regions)        ###
 ####################################################################
 
-##loop through the four regions
-# boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/Region_SouthernCA.shp",sep=""),
-#                   paste(loc.scripts,"ReferenceFiles/Region_Sierra.shp",sep=""),
-#                   paste(loc.scripts,"ReferenceFiles/Region_NorthernCA.shp",sep=""),
-#                   paste(loc.scripts,"ReferenceFiles/Region_CentralCoast.shp",sep=""))
-# boundary.name<-c("South","Sierra","North","Central")
+ boundary.shape<-c(
+                   paste(loc.scripts,"ReferenceFiles/Region_Sierra.shp",sep=""),
+                   paste(loc.scripts,"ReferenceFiles/Region_NorthernCA.shp",sep=""),
+                   paste(loc.scripts,"ReferenceFiles/Region_CentralCoast.shp",sep=""))
+ boundary.name<-c("Sierra","North","Central")
+
+
+# #loop through the four regions
+#  boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/Region_SouthernCA.shp",sep=""),
+#                    paste(loc.scripts,"ReferenceFiles/Region_Sierra.shp",sep=""),
+#                    paste(loc.scripts,"ReferenceFiles/Region_NorthernCA.shp",sep=""),
+#                    paste(loc.scripts,"ReferenceFiles/Region_CentralCoast.shp",sep=""))
+#  boundary.name<-c("South","Sierra","North","Central")
 
 # #loop through all california, and the four regions
 #  boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""),
@@ -252,8 +263,8 @@ if(conditions.mask.areas){
 #                    paste(loc.scripts,"ReferenceFiles/Region_CentralCoast.shp",sep=""))
 #  boundary.name<-c("CA","Sierra","North","South","Central")
 
-boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""))
-boundary.name<-c("CA")
+#boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""))
+#boundary.name<-c("CA")
 
 #these will be necessary for if you need to recalculate the polygons
 #and for file naming conventions
@@ -301,9 +312,9 @@ for(i in 1:length(boundary.name)){
     m.rast<-shrub.whp.rast
     p.rast<-sh.priority.rast
 
-    rast.calcs.time<-system.time(rasterize.mask.calculate.proportions(p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
+    rast.calcs.time<-system.time(count<-rasterize.mask.calculate.proportions(1,p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
     print(paste("Total time to do raster math for ",policy.target," using ",metric.name," in ",mask.name,": ",round(rast.calcs.time[[1]]/60)," minute(s)", sep=""))
-
+    print(count)
     #---------------- Drought Vulnerability, forest -------------------------#
 
     policy.target<-"ForestHealth"
@@ -313,174 +324,180 @@ for(i in 1:length(boundary.name)){
     m.rast<-forest.cecs.rast
     p.rast<-dv.priority.rast
 
-    rast.calcs.time<-system.time(rasterize.mask.calculate.proportions(p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
+    rast.calcs.time<-system.time(count<-rasterize.mask.calculate.proportions(1,p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
     print(paste("Total time to do raster math for ",policy.target," using ",metric.name," in ",mask.name,": ",round(rast.calcs.time[[1]]/60)," minute(s)", sep=""))
-
+    print(count)
     # #---------------- WHP, Landscape ---------------------------#
 
     policy.target<-"WildlandFireRisk"
-    metric.name<-"WildfireHazardPotentialWildland"
+    metric.name<-"WildfireHazardPotentialLandscape"
     mask.name<-"Landscape"
     r.rast<-whp.rast
     m.rast<-land.whp.rast
     p.rast<-whp.priority.rast
-    rast.calcs.time<-system.time(rasterize.mask.calculate.proportions(p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
+    rast.calcs.time<-system.time(count<-rasterize.mask.calculate.proportions(1,p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
     print(paste("Total time to do raster math for ",policy.target," using ",metric.name," in ",mask.name,": ",round(rast.calcs.time[[1]]/60)," minute(s)", sep=""))
-
-    #-----------------FLAME LENGTH, WILDLAND--------------#
+    print(count)
+    #-----------------FLAME LENGTH, landscape--------------#
     policy.target<-"WildlandFireRisk"
-    metric.name<-"FlameLengthAbove8FtWildland"
+    metric.name<-"FlameLengthAbove8FtLandscape"
     mask.name<-"Landscape"
     r.rast<-cecs.rast
     m.rast<-land.cecs.rast
     p.rast<-fl.priority.rast
 
-    rast.calcs.time<-system.time(rasterize.mask.calculate.proportions(p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
+    rast.calcs.time<-system.time(count<-rasterize.mask.calculate.proportions(1,p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
     print(paste("Total time to do raster math for ",policy.target," using ",metric.name," in ",mask.name,": ",round(rast.calcs.time[[1]]/60)," minute(s)", sep=""))
- 
+    print(count) 
     # #---------------- WHP, WUI ---------------------------#
 
     policy.target<-"WildlandFireRisk"
-    metric.name<-"WildfireHazardPotentialWildland"
+    metric.name<-"WildfireHazardPotentialWUI"
     mask.name<-"WUI"
     r.rast<-whp.rast
     m.rast<-wui.whp.rast
     p.rast<-whp.priority.rast
-    rast.calcs.time<-system.time(rasterize.mask.calculate.proportions(p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
+    rast.calcs.time<-system.time(count<-rasterize.mask.calculate.proportions(1,p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
     print(paste("Total time to do raster math for ",policy.target," using ",metric.name," in ",mask.name,": ",round(rast.calcs.time[[1]]/60)," minute(s)", sep=""))
-
+    print(count)
     #-----------------FLAME LENGTH, WUI--------------#
     policy.target<-"WildlandFireRisk"
-    metric.name<-"FlameLengthAbove8FtWildland"
+    metric.name<-"FlameLengthAbove8FtWUI"
     mask.name<-"WUI"
     r.rast<-cecs.rast
     m.rast<-wui.cecs.rast
     p.rast<-fl.priority.rast
 
-    rast.calcs.time<-system.time(rasterize.mask.calculate.proportions(p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
+    rast.calcs.time<-system.time(count<-rasterize.mask.calculate.proportions(1,p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
     print(paste("Total time to do raster math for ",policy.target," using ",metric.name," in ",mask.name,": ",round(rast.calcs.time[[1]]/60)," minute(s)", sep=""))
-
+    print(count)
     # #---------------- WHP, Roads ---------------------------#
 
     policy.target<-"WildlandFireRisk"
-    metric.name<-"WildfireHazardPotentialWildland"
+    metric.name<-"WildfireHazardPotentialRoads"
     mask.name<-"Roads"
     r.rast<-whp.rast
-    m.rast<-road.whp.rast
+    m.rast<-road.buff.whp.rast
     p.rast<-whp.priority.rast
-    rast.calcs.time<-system.time(rasterize.mask.calculate.proportions(p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
+    rast.calcs.time<-system.time(count<-rasterize.mask.calculate.proportions(1,p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
     print(paste("Total time to do raster math for ",policy.target," using ",metric.name," in ",mask.name,": ",round(rast.calcs.time[[1]]/60)," minute(s)", sep=""))
-
+    print(count)
     #-----------------FLAME LENGTH, roads--------------#
     policy.target<-"WildlandFireRisk"
-    metric.name<-"FlameLengthAbove8FtWildland"
+    metric.name<-"FlameLengthAbove8FtRoads"
     mask.name<-"Roads"
     r.rast<-cecs.rast
-    m.rast<-road.cecs.rast
+    m.rast<-road.buff.cecs.rast
     p.rast<-fl.priority.rast
 
-    rast.calcs.time<-system.time(rasterize.mask.calculate.proportions(p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
+    rast.calcs.time<-system.time(count<-rasterize.mask.calculate.proportions(1,p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
     print(paste("Total time to do raster math for ",policy.target," using ",metric.name," in ",mask.name,": ",round(rast.calcs.time[[1]]/60)," minute(s)", sep=""))
-
+    print(count)
 
     # #---------------- WHP, Utilities ---------------------------#
 
     policy.target<-"WildlandFireRisk"
-    metric.name<-"WildfireHazardPotentialWildland"
+    metric.name<-"WildfireHazardPotentialUtilities"
     mask.name<-"Utilities"
     r.rast<-whp.rast
-    m.rast<-tran.whp.rast
+    m.rast<-tran.buff.whp.rast
     p.rast<-whp.priority.rast
-    rast.calcs.time<-system.time(rasterize.mask.calculate.proportions(p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
+    rast.calcs.time<-system.time(count<-rasterize.mask.calculate.proportions(1,p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
     print(paste("Total time to do raster math for ",policy.target," using ",metric.name," in ",mask.name,": ",round(rast.calcs.time[[1]]/60)," minute(s)", sep=""))
-
+    print(count)
     #-----------------FLAME LENGTH, Utilities --------------#
     policy.target<-"WildlandFireRisk"
-    metric.name<-"FlameLengthAbove8FtWildland"
+    metric.name<-"FlameLengthAbove8FtUtilities"
     mask.name<-"Utilities"
     r.rast<-cecs.rast
-    m.rast<-tran.cecs.rast
+    m.rast<-tran.buff.cecs.rast
     p.rast<-fl.priority.rast
 
-    rast.calcs.time<-system.time(rasterize.mask.calculate.proportions(p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
+    rast.calcs.time<-system.time(count<-rasterize.mask.calculate.proportions(1,p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
     print(paste("Total time to do raster math for ",policy.target," using ",metric.name," in ",mask.name,": ",round(rast.calcs.time[[1]]/60)," minute(s)", sep=""))
-
+    print(count)
    # #---------------- WHP, Forest ---------------------------#
 
     policy.target<-"WildlandFireRisk"
-    metric.name<-"WildfireHazardPotentialWildland"
+    metric.name<-"WildfireHazardPotentialForest"
     mask.name<-"Forest"
     r.rast<-whp.rast
     m.rast<-forest.whp.rast
     p.rast<-whp.priority.rast
-    rast.calcs.time<-system.time(rasterize.mask.calculate.proportions(p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
+    rast.calcs.time<-system.time(count<-rasterize.mask.calculate.proportions(1,p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
     print(paste("Total time to do raster math for ",policy.target," using ",metric.name," in ",mask.name,": ",round(rast.calcs.time[[1]]/60)," minute(s)", sep=""))
-
+    print(count)
    # #---------------- WHP, Shrub ---------------------------#
 
     policy.target<-"WildlandFireRisk"
-    metric.name<-"WildfireHazardPotentialWildland"
+    metric.name<-"WildfireHazardPotentialShrub"
     mask.name<-"Shrub"
     r.rast<-whp.rast
     m.rast<-shrub.whp.rast
     p.rast<-whp.priority.rast
-    rast.calcs.time<-system.time(rasterize.mask.calculate.proportions(p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
+    rast.calcs.time<-system.time(count<-rasterize.mask.calculate.proportions(1,p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
     print(paste("Total time to do raster math for ",policy.target," using ",metric.name," in ",mask.name,": ",round(rast.calcs.time[[1]]/60)," minute(s)", sep=""))
-
+    print(count)
 
    # #---------------- WHP, grass ---------------------------#
 
     policy.target<-"WildlandFireRisk"
-    metric.name<-"WildfireHazardPotentialWildland"
+    metric.name<-"WildfireHazardPotentialGrass"
     mask.name<-"Grass"
     r.rast<-whp.rast
     m.rast<-grass.whp.rast
     p.rast<-whp.priority.rast
-    rast.calcs.time<-system.time(rasterize.mask.calculate.proportions(p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
+    rast.calcs.time<-system.time(count<-rasterize.mask.calculate.proportions(1,p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
     print(paste("Total time to do raster math for ",policy.target," using ",metric.name," in ",mask.name,": ",round(rast.calcs.time[[1]]/60)," minute(s)", sep=""))
-
+    print(count)
    # #---------------- WHP, woodland ---------------------------#
 
     policy.target<-"WildlandFireRisk"
-    metric.name<-"WildfireHazardPotentialWildland"
+    metric.name<-"WildfireHazardPotentialWoodland"
     mask.name<-"Woodland"
     r.rast<-whp.rast
     m.rast<-wood.whp.rast
     p.rast<-whp.priority.rast
-    rast.calcs.time<-system.time(rasterize.mask.calculate.proportions(p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
+    rast.calcs.time<-system.time(count<-rasterize.mask.calculate.proportions(1,p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
     print(paste("Total time to do raster math for ",policy.target," using ",metric.name," in ",mask.name,": ",round(rast.calcs.time[[1]]/60)," minute(s)", sep=""))
-
+    print(count)
 
     #---------------- Critical Habitat -------------------------#
 
     policy.target<-"Habitat"
     metric.name<-"CriticalHabitat"
-    mask.name<-"none"
+    mask.name<-"Landscape"
     r.rast<-whp.rast
+    m.rast<-land.whp.rast
     p.rast<-cr.priority.rast
-    rast.calcs.time<-system.time(rasterize.mask.calculate.proportions(p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name))
+    rast.calcs.time<-system.time(count<-rasterize.mask.calculate.proportions(1,p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
     print(paste("Total time to do raster math for ",policy.target," using ",metric.name," in ",mask.name,": ",round(rast.calcs.time[[1]]/60)," minute(s)", sep=""))
-
+    print(count)
     #---------------- Hydropower -------------------------#
 
-    policy.target<-"Water"
-    metric.name<-"Hydropower"
-    mask.name<-"none"
-    r.rast<-whp.rast
-    p.rast<-hy.priority.rast
-    rast.calcs.time<-system.time(rasterize.mask.calculate.proportions(p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name))
-    print(paste("Total time to do raster math for ",policy.target," using ",metric.name," in ",mask.name,": ",round(rast.calcs.time[[1]]/60)," minute(s)", sep=""))
-
+    #there aren't any overlaps of hydropower watersheds in south
+    if(boundary.name[i] %in% c("CA","Sierra","North","Central")){
+      policy.target<-"Water"
+      metric.name<-"Hydropower"
+      mask.name<-"Landscape"
+      r.rast<-whp.rast
+      m.rast<-land.whp.rast
+      p.rast<-hy.priority.rast
+      rast.calcs.time<-system.time(count<-rasterize.mask.calculate.proportions(1,p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
+      print(paste("Total time to do raster math for ",policy.target," using ",metric.name," in ",mask.name,": ",round(rast.calcs.time[[1]]/60)," minute(s)", sep=""))
+      print(count)
+    }
     #---------------- Debris Flow Risk -------------------------#
 
     policy.target<-"Water"
     metric.name<-"DebrisFlow"
-    mask.name<-"none"
+    mask.name<-"Landscape"
     r.rast<-whp.rast
+    m.rast<-land.whp.rast
     p.rast<-de.priority.rast
-    rast.calcs.time<-system.time(rasterize.mask.calculate.proportions(p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name))
+    rast.calcs.time<-system.time(count<-rasterize.mask.calculate.proportions(1,p.rast,metric.name,policy.target,boundary.name[i],r.rast,mask.name,m.rast))
     print(paste("Total time to do raster math for ",policy.target," using ",metric.name," in ",mask.name,": ",round(rast.calcs.time[[1]]/60)," minute(s)", sep=""))
-
+    print(count)
     #---------------- acres of fuel breaks -------------------------#
       ### Manually, aspatially calculate
 

@@ -25,7 +25,7 @@ whp.rast <- rast(paste(loc.data,"PriorityLayers/whp_classified_20240906.tif",sep
 ############### GLOBAL PARAMETERS ###################
 
 #date stamp of this set of results - appended to all outputs to avoid overwriting older versions
-datetime<-"2025Aug12"
+datetime<-"2025Aug18"
 
 #ending year of water year
 
@@ -79,16 +79,16 @@ if(calculate.metrics){
 # boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""))
 # boundary.name<-c("CA")
 
-boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/Region_SouthernCA.shp",sep=""))
-boundary.name<-c("South")
+#boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/Region_SouthernCA.shp",sep=""))
+#boundary.name<-c("South")
 
-# #loop through all california, and the four regions
-# boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""),
-#                   paste(loc.scripts,"ReferenceFiles/Region_SouthernCA.shp",sep=""),
-#                   paste(loc.scripts,"ReferenceFiles/Region_Sierra.shp",sep=""),
-#                   paste(loc.scripts,"ReferenceFiles/Region_NorthernCA.shp",sep=""),
-#                   paste(loc.scripts,"ReferenceFiles/Region_CentralCoast.shp",sep=""))
-# boundary.name<-c("CA","South","Sierra","North","Central")
+ #loop through all california, and the four regions
+ boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""),
+                   paste(loc.scripts,"ReferenceFiles/Region_SouthernCA.shp",sep=""),
+                   paste(loc.scripts,"ReferenceFiles/Region_Sierra.shp",sep=""),
+                   paste(loc.scripts,"ReferenceFiles/Region_NorthernCA.shp",sep=""),
+                   paste(loc.scripts,"ReferenceFiles/Region_CentralCoast.shp",sep=""))
+ boundary.name<-c("CA","South","Sierra","North","Central")
 
 vect.shape<-c(paste(loc.scripts,"ReferenceFiles/HUC12.shp",sep=""))
 vect.name<-c("HUC12")
@@ -113,6 +113,7 @@ for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each
 	print(paste("Start ", boundary.name[k]," loop"))
 
 	prepped.boundary.vect<-read.and.prepare.boundary.vector(boundary.shape[k],boundary.name[k],reference.rast)
+
 	if(boundary.name[k]=="CA"){
 		prepped.boundary.vect$Region<-"AllCA"
 	}	
@@ -126,116 +127,153 @@ for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each
 	###  BEGIN LOOP THROUGH METRICS   ###########
 	#############################################
 
+#	summary.method<-"global"
+	summary.method<-"zonal"
+
 	for(i in 1:length(metrics)){
 		#choose the correct metric
 		metric.name<-metrics[i]
-		#read in the appropriate raster
-		print(paste("Reading: ",loc.data,"Diff_",metric.name,".tif",sep=""))
-		diff.rast<-rast(paste(loc.data,"IntermediateFiles/DiffRasters/Diff_",metric.name,".tif",sep=""))
+		print(metric.name)
 
-		#read in pre-aggregated vector files per policy target and region
-		agg.treat.huc.vect<-vect(paste(loc.data,"IntermediateFiles/AggregatedVectors/Treatments_",
-					boundary.name[k],"_",policy.target[i],"_",start.year,"_",end.year,"_HUC12.shp",sep=""))
-		agg.fire.huc.vect<-vect(paste(loc.data,"IntermediateFiles/AggregatedVectors/Fires_",
-			boundary.name[i],"_",start.year,"_",end.year,"_HUC12.shp",sep=""))
-		agg.treat.vect<-vect(paste(loc.data,"IntermediateFiles/AggregatedVectors/Treatments_",
-					boundary.name[k],"_",policy.target[i],"_",start.year,"_",end.year,".shp",sep=""))
-		agg.fire.vect<-vect(paste(loc.data,"IntermediateFiles/AggregatedVectors/Fires_",
-			boundary.name[i],"_",start.year,"_",end.year,".shp",sep=""))
+		#read in the appropriate raster(s)
+		print(paste("Reading: ",loc.data,"PercDiff_",metric.name,".tif",sep=""))
+		perc.diff.rast<-rast(paste(loc.data,"IntermediateFiles/DiffRasters/PercDiff_",metric.name,".tif",sep=""))
+		print(paste("Reading: ",loc.data,"Init_",metric.name,".tif",sep=""))
+		before.rast<-rast(paste(loc.data,"IntermediateFiles/DiffRasters/Init_",metric.name,".tif",sep=""))
 
-		########### END READ IN AND PROCESS VECTORS ##############
+		if(summary.method=="global"){
 
+			library("exactextractr")
+			library("sf")
 
-		# #################### ZONAL CALCULATIONS #######################
+			#SF versions
 
-		# whole.summary.area.zonal<-summarize.pixels.in.area.of.interest(
-		# 						diff,metric.name,prepped.zonal.summary.area.vect,vect.name,"zonal",diffname)
-		# treatments.zonal<-summarize.pixels.in.area.of.interest(
-		# 						diff,metric.name,agg.treat.huc.vect,patch.name[1],"zonal",diffname)
-		# fires.zonal<-summarize.pixels.in.area.of.interest(
-		# 						diff,metric.name,agg.fire.huc.vect,patch.name[2],"zonal",diffname)
+			#have to read in the vector using sf instead of terra
+			agg.fire.sf<-st_read(paste(loc.data,"IntermediateFiles/AggregatedVectors/Fires_",
+						boundary.name[k],"_",start.year,"_",end.year,".shp",sep=""))
+			agg.fire.proj.sf<-st_transform(agg.fire.sf, st_crs(cecs.rast))
 
-		# diffname<-paste(metric.name,start.year,end.year,sep="_")
-
-		# #this is the output that will have the zonal mean for each spatial summary unit (e.g. HUC)
-		# #within the extent (boundary, e.g. Task Force region)
-		# #and then also includes the hucID (or other ID number for the individual spatial summary units)
-		# #and its area. the hucAverage is the actual value for the zonal average.
-
-		# all.zonal.results<-rbind(
-		# 	cbind(
-		# 	method=rep("Zonal",nrow(whole.summary.area.zonal)),
-		# 	metric=rep(metric.name,nrow(whole.summary.area.zonal)),
-		# 	boundary=rep(boundary.name[k],nrow(whole.summary.area.zonal)),
-		# 	subset=rep("WholeArea",nrow(whole.summary.area.zonal)),
-		# 	shapeID=as.data.frame(whole.summary.area.zonal)[,agg.code[2]],
-		# 	rasterAverage=as.data.frame(whole.summary.area.zonal)[,diffname]
-		# 	),
-		# 	cbind(
-		# 	method=rep("Zonal",nrow(treatments.zonal)),
-		# 	metric=rep(metric.name,nrow(treatments.zonal)),
-		# 	boundary=rep(boundary.name[k],nrow(treatments.zonal)),
-		# 	subset=rep(patch.name[1],nrow(treatments.zonal)),
-		# 	shapeID=as.data.frame(treatments.zonal)[,agg.code[2]],
-		# 	rasterAverage=as.data.frame(treatments.zonal)[,diffname]
-		# 	),
-		# 	cbind(
-		# 	method=rep("Zonal",nrow(fires.zonal)),
-		# 	metric=rep(metric.name,nrow(fires.zonal)),
-		# 	boundary=rep(boundary.name[k],nrow(fires.zonal)),
-		# 	subset=rep(patch.name[2],nrow(fires.zonal)),
-		# 	shapeID=as.data.frame(fires.zonal)[,agg.code[2]],
-		# 	rasterAverage=as.data.frame(fires.zonal)[,diffname]
-		# 	)
-		# )
+			#have to read in the vector using sf instead of terra
+			agg.treat.sf<-st_read(paste(loc.data,"IntermediateFiles/AggregatedVectors/Treatments_",
+						boundary.name[k],"_",policy.target[i],"_",start.year,"_",end.year,".shp",sep=""))
+			agg.treat.proj.sf<-st_transform(agg.treat.sf, st_crs(cecs.rast))
 
 
-		# write.table(all.zonal.results,paste("RawZonalCalcOutput_",diffname,"_",boundary.name[k],"_",datetime,".csv",sep=""),
-		# 	sep = ",",quote = FALSE, col.names = TRUE, row.names = FALSE,na="NA") 
+			boundary.sf<-st_read(boundary.shape[k])
+			prepped.boundary.sf<-st_transform(boundary.sf, st_crs(cecs.rast))
 
-		# ################### END ZONAL CALCS ######################
+			########### END READ IN AND PROCESS VECTORS ##############
 
+			################### BEGIN GLOBAL CALCS ######################
 
-		################### BEGIN GLOBAL CALCS ######################
+			diffname<-paste(metric.name,start.year,end.year,sep="_")
 
-		diffname<-paste(metric.name,start.year,end.year,sep="_")
+			print(paste("Starting global median calcs for ",metric.name," in ",boundary.name[k],sep=""))
+			all.global.results<-rbind(
+				cbind(
+				method="Global",type="PercentDiff", metric=metric.name,boundary=boundary.name[k],subset="WholeArea",
+				rasterAverage=exact_extract(perc.diff.rast,prepped.boundary.sf,fun="median")
+				),
+				cbind(
+				method="Global",type="PercentDiff", metric=metric.name,boundary=boundary.name[k],subset="Treatments",
+				rasterAverage=exact_extract(perc.diff.rast,agg.treat.proj.sf,fun="median")
+				),
+				cbind(
+				method="Global",type="PercentDiff", metric=metric.name,boundary=boundary.name[k],subset="Fires",
+				rasterAverage=exact_extract(perc.diff.rast,agg.fire.proj.sf,fun="median")
+				),
+				cbind(
+				method="Global",type="InitialValues", metric=metric.name,boundary=boundary.name[k],subset="WholeArea",
+				rasterAverage=exact_extract(before.rast,prepped.boundary.sf,fun="median")
+				),
+				cbind(
+				method="Global",type="InitialValues", metric=metric.name,boundary=boundary.name[k],subset="Treatments",
+				rasterAverage=exact_extract(before.rast,agg.treat.proj.sf,fun="median")
+				),
+				cbind(
+				method="Global",type="InitialValues", metric=metric.name,boundary=boundary.name[k],subset="Fires",
+				rasterAverage=exact_extract(before.rast,agg.fire.proj.sf,fun="median")
+				)
 
-		global.summary.treatments<-summarize.pixels.in.area.of.interest(
-								diff,metric.name,agg.treat.vect,"Treatments","global",diffname)
-		global.summary.fires<-summarize.pixels.in.area.of.interest(
-								diff,metric.name,agg.fire.vect,"Treatments","global",diffname)
-		global.summary.wholearea<-summarize.pixels.in.area.of.interest(
-								diff,metric.name,prepped.boundary.vect,boundary.name[k],"global",diffname)
-
-		all.global.results<-rbind(
-			cbind(
-			method=rep("Global",nrow(global.summary.wholearea)),
-			metric=rep(metric.name,nrow(global.summary.wholearea)),
-			boundary=rep(boundary.name[k],nrow(global.summary.wholearea)),
-			subset=rep("WholeArea",nrow(global.summary.wholearea)),
-			rasterAverage=as.data.frame(global.summary.wholearea)[,diffname]
-			),
-			cbind(
-			method=rep("Global",nrow(global.summary.treatments)),
-			metric=rep(metric.name,nrow(global.summary.treatments)),
-			boundary=rep(boundary.name[k],nrow(global.summary.treatments)),
-			subset=rep(patch.name[1],nrow(global.summary.treatments)),
-			rasterAverage=as.data.frame(global.summary.treatments)[,diffname]
-			),
-			cbind(
-			method=rep("Global",nrow(global.summary.fires)),
-			metric=rep(metric.name,nrow(global.summary.fires)),
-			boundary=rep(boundary.name[k],nrow(global.summary.fires)),
-			subset=rep(patch.name[2],nrow(global.summary.fires)),
-			rasterAverage=as.data.frame(global.summary.fires)[,diffname]
 			)
-		)
 
-		write.table(all.global.results,paste("GlobalCalcOutput_",diffname,"_",boundary.name[k],"_",datetime,".csv",sep=""),
-			sep = ",",quote = FALSE, col.names = TRUE, row.names = FALSE,na="NA") 
+			print(paste("Writing to GlobalCalcOutput_",diffname,"_",boundary.name[k],"_",datetime,".csv",sep=""))
+			write.table(all.global.results,paste("GlobalCalcOutput_",diffname,"_",boundary.name[k],"_",datetime,".csv",sep=""),
+				sep = ",",quote = FALSE, col.names = TRUE, row.names = FALSE,na="NA") 
+
+			################### END GLOBAL CALCS ######################
 
 
-		################### END GLOBAL CALCS ######################
+		}else if(summary.method=="zonal"){
+
+			library("exactextractr")
+			library("sf")
+
+
+			#have to read in the vector using sf instead of terra
+			agg.fire.huc.sf<-st_read(paste(loc.data,"IntermediateFiles/AggregatedVectors/Fires_",
+						boundary.name[k],"_",start.year,"_",end.year,"_HUC12.shp",sep=""))
+			agg.fire.huc.proj.sf<-st_transform(agg.fire.huc.sf, st_crs(cecs.rast))
+
+			#have to read in the vector using sf instead of terra
+			agg.treat.huc.sf<-st_read(paste(loc.data,"IntermediateFiles/AggregatedVectors/Treatments_",
+						boundary.name[k],"_",policy.target[i],"_",start.year,"_",end.year,"_HUC12.shp",sep=""))
+			agg.treat.huc.proj.sf<-st_transform(agg.treat.huc.sf, st_crs(cecs.rast))
+
+
+			boundary.sf<-st_read(boundary.shape[k])
+			prepped.boundary.sf<-st_transform(boundary.sf, st_crs(cecs.rast))
+
+			zonal.summary.area.sf<-st_read(vect.shape)
+			zonal.summary.proj.sf<-st_transform(zonal.summary.area.sf, st_crs(cecs.rast))
+			prepped.zonal.summary.sf<-st_intersection(zonal.summary.proj.sf,prepped.boundary.sf)
+
+			########### END READ IN AND PROCESS VECTORS ##############
+
+
+			# #################### ZONAL CALCULATIONS #######################
+
+			diffname<-paste(metric.name,start.year,end.year,sep="_")
+
+			print(paste("Starting zonal median calcs for ",metric.name," in ",boundary.name[k],sep=""))
+			 all.zonal.results<-rbind(
+			cbind(
+				method=rep("Zonal",nrow(prepped.zonal.summary.sf)),
+			 	metric=rep(metric.name,nrow(prepped.zonal.summary.sf)),
+			 	boundary=rep(boundary.name[k],nrow(prepped.zonal.summary.sf)),
+			 	subset=rep("WholeArea",nrow(prepped.zonal.summary.sf)),
+			 	shapeID=prepped.zonal.summary.sf[,"huc12"],
+				PercentDiff=exact_extract(perc.diff.rast,prepped.zonal.summary.sf,fun="median"),
+				Initial=exact_extract(before.rast,prepped.zonal.summary.sf,fun="median")),
+			cbind(
+				method=rep("Zonal",nrow(agg.fire.huc.proj.sf)),
+			 	metric=rep(metric.name,nrow(agg.fire.huc.proj.sf)),
+			 	boundary=rep(boundary.name[k],nrow(agg.fire.huc.proj.sf)),
+			 	subset=rep("Fire",nrow(agg.fire.huc.proj.sf)),
+			 	shapeID=agg.fire.huc.proj.sf[,"huc12"],
+				PercentDiff=exact_extract(perc.diff.rast,agg.fire.huc.proj.sf,fun="median"),
+				Initial=exact_extract(before.rast,agg.fire.huc.proj.sf,fun="median")),
+			cbind(
+				method=rep("Zonal",nrow(agg.treat.huc.proj.sf)),
+			 	metric=rep(metric.name,nrow(agg.treat.huc.proj.sf)),
+			 	boundary=rep(boundary.name[k],nrow(agg.treat.huc.proj.sf)),
+			 	subset=rep("Treatments",nrow(agg.treat.huc.proj.sf)),
+			 	shapeID=agg.treat.huc.proj.sf[,"huc12"],
+				PercentDiff=exact_extract(perc.diff.rast,agg.treat.huc.proj.sf,fun="median"),
+				Initial=exact_extract(before.rast,agg.treat.huc.proj.sf,fun="median"))
+			)
+
+ 			 print(paste("Writing to ZonalCalcOutput_",diffname,"_",boundary.name[k],"_",datetime,".csv",sep=""))
+			 write.table(as.data.frame(all.zonal.results),paste("ZonalCalcOutput_",diffname,"_",boundary.name[k],"_",datetime,".csv",sep=""),
+			 	sep = ",",quote = FALSE, col.names = TRUE, row.names = FALSE,na="NA")
+
+			 print(paste("Writing to GlobalCalcOutput_",diffname,"_",boundary.name[k],"_",datetime,".shp",sep=""))
+			 st_write(all.zonal.results, paste("ZonalCalcOutput_",diffname,"_",boundary.name[k],"_",datetime,".shp",sep=""))
+
+			# ################### END ZONAL CALCS ######################
+
+		}
+
 
 
 		#################### DATA VISUALIZATIONS ###################

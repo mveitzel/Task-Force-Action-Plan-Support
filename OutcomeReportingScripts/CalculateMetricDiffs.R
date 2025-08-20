@@ -27,12 +27,21 @@
 	# do I want to use subset.raster here?
 	wui.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/FRAP24_WUIOnly_CECS.tif",sep=""))
 	diff.masked.rast<-diff.rast*wui.cecs.rast
+
 	print("Raster masked for WUI")
 
-	diff<-multiply.conversion.factor(metrics[1],diff.masked.rast,conversion)
+	diff.rast<-multiply.conversion.factor(metrics[1],diff.masked.rast,conversion)
 
-	print(paste(loc.data,"Writing IntermediateFiles/DiffRasters/Diff_",metrics[1],".tif",sep=""))
-	writeRaster(diff,paste(loc.data,"IntermediateFiles/DiffRasters/Diff_",metrics[1],".tif",sep=""))
+	before.conv.rast<-multiply.conversion.factor(metrics[1],before.proj.rast*wui.cecs.rast,conversion)
+	before.prepped.rast<-before.conv.rast
+	before.prepped.rast[before.prepped.rast<=0]<-NA
+
+	perc.diff.rast<-diff.rast/before.prepped.rast
+
+	print(paste(loc.data,"Writing IntermediateFiles/DiffRasters/PercDiff_",metrics[1],".tif",sep=""))
+	writeRaster(perc.diff.rast,paste(loc.data,"IntermediateFiles/DiffRasters/PercDiff_",metrics[1],".tif",sep=""),overwrite=TRUE)
+	print(paste(loc.data,"Writing IntermediateFiles/DiffRasters/Init_",metrics[1],".tif",sep=""))
+	writeRaster(before.prepped.rast,paste(loc.data,"IntermediateFiles/DiffRasters/Init_",metrics[1],".tif",sep=""),overwrite=TRUE)
 
 #------------ end flame length (WUI) raster calcs -----------#
 
@@ -61,10 +70,22 @@
 	diff.masked.rast<-diff.rast*land.cecs.rast
 	print("Raster masked for Landscape")
 
-	diff<-multiply.conversion.factor(metrics[2],diff.masked.rast,conversion)
+#	rast.matrix<-as.matrix(diff)
+#	extremes<-quantile(rast.matrix,c(0.005,0.995),na.rm=TRUE)
 
-	print(paste(loc.data,"Writing IntermediateFiles/DiffRasters/Diff_",metrics[2],".tif",sep=""))
-	writeRaster(diff,paste(loc.data,"IntermediateFiles/DiffRasters/Diff_",metrics[2],".tif",sep=""),overwrite=TRUE)
+	diff.rast<-multiply.conversion.factor(metrics[2],diff.masked.rast,conversion)
+
+	before.conv.rast<-multiply.conversion.factor(metrics[2],before.proj.rast*wui.cecs.rast,conversion)
+	before.prepped.rast<-before.conv.rast
+	before.prepped.rast[before.prepped.rast<=0]<-NA
+
+	perc.diff.rast<-diff.rast/before.prepped.rast
+
+
+	print(paste(loc.data,"Writing IntermediateFiles/DiffRasters/PercDiff_",metrics[2],".tif",sep=""))
+	writeRaster(perc.diff.rast,paste(loc.data,"IntermediateFiles/DiffRasters/PercDiff_",metrics[2],".tif",sep=""),overwrite=TRUE)
+	print(paste(loc.data,"Writing IntermediateFiles/DiffRasters/Init_",metrics[2],".tif",sep=""))
+	writeRaster(before.prepped.rast,paste(loc.data,"IntermediateFiles/DiffRasters/Init_",metrics[2],".tif",sep=""),overwrite=TRUE)
 
 #------------ end flame length (Wildland) raster calcs -----------#
 
@@ -93,9 +114,20 @@
 	diff.masked.rast<-diff.rast*tran.buff.cecs.rast
 	print("Raster masked for Utilities")
 
-	diff<-multiply.conversion.factor(metrics[3],diff.masked.rast,conversion)
-	print(paste(loc.data,"Writing IntermediateFiles/DiffRasters/Diff_",metrics[3],".tif",sep=""))
-	writeRaster(diff,paste(loc.data,"IntermediateFiles/DiffRasters/Diff_",metrics[3],".tif",sep=""))
+
+	diff.rast<-multiply.conversion.factor(metrics[3],diff.masked.rast,conversion)
+
+	before.conv.rast<-multiply.conversion.factor(metrics[3],before.proj.rast*tran.buff.cecs.rast,conversion)
+	before.prepped.rast<-before.conv.rast
+	before.prepped.rast[before.prepped.rast<=0]<-NA
+
+	perc.diff.rast<-diff.rast/before.prepped.rast
+
+
+	print(paste(loc.data,"Writing IntermediateFiles/DiffRasters/PercDiff_",metrics[3],".tif",sep=""))
+	writeRaster(perc.diff.rast,paste(loc.data,"IntermediateFiles/DiffRasters/PercDiff_",metrics[3],".tif",sep=""),overwrite=TRUE)
+	print(paste(loc.data,"Writing IntermediateFiles/DiffRasters/Init_",metrics[3],".tif",sep=""))
+	writeRaster(before.prepped.rast,paste(loc.data,"IntermediateFiles/DiffRasters/Init_",metrics[3],".tif",sep=""),overwrite=TRUE)
 
 
 #------------ end flame length (Utilities) raster calcs -----------#
@@ -126,9 +158,19 @@
 	diff.masked.rast<-diff.rast*road.buff.cecs.rast
 	print("Raster masked for roads")
 
-	diff<-multiply.conversion.factor(metrics[4],diff.masked.rast,conversion)
-	print(paste(loc.data,"Writing IntermediateFiles/DiffRasters/Diff_",metrics[4],".tif",sep=""))
-	writeRaster(diff,paste(loc.data,"IntermediateFiles/DiffRasters/Diff_",metrics[4],".tif",sep=""))
+
+	diff.rast<-multiply.conversion.factor(metrics[4],diff.masked.rast,conversion)
+
+	before.conv.rast<-multiply.conversion.factor(metrics[4],before.proj.rast*road.buff.cecs.rast,conversion)
+	before.prepped.rast<-before.conv.rast
+	before.prepped.rast[before.prepped.rast<=0]<-NA
+
+	perc.diff.rast<-diff.rast/before.prepped.rast
+
+	print(paste(loc.data,"Writing IntermediateFiles/DiffRasters/PercDiff_",metrics[4],".tif",sep=""))
+	writeRaster(perc.diff.rast,paste(loc.data,"IntermediateFiles/DiffRasters/PercDiff_",metrics[4],".tif",sep=""),overwrite=TRUE)
+	print(paste(loc.data,"Writing IntermediateFiles/DiffRasters/Init_",metrics[4],".tif",sep=""))
+	writeRaster(before.prepped.rast,paste(loc.data,"IntermediateFiles/DiffRasters/Init_",metrics[4],".tif",sep=""),overwrite=TRUE)
 
 
 #------------ end flame length (Roads) raster calcs -----------#
@@ -158,9 +200,20 @@
 	diff.masked.rast<-diff.rast*forest.cecs.rast
 	print("Raster masked for forest")
 
-	diff<-multiply.conversion.factor(metrics[5],diff.masked.rast,conversion)
-	print(paste(loc.data,"Writing IntermediateFiles/DiffRasters/Diff_",metrics[5],".tif",sep=""))
-	writeRaster(diff,paste(loc.data,"IntermediateFiles/DiffRasters/Diff_",metrics[5],".tif",sep=""))
+
+	diff.rast<-multiply.conversion.factor(metrics[5],diff.masked.rast,conversion)
+
+	before.conv.rast<-multiply.conversion.factor(metrics[5],before.proj.rast*forest.cecs.rast,conversion)
+	before.prepped.rast<-before.conv.rast
+	before.prepped.rast[before.prepped.rast<=0]<-NA
+
+	perc.diff.rast<-diff.rast/before.prepped.rast
+
+
+	print(paste(loc.data,"Writing IntermediateFiles/DiffRasters/PercDiff_",metrics[5],".tif",sep=""))
+	writeRaster(perc.diff.rast,paste(loc.data,"IntermediateFiles/DiffRasters/PercDiff_",metrics[5],".tif",sep=""),overwrite=TRUE)
+	print(paste(loc.data,"Writing IntermediateFiles/DiffRasters/Init_",metrics[5],".tif",sep=""))
+	writeRaster(before.prepped.rast,paste(loc.data,"IntermediateFiles/DiffRasters/Init_",metrics[5],".tif",sep=""),overwrite=TRUE)
 
 
 #------------ end drought vulnerability raster calcs -----------#
@@ -257,9 +310,19 @@
 	diff.masked.rast<-diff.rast*shrub.cecs.rast
 	print("Raster masked for shrub")
 
-	diff<-multiply.conversion.factor(metrics[6],diff.masked.rast,conversion)
-	print(paste(loc.data,"Writing IntermediateFiles/DiffRasters/Diff_",metrics[6],".tif",sep=""))
-	writeRaster(diff,paste(loc.data,"IntermediateFiles/DiffRasters/Diff_",metrics[6],".tif",sep=""),overwrite=TRUE)
+
+	diff.rast<-multiply.conversion.factor(metrics[6],diff.masked.rast,conversion)
+
+	before.conv.rast<-multiply.conversion.factor(metrics[6],before.proj.rast*shrub.cecs.rast,conversion)
+	before.prepped.rast<-before.conv.rast
+	before.prepped.rast[before.prepped.rast<=0]<-NA
+
+	perc.diff.rast<-diff.rast/before.prepped.rast
+
+	print(paste(loc.data,"Writing IntermediateFiles/DiffRasters/PercDiff_",metrics[6],".tif",sep=""))
+	writeRaster(perc.diff.rast,paste(loc.data,"IntermediateFiles/DiffRasters/PercDiff_",metrics[6],".tif",sep=""),overwrite=TRUE)
+	print(paste(loc.data,"Writing IntermediateFiles/DiffRasters/Init_",metrics[6],".tif",sep=""))
+	writeRaster(before.prepped.rast,paste(loc.data,"IntermediateFiles/DiffRasters/Init_",metrics[6],".tif",sep=""),overwrite=TRUE)
 
 
 #------------ end shrub-grass ratio calcs -----------#
