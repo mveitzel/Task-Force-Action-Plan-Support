@@ -241,11 +241,11 @@ if(conditions.mask.areas){
 # PREP BOUNDARY LAYERS (Statewide and Task Force Regions)        ###
 ####################################################################
 
- boundary.shape<-c(
-                   paste(loc.scripts,"ReferenceFiles/Region_Sierra.shp",sep=""),
-                   paste(loc.scripts,"ReferenceFiles/Region_NorthernCA.shp",sep=""),
-                   paste(loc.scripts,"ReferenceFiles/Region_CentralCoast.shp",sep=""))
- boundary.name<-c("Sierra","North","Central")
+# boundary.shape<-c(
+#                   paste(loc.scripts,"ReferenceFiles/Region_Sierra.shp",sep=""),
+#                   paste(loc.scripts,"ReferenceFiles/Region_NorthernCA.shp",sep=""),
+#                   paste(loc.scripts,"ReferenceFiles/Region_CentralCoast.shp",sep=""))
+# boundary.name<-c("Sierra","North","Central")
 
 
 # #loop through the four regions
@@ -255,13 +255,13 @@ if(conditions.mask.areas){
 #                    paste(loc.scripts,"ReferenceFiles/Region_CentralCoast.shp",sep=""))
 #  boundary.name<-c("South","Sierra","North","Central")
 
-# #loop through all california, and the four regions
-#  boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""),
-#                    paste(loc.scripts,"ReferenceFiles/Region_Sierra.shp",sep=""),
-#                    paste(loc.scripts,"ReferenceFiles/Region_NorthernCA.shp",sep=""),
-#                    paste(loc.scripts,"ReferenceFiles/Region_SouthernCA.shp",sep=""),
-#                    paste(loc.scripts,"ReferenceFiles/Region_CentralCoast.shp",sep=""))
-#  boundary.name<-c("CA","Sierra","North","South","Central")
+#loop through all california, and the four regions
+boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""),
+                  paste(loc.scripts,"ReferenceFiles/Region_Sierra.shp",sep=""),
+                  paste(loc.scripts,"ReferenceFiles/Region_NorthernCA.shp",sep=""),
+                  paste(loc.scripts,"ReferenceFiles/Region_SouthernCA.shp",sep=""),
+                  paste(loc.scripts,"ReferenceFiles/Region_CentralCoast.shp",sep=""))
+boundary.name<-c("CA","Sierra","North","South","Central")
 
 #boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""))
 #boundary.name<-c("CA")
@@ -507,4 +507,49 @@ timer.end<-Sys.time()
 
 time.total<-timer.end-timer.start
 print(time.total)
+
+
+#data vis
+
+all.targeted.effort<-read.csv("TargetedEffortResults/TargetedEffortResults_2025Aug20_AllRegions.csv")
+
+metrics<-levels(factor(all.targeted.effort$Metric))
+
+regions<-levels(factor(all.targeted.effort$Boundary))
+
+nice.boundary.name<-c(
+          "All of California",
+          "Central Coast Region",
+          "Northern California",
+          "Sierra Nevada Region",
+          "Southern California")
+
+
+
+for(k in 1:length(regions)){
+
+  for(i in 1:length(metrics)){
+    #choose the correct metric
+    metric.name<-metrics[i]
+    print(metric.name)
+
+   all.targeted.effort$AreaType[all.targeted.effort$AreaType=="TotalArea"]<-"Background\nProportion"
+   all.targeted.effort$AreaType[all.targeted.effort$AreaType=="Treatments"]<-"Proportion\n in Treatments"
+
+   targeted.effort.sub<-all.targeted.effort[all.targeted.effort$Metric==metrics[i] & all.targeted.effort$Boundary==regions[k],]
+
+    plot.title<-paste("Proportion of Priority Areas\n(",metric.name,")\nin ",nice.boundary.name[k], sep="")
+    bar.plt<-ggplot(data=targeted.effort.sub, aes(x=AreaType,fill=AreaType,y=ProportionOfTreatments)) +
+      geom_bar(stat="identity")+
+      theme(legend.position="none")+
+        labs(title = plot.title,x = element_blank(), y = "Proportion of Priority Areas")+
+      scale_fill_manual(values=c("#E9E5C3","#5A3B00"))#+
+    pltnm.b<-paste("TargetedEffortResults/RelativeProportion_bar_", metric.name,"_",regions[k],".png",sep="")
+      ggsave(pltnm.b, units="in", width=4,height=3)
+
+  }
+
+}
+
+
 

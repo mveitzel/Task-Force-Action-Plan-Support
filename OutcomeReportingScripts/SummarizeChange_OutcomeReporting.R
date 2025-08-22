@@ -25,7 +25,7 @@ whp.rast <- rast(paste(loc.data,"PriorityLayers/whp_classified_20240906.tif",sep
 ############### GLOBAL PARAMETERS ###################
 
 #date stamp of this set of results - appended to all outputs to avoid overwriting older versions
-datetime<-"2025Aug18"
+datetime<-"2025Aug20_absdiff"
 
 #ending year of water year
 
@@ -127,8 +127,8 @@ for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each
 	###  BEGIN LOOP THROUGH METRICS   ###########
 	#############################################
 
-#	summary.method<-"global"
-	summary.method<-"zonal"
+	summary.method<-"global"
+#	summary.method<-"zonal"
 
 	for(i in 1:length(metrics)){
 		#choose the correct metric
@@ -136,6 +136,8 @@ for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each
 		print(metric.name)
 
 		#read in the appropriate raster(s)
+		print(paste("Reading: ",loc.data,"PercDiff_",metric.name,".tif",sep=""))
+		diff.rast<-rast(paste(loc.data,"IntermediateFiles/DiffRasters/Diff_",metric.name,".tif",sep=""))
 		print(paste("Reading: ",loc.data,"PercDiff_",metric.name,".tif",sep=""))
 		perc.diff.rast<-rast(paste(loc.data,"IntermediateFiles/DiffRasters/PercDiff_",metric.name,".tif",sep=""))
 		print(paste("Reading: ",loc.data,"Init_",metric.name,".tif",sep=""))
@@ -193,6 +195,18 @@ for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each
 				cbind(
 				method="Global",type="InitialValues", metric=metric.name,boundary=boundary.name[k],subset="Fires",
 				rasterAverage=exact_extract(before.rast,agg.fire.proj.sf,fun="median")
+				),
+				cbind(
+				method="Global",type="AbsoluteDiff", metric=metric.name,boundary=boundary.name[k],subset="WholeArea",
+				rasterAverage=exact_extract(diff.rast,prepped.boundary.sf,fun="median")
+				),
+				cbind(
+				method="Global",type="AbsoluteDiff", metric=metric.name,boundary=boundary.name[k],subset="Treatments",
+				rasterAverage=exact_extract(diff.rast,agg.treat.proj.sf,fun="median")
+				),
+				cbind(
+				method="Global",type="AbsoluteDiff", metric=metric.name,boundary=boundary.name[k],subset="Fires",
+				rasterAverage=exact_extract(diff.rast,agg.fire.proj.sf,fun="median")
 				)
 
 			)
@@ -274,31 +288,6 @@ for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each
 
 		}
 
-
-
-		#################### DATA VISUALIZATIONS ###################
-
-				#---------------- Plots for whole summary area ---------------------#
-
-				# area_type<-"SummaryUnit"
-
-				# plot.results(dt.dff=zonal.results$zonalAll,	ttlestrng=titlestring,
-				# 	xlbl=xlabel, metnm=metric.name, af.yr=after.year, bf.yr=before.year, sum.area=area_type,
-				# 	sumIDnm=sum.Poly.name[j], lnd.clss=sub.set[i], dffnm=diffname, dttme=datetime,reg=crop.nm[k])
-
-				# zonal.means[1,]<-c(metric.name,crop.nm[k],sum.Poly.name[j],sub.set[i],area_type,
-				# 	mean(as.data.frame(zonal.results$zonalAll)[,diffname],na.rm=TRUE))
-				# write.table(zonal.means,paste("ZonalMeansOutput_",diffname,"_",datetime,".csv",sep=""),
-				# 			sep = ",",quote = FALSE, col.names = FALSE, row.names = FALSE,na="NA",append=TRUE)
-				#count<-count+1
-
-		#use Lauren's boxplot code
-		#make HUC level maps of the differences
-
-
-			########### END DATA VISUALIZATIONS ##############
-
-
 	} # end loop through metrics (i)
 
 	########### END INITIAL ANALYSIS AND DATA VIS ############
@@ -306,8 +295,123 @@ for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each
 	##########################################################
 } #end boundary regions loop (k)
 
+
 timer.end<-Sys.time()
 
 time.total<-timer.end-timer.start
 print(time.total)
+
+timer.start<-Sys.time()
+
+#################### DATA VISUALIZATIONS ###################
+
+datetimevis<-"2025Aug18"
+
+ca.vect<-vect(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""))
+ca.cecs.vect<-check.crs.match(cecs.rast,ca.vect)
+
+for(i in 1:length(metrics)){
+	#choose the correct metric
+	metric.name<-metrics[i]
+	print(metric.name)
+
+	diffname<-paste(metric.name,start.year,end.year,sep="_")
+
+	all.zonal.results.vect<-vect(paste("ZonalCalcOutput_",diffname,"_",boundary.name[1],"_",datetimevis,".shp",sep=""))
+
+#	plot(all.zonal.results.vect,"PrcntDf",map.pal("viridis",10))
+
+
+require(tidyterra)
+require(tidyr)
+
+legend.title<-"Percent Difference"
+plot.title<-paste(legend.title, " in ", metric.name, sep="")
+
+#   ggplt <- ggplot()+
+#       geom_spatvector(data=ca.cecs.vect, lwd=1)+
+#       geom_spatvector(data=all.zonal.results.vect,
+
+#       #why does it still draw the lines when I've put lwd=0? 
+#                       aes(fill=PrcntDf),lwd = 0)+
+#             scale_fill_viridis_c(na.value = "white") +
+#       theme(text=element_text(size=12, family="Century Gothic"))+
+#       theme (legend.text = element_text(size =12))+
+#       theme (legend.title = element_text (size = 14))+
+# #	      theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+#             panel.background = element_blank())+
+#       labs(title = plot.title, fill=legend.title)+
+#       theme_void()
+#   pltnm<-paste("PercentDiff_Map_", metric.name,".png",sep="_")
+# 	  ggsave(pltnm)
+
+
+	hist.plt<-ggplot(data=all.zonal.results.vect, aes(y=PrcntDf)) +
+	  geom_histogram()+
+      labs(title = plot.title)+
+	  #labs (x = bquote('Time Step'), y = metric.name, title = bx.plt.title)+
+	  scale_fill_viridis_d(end = 0.8, begin = 0.2, direction=-1, option = "viridis")#+
+  pltnm.b<-paste("PercentDiff_hist_", metric.name,".png",sep="_")
+  ggsave(pltnm.b)
+
+}
+
+
+for(i in 1:length(metrics)){
+	#choose the correct metric
+	metric.name<-metrics[i]
+	print(metric.name)
+
+	diffname<-paste(metric.name,start.year,end.year,sep="_")
+
+	all.zonal.results.vect<-vect(paste("ZonalCalcOutput_",diffname,"_",boundary.name[1],"_",datetimevis,".shp",sep=""))
+
+#	plot(all.zonal.results.vect,"PrcntDf",map.pal("viridis",10))
+
+
+require(tidyterra)
+require(tidyr)
+
+legend.title<-"Initial"
+plot.title<-paste(legend.title, " in ", metric.name, sep="")
+
+#   ggplt <- ggplot()+
+#       geom_spatvector(data=ca.cecs.vect, lwd=1)+
+#       geom_spatvector(data=all.zonal.results.vect,
+
+#       #why does it still draw the lines when I've put lwd=0? 
+#                       aes(fill=PrcntDf),lwd = 0)+
+#             scale_fill_viridis_c(na.value = "white") +
+#       theme(text=element_text(size=12, family="Century Gothic"))+
+#       theme (legend.text = element_text(size =12))+
+#       theme (legend.title = element_text (size = 14))+
+# #	      theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+#             panel.background = element_blank())+
+#       labs(title = plot.title, fill=legend.title)+
+#       theme_void()
+#   pltnm<-paste("PercentDiff_Map_", metric.name,".png",sep="_")
+# 	  ggsave(pltnm)
+
+
+	hist.plt<-ggplot(data=all.zonal.results.vect, aes(y=Initial)) +
+	  geom_histogram()+
+      labs(title = plot.title)+
+	  #labs (x = bquote('Time Step'), y = metric.name, title = bx.plt.title)+
+	  scale_fill_viridis_d(end = 0.8, begin = 0.2, direction=-1, option = "viridis")#+
+  pltnm.b<-paste("Initial_hist_", metric.name,".png",sep="_")
+  ggsave(pltnm.b)
+
+}
+
+
+#boxplot(all.zonal.results.vect$PrcntDf)
+
+
+########### END DATA VISUALIZATIONS ##############
+
+timer.end<-Sys.time()
+
+time.vis<-timer.end-timer.start
+print(time.vis)
+
 
