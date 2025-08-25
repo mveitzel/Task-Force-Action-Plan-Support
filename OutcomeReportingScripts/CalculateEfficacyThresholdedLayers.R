@@ -113,11 +113,6 @@ timer.start<-Sys.time()
 	land.bef.masked.rast<-fl.before.rast*land.cecs.rast
 	print("Raster masked for Landscape")
 
-    writeRaster(land.aft.masked.rast,paste(loc.data,
-    	"IntermediateFiles/ThresholdedEfficacyLayers/FlameLengthLandscapeThresholded_",end.year,".tif",sep=""),overwrite=TRUE)
-    writeRaster(land.bef.masked.rast,paste(loc.data,
-    	"IntermediateFiles/ThresholdedEfficacyLayers/FlameLengthLandscapeThresholded_",start.year,".tif",sep=""),overwrite=TRUE)
-
 	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[2],"_",start.year,".tif",sep=""))
 	writeRaster(land.bef.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[2],"_",start.year,".tif",sep=""),overwrite=TRUE)
 	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[2],"_",end.year,".tif",sep=""))

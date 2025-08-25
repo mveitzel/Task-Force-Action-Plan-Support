@@ -78,7 +78,7 @@
   #triggering threshold set equivalent to a 50% chance of debris flow occurrence
   # = 0.05*0.5 = 0.025
   #
-  # We have instead chosen to show the top 40% of at-risk areas, similar to the classes 4 and 5 in sensitive habitat
+  # We have instead chosen to show the top 20% of at-risk areas, similar to the classes 4 and 5 in sensitive habitat
   de.vect<-vect(paste(loc.data,"PriorityLayers/ca_prefire_pfdf_basins.shp",sep=""))
   de.proj.vect<-check.crs.match(whp.rast,de.vect)
   de.proj.rast<-rasterize(de.proj.vect,whp.rast,field="pfprgt")
