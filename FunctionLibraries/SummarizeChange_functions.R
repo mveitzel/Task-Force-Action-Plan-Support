@@ -363,7 +363,8 @@ summarize.pixels.in.area.of.interest<-function(rast.rast,rast.name,vect.vect,vec
 
 
 #this function filters patches for e.g. treatment types and date ranges
-
+#TODO*** in a future iteration make this function take the 'is it a fire or a treatment' argument
+# and choose appropriate column headers for it
 filter.patches<-function(treat.prp.vect,pol.targ,start.yr,end.yr="present"){
   print("Starting filter.patches")
   #choose which list of activity types to filter treatments by.  Use NA if just subsetting by year
@@ -392,6 +393,15 @@ filter.patches<-function(treat.prp.vect,pol.targ,start.yr,end.yr="present"){
   return(trtmnts)
 }
 
+
+filter.fires<-function((fire.vect,start.yr,end.yr){
+  	print("Starting filter.fires")
+
+    fire.filt.vect<-fire.vect[format(as.Date(trt.subs.vect$ACTIVITY_END),"%Y-%m-%d")>=start.yr &
+       format(as.Date(trt.subs.vect$ACTIVITY_END),"%Y-%m-%d")<=end.yr ,]
+    print(paste("Subsetted between ",start.yr," and ",end.yr,sep=""))
+  return(fire.filt.vect)
+}
 
 #to get a total here, instead of treatments for trt.rast, put in the mask raster name
 raster.math.proportion.calc<-function(pri.rast,pri.name,trt.rast,pol.name,bdry.nm){

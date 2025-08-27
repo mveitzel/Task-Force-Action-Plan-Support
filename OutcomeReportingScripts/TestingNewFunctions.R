@@ -124,3 +124,12 @@ region_DV<-summarize.pixels.in.area.of.interest(reference.rast,metric.name,agg.t
 #      user    system   elapsed 
 # 3.3078333 0.1958333 3.4911667 
 
+#comparing sf and terra for vector area calculation:
+
+vect.terra<-vect(paste(loc.data,"IntermediateFiles/AggregatedVectors/Treatments_CA_ForestHealth_2020_2024.shp",sep=""))
+terra.time<-system.time(vect.terra.area<-expanse(vect.terra))
+
+library("sf")
+
+vect.sf<-st_read(paste(loc.data,"IntermediateFiles/AggregatedVectors/Treatments_CA_ForestHealth_2020_2024.shp",sep=""))
+sf.time<-system.time(vect.sf.area<-st_area(vect.sf))

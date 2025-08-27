@@ -121,6 +121,38 @@ if(aggregate.vectors){
 library("exactextractr")
 library("sf")
 
+fire.areas<-data.frame(Region=character(),Area_ac=numeric(),stringsAsFactors=FALSE)
+treatment.areas<-data.frame(Region=character(),metric=character(),Area_ac=numeric(),stringsAsFactors=FALSE)
+count<-1
+
+#calculate areas of fires and treatments (for st_area, documentation says it uses units of the CRS if it's projected)
+for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each region
+	print(paste("Start ", boundary.name[k]," loop"))
+
+	agg.fire.sf<-st_read(paste(loc.data,"IntermediateFiles/AggregatedVectors/Fires_",
+				boundary.name[k],"_",start.year,"_",end.year,".shp",sep=""))
+	agg.fire.proj.sf<-st_transform(agg.fire.sf, st_crs(cecs.rast))
+
+	fire.areas[k,]<-c(boundary.name[k],st_area(agg.fire.proj.sf)*0.000247105 )
+
+	for(i in 1:length(metrics)){
+		#choose the correct metric
+		metric.name<-metrics[i]
+		print(metric.name)
+
+			agg.treat.sf<-st_read(paste(loc.data,"IntermediateFiles/AggregatedVectors/Treatments_",
+						boundary.name[k],"_",policy.target[i],"_",start.year,"_",end.year,".shp",sep=""))
+			agg.treat.proj.sf<-st_transform(agg.treat.sf, st_crs(cecs.rast))
+
+		treatment.areas[count,]<-c(boundary.name[k],metric.name,st_area(agg.treat.proj.sf)*0.000247105)
+		count<-count+1
+
+		}
+
+	}
+
+write.csv(fire.areas,"FireAreasByRegion.csv")
+write.csv(treatment.areas,"TreatmentAreasByRegionMetric.csv")
 
 for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each region
 	print(paste("Start ", boundary.name[k]," loop"))
