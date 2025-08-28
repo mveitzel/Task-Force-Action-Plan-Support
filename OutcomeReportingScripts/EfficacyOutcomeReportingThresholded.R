@@ -27,7 +27,7 @@ whp.rast <- rast(paste(loc.data,"PriorityLayers/whp_classified_20240906.tif",sep
 ############### GLOBAL PARAMETERS ###################
 
 #date stamp of this set of results - appended to all outputs to avoid overwriting older versions
-datetime<-"2025Aug21_thresholded"
+datetime<-"2025Aug27_thresholded"
 
 #ending year of water year
 
@@ -78,11 +78,6 @@ if(calculate.metrics){
 
 ########### READ IN AND PROCESS VECTORS ##############
 
-# boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""))
-# boundary.name<-c("CA")
-
-#boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/Region_SouthernCA.shp",sep=""))
-#boundary.name<-c("South")
 
  #loop through all california, and the four regions
  boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""),
@@ -99,8 +94,8 @@ nice.boundary.name<-c(
 				  "Northern California",
 				  "Central Coast Region")
 
-vect.shape<-c(paste(loc.scripts,"ReferenceFiles/HUC12.shp",sep=""))
-vect.name<-c("HUC12")
+# vect.shape<-c(paste(loc.scripts,"ReferenceFiles/HUC12.shp",sep=""))
+# vect.name<-c("HUC12")
 
 ######################################
 ##         PREP VECTORS            ###
@@ -164,9 +159,9 @@ for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each
 	zonal.summary.proj.sf<-st_transform(zonal.summary.area.sf, st_crs(cecs.rast))
 	prepped.zonal.summary.sf<-st_intersection(zonal.summary.proj.sf,prepped.boundary.sf)
 
-	agg.fire.huc.sf<-st_read(paste(loc.data,"IntermediateFiles/AggregatedVectors/Fires_",
-			boundary.name[k],"_",start.year,"_",end.year,"_HUC12.shp",sep=""))
-	agg.fire.huc.proj.sf<-st_transform(agg.fire.huc.sf, st_crs(cecs.rast))
+	# agg.fire.huc.sf<-st_read(paste(loc.data,"IntermediateFiles/AggregatedVectors/Fires_",
+	# 		boundary.name[k],"_",start.year,"_",end.year,"_HUC12.shp",sep=""))
+	# agg.fire.huc.proj.sf<-st_transform(agg.fire.huc.sf, st_crs(cecs.rast))
 
 	agg.fire.sf<-st_read(paste(loc.data,"IntermediateFiles/AggregatedVectors/Fires_",
 				boundary.name[k],"_",start.year,"_",end.year,".shp",sep=""))
@@ -237,54 +232,54 @@ for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each
 				sep = ",",quote = FALSE, col.names = TRUE, row.names = FALSE,na="NA") 
 
 
-			#huc-level results to look at
+			# #huc-level results to look at
 
-			#have to read in the vector using sf instead of terra
-			agg.treat.huc.sf<-st_read(paste(loc.data,"IntermediateFiles/AggregatedVectors/Treatments_",
-						boundary.name[k],"_",policy.target[i],"_",start.year,"_",end.year,"_HUC12.shp",sep=""))
-			agg.treat.huc.proj.sf<-st_transform(agg.treat.huc.sf, st_crs(cecs.rast))
+			# #have to read in the vector using sf instead of terra
+			# agg.treat.huc.sf<-st_read(paste(loc.data,"IntermediateFiles/AggregatedVectors/Treatments_",
+			# 			boundary.name[k],"_",policy.target[i],"_",start.year,"_",end.year,"_HUC12.shp",sep=""))
+			# agg.treat.huc.proj.sf<-st_transform(agg.treat.huc.sf, st_crs(cecs.rast))
 
-			diffname<-paste(metric.name,start.year,end.year,sep="_")
+			# diffname<-paste(metric.name,start.year,end.year,sep="_")
 
-			print(paste("Starting huc-level proportion calcs for ",metric.name," in ",boundary.name[k],sep=""))
-			 all.zonal.results<-rbind(
-			cbind(
-				method=rep("Zonal",nrow(prepped.zonal.summary.sf)),
-			 	metric=rep(metric.name,nrow(prepped.zonal.summary.sf)),
-			 	boundary=rep(boundary.name[k],nrow(prepped.zonal.summary.sf)),
-			 	subset=rep("WholeArea",nrow(prepped.zonal.summary.sf)),
-			 	shapeID=prepped.zonal.summary.sf[,"huc12"],
-				before=exact_extract(bef.thr.rast,prepped.zonal.summary.sf,fun="mean"),
-				after=exact_extract(aft.thr.rast,prepped.zonal.summary.sf,fun="mean")),
-			cbind(
-				method=rep("Zonal",nrow(agg.fire.huc.proj.sf)),
-			 	metric=rep(metric.name,nrow(agg.fire.huc.proj.sf)),
-			 	boundary=rep(boundary.name[k],nrow(agg.fire.huc.proj.sf)),
-			 	subset=rep("Fire",nrow(agg.fire.huc.proj.sf)),
-			 	shapeID=agg.fire.huc.proj.sf[,"huc12"],
-				before=exact_extract(bef.thr.rast,agg.fire.huc.proj.sf,fun="mean"),
-				after=exact_extract(aft.thr.rast,agg.fire.huc.proj.sf,fun="mean")),
-			cbind(
-				method=rep("Zonal",nrow(agg.treat.huc.proj.sf)),
-			 	metric=rep(metric.name,nrow(agg.treat.huc.proj.sf)),
-			 	boundary=rep(boundary.name[k],nrow(agg.treat.huc.proj.sf)),
-			 	subset=rep("Treatments",nrow(agg.treat.huc.proj.sf)),
-			 	shapeID=agg.treat.huc.proj.sf[,"huc12"],
-				before=exact_extract(bef.thr.rast,agg.treat.huc.proj.sf,fun="mean"),
-				after=exact_extract(aft.thr.rast,agg.treat.huc.proj.sf,fun="mean"))
-			)
+			# print(paste("Starting huc-level proportion calcs for ",metric.name," in ",boundary.name[k],sep=""))
+			#  all.zonal.results<-rbind(
+			# cbind(
+			# 	method=rep("Zonal",nrow(prepped.zonal.summary.sf)),
+			#  	metric=rep(metric.name,nrow(prepped.zonal.summary.sf)),
+			#  	boundary=rep(boundary.name[k],nrow(prepped.zonal.summary.sf)),
+			#  	subset=rep("WholeArea",nrow(prepped.zonal.summary.sf)),
+			#  	shapeID=prepped.zonal.summary.sf[,"huc12"],
+			# 	before=exact_extract(bef.thr.rast,prepped.zonal.summary.sf,fun="mean"),
+			# 	after=exact_extract(aft.thr.rast,prepped.zonal.summary.sf,fun="mean")),
+			# cbind(
+			# 	method=rep("Zonal",nrow(agg.fire.huc.proj.sf)),
+			#  	metric=rep(metric.name,nrow(agg.fire.huc.proj.sf)),
+			#  	boundary=rep(boundary.name[k],nrow(agg.fire.huc.proj.sf)),
+			#  	subset=rep("Fire",nrow(agg.fire.huc.proj.sf)),
+			#  	shapeID=agg.fire.huc.proj.sf[,"huc12"],
+			# 	before=exact_extract(bef.thr.rast,agg.fire.huc.proj.sf,fun="mean"),
+			# 	after=exact_extract(aft.thr.rast,agg.fire.huc.proj.sf,fun="mean")),
+			# cbind(
+			# 	method=rep("Zonal",nrow(agg.treat.huc.proj.sf)),
+			#  	metric=rep(metric.name,nrow(agg.treat.huc.proj.sf)),
+			#  	boundary=rep(boundary.name[k],nrow(agg.treat.huc.proj.sf)),
+			#  	subset=rep("Treatments",nrow(agg.treat.huc.proj.sf)),
+			#  	shapeID=agg.treat.huc.proj.sf[,"huc12"],
+			# 	before=exact_extract(bef.thr.rast,agg.treat.huc.proj.sf,fun="mean"),
+			# 	after=exact_extract(aft.thr.rast,agg.treat.huc.proj.sf,fun="mean"))
+			# )
 
-			 all.zonal.results$before[all.zonal.results$before==0]<-NA
-			all.zonal.results$percdiff<-(all.zonal.results$after-all.zonal.results$before)/all.zonal.results$before
+			#  all.zonal.results$before[all.zonal.results$before==0]<-NA
+			# all.zonal.results$percdiff<-(all.zonal.results$after-all.zonal.results$before)/all.zonal.results$before
 
-			all.zonal.results.df<-as.data.frame(all.zonal.results)
+			# all.zonal.results.df<-as.data.frame(all.zonal.results)
 
- 			 print(paste("Writing to ZonalThresholdCalcOutput_",diffname,"_",boundary.name[k],"_",datetime,".csv",sep=""))
-			 write.table(as.data.frame(all.zonal.results.df),paste("ZonalThresholdCalcOutput_",diffname,"_",boundary.name[k],"_",datetime,".csv",sep=""),
-			 	sep = ",",quote = FALSE, col.names = TRUE, row.names = FALSE,na="NA")
+ 			#  print(paste("Writing to ZonalThresholdCalcOutput_",diffname,"_",boundary.name[k],"_",datetime,".csv",sep=""))
+			#  write.table(as.data.frame(all.zonal.results.df),paste("ZonalThresholdCalcOutput_",diffname,"_",boundary.name[k],"_",datetime,".csv",sep=""),
+			#  	sep = ",",quote = FALSE, col.names = TRUE, row.names = FALSE,na="NA")
 
-			 print(paste("Writing to ZonalThresholdCalcOutput_",diffname,"_",boundary.name[k],"_",datetime,".shp",sep=""))
-			 st_write(all.zonal.results, paste("EfficacyResults/ZonalThresholdCalcOutput_",diffname,"_",boundary.name[k],"_",datetime,".shp",sep=""))
+			#  print(paste("Writing to ZonalThresholdCalcOutput_",diffname,"_",boundary.name[k],"_",datetime,".shp",sep=""))
+			#  st_write(all.zonal.results, paste("EfficacyResults/ZonalThresholdCalcOutput_",diffname,"_",boundary.name[k],"_",datetime,".shp",sep=""))
 
 
 	}
@@ -356,32 +351,32 @@ for(k in 1:length(boundary.name)){
 		pltnm.b<-paste("EfficacyResults/PercentDiff_bar_", metric.name,"_",boundary.name[k],".png",sep="")
 	  	ggsave(pltnm.b, units="in", width=4,height=3)
 
-	  	#this is just making maps and histograms for us to sort of take a closer look as needed
-		all.zonal.results.vect<-vect(paste("ZonalThresholdCalcOutput_",diffname,"_",boundary.name[k],"_",datetimevis,".shp",sep=""))
+	  	# #this is just making maps and histograms for us to sort of take a closer look as needed
+		# all.zonal.results.vect<-vect(paste("ZonalThresholdCalcOutput_",diffname,"_",boundary.name[k],"_",datetimevis,".shp",sep=""))
 
-		legend.title<-"Percent Difference"
-		plot.title<-paste(legend.title, " in ", metric.name, " (",boundary.name[k],")", sep="")
+		# legend.title<-"Percent Difference"
+		# plot.title<-paste(legend.title, " in ", metric.name, " (",boundary.name[k],")", sep="")
 
-	    ggplt <- ggplot()+
-	       geom_spatvector(data=ca.cecs.vect, lwd=1)+
-	       geom_spatvector(data=all.zonal.results.vect,aes(fill=percdff),lwd = 0,col=NA)+
-	             scale_fill_viridis_c(na.value = "white") +
-	       theme(text=element_text(size=12, family="Century Gothic"))+
-	       theme (legend.text = element_text(size =12))+
-	       theme (legend.title = element_text (size = 14))+
-	       labs(title = plot.title, fill=legend.title)+
-	       theme_void()
-	   	pltnm<-paste("EfficacyResults/PercentDiff_Map_", metric.name,"_",boundary.name[k],".png",sep="")
-	 	ggsave(pltnm)
+	    # ggplt <- ggplot()+
+	    #    geom_spatvector(data=ca.cecs.vect, lwd=1)+
+	    #    geom_spatvector(data=all.zonal.results.vect,aes(fill=percdff),lwd = 0,col=NA)+
+	    #          scale_fill_viridis_c(na.value = "white") +
+	    #    theme(text=element_text(size=12, family="Century Gothic"))+
+	    #    theme (legend.text = element_text(size =12))+
+	    #    theme (legend.title = element_text (size = 14))+
+	    #    labs(title = plot.title, fill=legend.title)+
+	    #    theme_void()
+	   	# pltnm<-paste("EfficacyResults/PercentDiff_Map_", metric.name,"_",boundary.name[k],".png",sep="")
+	 	# ggsave(pltnm)
 
 
-		hist.plt<-ggplot(data=all.zonal.results.vect, aes(x=percdff)) +
-		  geom_histogram()+
-		  facet_grid(subset~.)
-	      labs(title = plot.title)+
-		  scale_fill_viridis_d(end = 0.8, begin = 0.2, direction=-1, option = "viridis")#+
-		pltnm.h<-paste("EfficacyResults/PercentDiff_hist_", metric.name,"_",boundary.name[k],".png",sep="")
-		ggsave(pltnm.h)
+		# hist.plt<-ggplot(data=all.zonal.results.vect, aes(x=percdff)) +
+		#   geom_histogram()+
+		#   facet_grid(subset~.)
+	    #   labs(title = plot.title)+
+		#   scale_fill_viridis_d(end = 0.8, begin = 0.2, direction=-1, option = "viridis")#+
+		# pltnm.h<-paste("EfficacyResults/PercentDiff_hist_", metric.name,"_",boundary.name[k],".png",sep="")
+		# ggsave(pltnm.h)
 
 	}
 

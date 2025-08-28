@@ -25,16 +25,16 @@ policy.target<-c("WildlandFireRisk","ShrublandHealth","ForestHealth","Habitat","
 #enable this if you want to make a csv of the relative areas of each policy target in each boundary shape
 calculate.areas<-FALSE
 
-zsum.shape<-c(paste(loc.scripts,"ReferenceFiles/HUC12.shp",sep=""))
-zsum.name<-c("HUC12")
+# zsum.shape<-c(paste(loc.scripts,"ReferenceFiles/HUC12.shp",sep=""))
+# zsum.name<-c("HUC12")
 
 patch.shape<-c(paste(loc.data,"ITS_2025Aug16_Data/appended.gdb",sep=""),
 			   paste(loc.data,"FireFootprints/fire24_1.gdb",sep=""))
 patch.layer<-c("appended_poly",
 				"firep24_1")
 
-read.time<-system.time(zonal.summary.area.vect<-read.vector.and.check.crs(whp.rast,zsum.shape,zsum.name))
-print(paste("Time to read zonal summary area: ",round(read.time[[1]]/60)," minute(s)", sep=""))
+# read.time<-system.time(zonal.summary.area.vect<-read.vector.and.check.crs(whp.rast,zsum.shape,zsum.name))
+# print(paste("Time to read zonal summary area: ",round(read.time[[1]]/60)," minute(s)", sep=""))
 
 read.time<-system.time(treat.vect<-read.and.check.crs.patch.vector(patch.shape[1],"Treatments",patch.layer[1],whp.rast))
 print(paste("Time to read treatments: ",round(read.time[[1]]/60)," minute(s)", sep=""))
@@ -57,35 +57,37 @@ for(i in 1:length(boundary.name)){
        treat.filt.vect<-list()
     }
 
-	prep.time<-system.time(prepped.zonal.summary.area.vect<-crop.vector.by.boundary.and.recalc.area(prepped.boundary.vect,boundary.name[i],zonal.summary.area.vect,zsum.name))
-	print(paste("Time to prep zonal summary area: ",round(prep.time[[1]]/60)," minute(s)", sep=""))
+	# prep.time<-system.time(prepped.zonal.summary.area.vect<-crop.vector.by.boundary.and.recalc.area(prepped.boundary.vect,boundary.name[i],zonal.summary.area.vect,zsum.name))
+	# print(paste("Time to prep zonal summary area: ",round(prep.time[[1]]/60)," minute(s)", sep=""))
 
 	#prep fires
+	filt.time<-system.time(fire.filt.vect<-filter.fires(fire.vect,start.y,end.y))
+	print(paste("Time to filter fires by time range (efficacy): ",round(filt.time[[1]]/60)," minute(s)", sep=""))
 
 	#also intersect and aggregate fires
 	agg.time<-system.time(agg.fires.region.vect<-intersect.and.aggregate.vectors(
-		prepped.boundary.vect,boundary.name[i],fire.vect,"Fires","Regions","Region",
+		prepped.boundary.vect,boundary.name[i],fire.filt.vect,"Fires","Regions","Region",
 		prepped.boundary.vect,boundary.name[i]))
 	print(paste("Time to aggregate fires by region (efficacy): ",round(agg.time[[1]]/60)," minute(s)", sep=""))
 	writeVector(agg.fires.region.vect,paste(loc.data,"IntermediateFiles/AggregatedVectors/Fires_",
 		boundary.name[i],"_",start.year,"_",end.year,".shp",sep=""),overwrite=TRUE)
 
-	#also intersect and aggregate fires at HUC level
-	agg.time<-system.time(agg.fires.huc.vect<-intersect.and.aggregate.vectors(
-		prepped.zonal.summary.area.vect,zsum.name,fire.vect,"Fires","HUC12","huc12",
-		prepped.boundary.vect,boundary.name[i]))
-	print(paste("Time to aggregate fires by HUC12 (efficacy): ",round(agg.time[[1]]/60)," minute(s)", sep=""))
-	writeVector(agg.fires.huc.vect,paste(loc.data,"IntermediateFiles/AggregatedVectors/Fires_",
-		boundary.name[i],"_",start.year,"_",end.year,"_HUC12.shp",sep=""),overwrite=TRUE)
+	# #also intersect and aggregate fires at HUC level
+	# agg.time<-system.time(agg.fires.huc.vect<-intersect.and.aggregate.vectors(
+	# 	prepped.zonal.summary.area.vect,zsum.name,fire.vect,"Fires","HUC12","huc12",
+	# 	prepped.boundary.vect,boundary.name[i]))
+	# print(paste("Time to aggregate fires by HUC12 (efficacy): ",round(agg.time[[1]]/60)," minute(s)", sep=""))
+	# writeVector(agg.fires.huc.vect,paste(loc.data,"IntermediateFiles/AggregatedVectors/Fires_",
+	# 	boundary.name[i],"_",start.year,"_",end.year,"_HUC12.shp",sep=""),overwrite=TRUE)
 
 
 	for(k in 1:length(policy.target)){
 	  	print(policy.target[k])
 
-	    filter.time<-system.time(treat.filt.te.vect<-filter.patches(treat.vect,policy.target[k],start.y,"present"))
+	    filter.time<-system.time(treat.filt.te.vect<-filter.treatments(treat.vect,policy.target[k],start.y,"present"))
 	    print(paste("Time to filter treatments (targeted effort): ",round(filter.time[[1]]/60)," minute(s)", sep=""))
 
-	    filter.time<-system.time(treat.filt.ef.vect<-filter.patches(treat.vect,policy.target[k],start.y,end.y))
+	    filter.time<-system.time(treat.filt.ef.vect<-filter.treatments(treat.vect,policy.target[k],start.y,end.y))
 	    print(paste("Time to filter treatments (efficacy): ",round(filter.time[[1]]/60)," minute(s)", sep=""))
 
 
@@ -116,13 +118,13 @@ for(i in 1:length(boundary.name)){
 			writeVector(agg.treatments.region.vect,paste(loc.data,"IntermediateFiles/AggregatedVectors/Treatments_",
 				boundary.name[i],"_",policy.target[k],"_",start.year,"_",end.year,".shp",sep=""),overwrite=TRUE)
 
-			#also intersect and aggregate treatments at HUC level
-			agg.time<-system.time(agg.treatments.huc.vect<-intersect.and.aggregate.vectors(
-				prepped.zonal.summary.area.vect,zsum.name,treat.filt.ef.vect,"Treatments","HUC12","huc12",
-				prepped.boundary.vect,boundary.name[i]))
-			print(paste("Time to aggregate treatments by HUC12 (efficacy): ",round(agg.time[[1]]/60)," minute(s)", sep=""))
-			writeVector(agg.treatments.huc.vect,paste(loc.data,"IntermediateFiles/AggregatedVectors/Treatments_",
-				boundary.name[i],"_",policy.target[k],"_",start.year,"_",end.year,"_HUC12.shp",sep=""),overwrite=TRUE)
+			# #also intersect and aggregate treatments at HUC level
+			# agg.time<-system.time(agg.treatments.huc.vect<-intersect.and.aggregate.vectors(
+			# 	prepped.zonal.summary.area.vect,zsum.name,treat.filt.ef.vect,"Treatments","HUC12","huc12",
+			# 	prepped.boundary.vect,boundary.name[i]))
+			# print(paste("Time to aggregate treatments by HUC12 (efficacy): ",round(agg.time[[1]]/60)," minute(s)", sep=""))
+			# writeVector(agg.treatments.huc.vect,paste(loc.data,"IntermediateFiles/AggregatedVectors/Treatments_",
+			# 	boundary.name[i],"_",policy.target[k],"_",start.year,"_",end.year,"_HUC12.shp",sep=""),overwrite=TRUE)
 
 		}
 

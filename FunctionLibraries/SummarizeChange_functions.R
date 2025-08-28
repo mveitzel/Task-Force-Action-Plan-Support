@@ -365,8 +365,8 @@ summarize.pixels.in.area.of.interest<-function(rast.rast,rast.name,vect.vect,vec
 #this function filters patches for e.g. treatment types and date ranges
 #TODO*** in a future iteration make this function take the 'is it a fire or a treatment' argument
 # and choose appropriate column headers for it
-filter.patches<-function(treat.prp.vect,pol.targ,start.yr,end.yr="present"){
-  print("Starting filter.patches")
+filter.treatments<-function(treat.prp.vect,pol.targ,start.yr,end.yr="present"){
+  print("Starting filter.treatments")
   #choose which list of activity types to filter treatments by.  Use NA if just subsetting by year
   if(!is.na(pol.targ)){
 	  if(pol.targ!="Suppression Support"){
@@ -383,23 +383,23 @@ filter.patches<-function(treat.prp.vect,pol.targ,start.yr,end.yr="present"){
     }
 
   if(end.yr!="present"){
-      trtmnts<-trt.subs.vect[format(as.Date(trt.subs.vect$ACTIVITY_END),"%Y-%m-%d")>=start.yr &
+      trtmnts<-trt.subs.vect[format(as.Date(trt.subs.vect$ACTIVITY_START),"%Y-%m-%d")>=start.yr &
            format(as.Date(trt.subs.vect$ACTIVITY_END),"%Y-%m-%d")<=end.yr ,]
       print(paste("Subsetted between ",start.yr," and ",end.yr,sep=""))
     }else{
-      trtmnts<-trt.subs.vect[format(as.Date(trt.subs.vect$ACTIVITY_END),"%Y-%m-%d")>=start.yr,]
-      print(paste("Subsetted starting at ",start.yr," through present",sep=""))
+      trtmnts<-trt.subs.vect[format(as.Date(trt.subs.vect$ACTIVITY_START),"%Y-%m-%d")>=start.yr,]
+      print(paste("Treatments subsetted starting at ",start.yr," through present",sep=""))
     }
   return(trtmnts)
 }
 
 
-filter.fires<-function((fire.vect,start.yr,end.yr){
+filter.fires<-function(fire.vect,start.yr,end.yr){
   	print("Starting filter.fires")
 
-    fire.filt.vect<-fire.vect[format(as.Date(trt.subs.vect$ACTIVITY_END),"%Y-%m-%d")>=start.yr &
-       format(as.Date(trt.subs.vect$ACTIVITY_END),"%Y-%m-%d")<=end.yr ,]
-    print(paste("Subsetted between ",start.yr," and ",end.yr,sep=""))
+    fire.filt.vect<-fire.vect[format(as.Date(fire.vect$ALARM_DATE),"%Y-%m-%d")>=start.yr &
+       format(as.Date(fire.vect$CONT_DATE),"%Y-%m-%d")<=end.yr ,]
+    print(paste("Fires subsetted between ",start.yr," and ",end.yr,sep=""))
   return(fire.filt.vect)
 }
 
