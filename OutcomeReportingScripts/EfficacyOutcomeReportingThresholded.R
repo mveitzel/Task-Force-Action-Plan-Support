@@ -27,7 +27,7 @@ whp.rast <- rast(paste(loc.data,"PriorityLayers/whp_classified_20240906.tif",sep
 ############### GLOBAL PARAMETERS ###################
 
 #date stamp of this set of results - appended to all outputs to avoid overwriting older versions
-datetime<-"2025Aug27_thresholded"
+datetime<-"2025Sept22_thresholded"
 
 #ending year of water year
 
@@ -38,23 +38,27 @@ end.year<-"2024"
 start.y<-paste(start.year,"-09-30",sep="")
 end.y<-paste(end.year,"-10-01",sep="")
 
-metrics<-c( "FlameLengthWUI",
-			"FlameLengthLandscape",
-			"FlameLengthUtilities",
-			"FlameLengthRoads",
-			"DroughtVulnerability", 
-			"Shrub-GrassRatio")
+#metrics<-c( "FlameLengthWUI",
+#			"FlameLengthLandscape",
+#			"FlameLengthUtilities",
+#			"FlameLengthRoads",
+#			"DroughtVulnerability", 
+#			"Shrub-GrassRatio")
+
+metrics<-c( "GrassProportion")
+
 
 #these should match the metrics and are for making sure
 #to read in the correctly aggregated vector which was
 #filtered for the appropriate treatment types
-policy.target<-c("WildlandFireRisk",
-			"WildlandFireRisk",
-			"WildlandFireRisk",
-			"WildlandFireRisk",
-			"ForestHealth",
-			"ShrublandHealth")
+#policy.target<-c("WildlandFireRisk",
+#			"WildlandFireRisk",
+#			"WildlandFireRisk",
+#			"WildlandFireRisk",
+#			"ForestHealth",
+#			"ShrublandHealth")
 
+policy.target<-c("ShrublandHealth")
 
 ############ END GLOBAL PARAMETERS #################
 
@@ -146,8 +150,8 @@ for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each
 
 	}
 
-write.csv(fire.areas,"FireAreasByRegion.csv")
-write.csv(treatment.areas,"TreatmentAreasByRegionMetric.csv")
+write.csv(fire.areas,"FireAreasByRegion_exclusive.csv")
+write.csv(treatment.areas,"TreatmentAreasByRegionMetric_exclusive.csv")
 
 for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each region
 	print(paste("Start ", boundary.name[k]," loop"))
@@ -155,9 +159,9 @@ for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each
 	boundary.sf<-st_read(boundary.shape[k])
 	prepped.boundary.sf<-st_transform(boundary.sf, st_crs(cecs.rast))
 
-	zonal.summary.area.sf<-st_read(vect.shape)
-	zonal.summary.proj.sf<-st_transform(zonal.summary.area.sf, st_crs(cecs.rast))
-	prepped.zonal.summary.sf<-st_intersection(zonal.summary.proj.sf,prepped.boundary.sf)
+#	zonal.summary.area.sf<-st_read(vect.shape)
+#	zonal.summary.proj.sf<-st_transform(zonal.summary.area.sf, st_crs(cecs.rast))
+#	prepped.zonal.summary.sf<-st_intersection(zonal.summary.proj.sf,prepped.boundary.sf)
 
 	# agg.fire.huc.sf<-st_read(paste(loc.data,"IntermediateFiles/AggregatedVectors/Fires_",
 	# 		boundary.name[k],"_",start.year,"_",end.year,"_HUC12.shp",sep=""))
@@ -200,6 +204,8 @@ for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each
 				method="Global",
 				metric=metric.name,
 				boundary=boundary.name[k],
+				fire.area=st_area(agg.fire.proj.sf)*0.000247105,
+				treatment.area=st_area(agg.treat.proj.sf)*0.000247105,
 				subset="WholeArea",
 				before=exact_extract(bef.thr.rast,prepped.boundary.sf,fun="mean"),
 				after=exact_extract(aft.thr.rast,prepped.boundary.sf,fun="mean")
@@ -208,6 +214,8 @@ for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each
 				method="Global",
 				metric=metric.name,
 				boundary=boundary.name[k],
+				fire.area=st_area(agg.fire.proj.sf)*0.000247105,
+				treatment.area=st_area(agg.treat.proj.sf)*0.000247105,
 				subset="Treatments",
 				before=exact_extract(bef.thr.rast,agg.treat.proj.sf,fun="mean"),
 				after=exact_extract(aft.thr.rast,agg.treat.proj.sf,fun="mean")
@@ -216,6 +224,8 @@ for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each
 				method="Global",
 				metric=metric.name,
 				boundary=boundary.name[k],
+				fire.area=st_area(agg.fire.proj.sf)*0.000247105,
+				treatment.area=st_area(agg.treat.proj.sf)*0.000247105,
 				subset="Fires",
 				before=exact_extract(bef.thr.rast,agg.fire.proj.sf,fun="mean"),
 				after=exact_extract(aft.thr.rast,agg.fire.proj.sf,fun="mean")

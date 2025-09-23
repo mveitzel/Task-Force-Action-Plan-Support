@@ -245,3 +245,67 @@ time.total<-timer.end-timer.start
 print(time.total)
 
 
+
+#---------- GRASS PROPORTION CALCS -------------------#
+
+timer.start<-Sys.time()
+
+	vint<-"250418"
+	metric.grass<-"Veg_HerbFrac"
+	#xlabel<-"Average decrease in Shrub-Grass Ratio"
+	conversion<-NA #the conversion factor for the individual proportions are 1/10000, but we're doing a ratio so they cancel
+
+	#filenaming convention changed for the CONUS CECS runs
+	before.yr.grass.name<-"CECS_Data/HerbCover_2020_WestCoast.tif"
+	after.yr.grass.name<-"CECS_Data/HerbCover_2024_WestCoast.tif"
+
+	before.grass.west.rast<-read.in.raster(loc.data,before.yr.grass.name,metrics[1])
+	after.grass.west.rast<-read.in.raster(loc.data,after.yr.grass.name,metrics[1])
+
+	#need to clip to CA
+	before.grass.cr.rast<-crop(before.grass.west.rast,reference.rast)
+	before.grass.rast<-mask(before.grass.cr.rast,reference.rast)
+
+	after.grass.cr.rast<-crop(after.grass.west.rast,reference.rast)
+	after.grass.rast<-mask(after.grass.cr.rast,reference.rast)
+
+	# "Units are % multiplied by 100, so a tree cover value of 9000 corresponds to 90% tree cover."
+	# so as long as max values are below 10000, we're okay.  a quick 'global' check verified that.
+	
+	before.proj.rast<-check.crs.match(reference.rast,before.grass.rast)
+	after.proj.rast<-check.crs.match(reference.rast,after.grass.rast)
+
+
+	print("Begin thresholding")
+	# "Units are % multiplied by 100, so a tree cover value of 9000 corresponds to 90% tree cover."
+	# so as long as max values are below 10000, we're okay.  a quick 'global' check verified that.
+	# Talking with Emma Underwood, Nicole Molinari, and Alexandra Syphard, we settled on a simple measure
+	# of grass proportion being greater than or equal to 50 % in an area that should otherwise be shrub
+	# just as a simple metric of shrubland intactness.
+	sh.before.rast<-before.proj.rast
+	sh.before.rast[sh.before.rast<=5000]<-1
+	sh.before.rast[sh.before.rast > 5000 ]<-0
+	print("Grass proportion thresholded: before")
+  
+	sh.after.rast<-after.proj.rast
+	sh.after.rast[sh.after.rast<=5000]<-1
+	sh.after.rast[sh.after.rast > 5000 ]<-0
+	print("Grass proportion thresholded: after")
+ 
+	#	mask for shrubs
+	shrub.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_SHRUB_CECS.tif",sep=""))
+	shrub.aft.masked.rast<-sh.after.rast*shrub.cecs.rast
+	shrub.bef.masked.rast<-sh.before.rast*shrub.cecs.rast
+	print("Raster masked for shrub")
+
+	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[1],"_",start.year,".tif",sep=""))
+	writeRaster(shrub.bef.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[1],"_",start.year,".tif",sep=""),overwrite=TRUE)
+	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[1],"_",end.year,".tif",sep=""))
+	writeRaster(shrub.aft.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[1],"_",end.year,".tif",sep=""),overwrite=TRUE)
+
+
+timer.end<-Sys.time()
+
+time.total<-timer.end-timer.start
+print(time.total)
+

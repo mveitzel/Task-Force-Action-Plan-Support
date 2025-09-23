@@ -133,3 +133,30 @@ library("sf")
 
 vect.sf<-st_read(paste(loc.data,"IntermediateFiles/AggregatedVectors/Treatments_CA_ForestHealth_2020_2024.shp",sep=""))
 sf.time<-system.time(vect.sf.area<-st_area(vect.sf))
+
+
+hist(treat.vect$ACTIVITY_END,breaks=50)
+hist(treat.vect$ACTIVITY_END[treat.vect$ACTIVITY_END>"2020-10-01"],breaks=50)
+
+hist(as.Date(treat.vect$ACTIVITY_START),breaks=50)
+hist(as.Date(treat.vect$ACTIVITY_START)[as.Date(treat.vect$ACTIVITY_START)>"2020-10-01"],breaks=50)
+
+treat.vect$duration<-as.Date(treat.vect$ACTIVITY_END)-as.Date(treat.vect$ACTIVITY_START)
+hist(as.numeric(as.character(treat.vect$duration[as.Date(treat.vect$ACTIVITY_START)>"2020-10-01" &
+	as.Date(treat.vect$ACTIVITY_END)<"2024-09-30"],breaks=50)))
+
+sum(as.Date(treat.vect$ACTIVITY_START)>"2020-10-01" &
+	as.Date(treat.vect$ACTIVITY_END)<"2024-09-30",na.rm=TRUE)
+#about 31 K records
+
+sum(as.Date(treat.vect$ACTIVITY_START)>"2020-10-01" &
+	as.Date(treat.vect$ACTIVITY_END)<"2024-09-30" & treat.vect$duration<=0,na.rm=TRUE)
+#13662 have negative durations
+
+sum(as.Date(treat.vect$ACTIVITY_START)>"2020-10-01" &
+	as.Date(treat.vect$ACTIVITY_END)<"2024-09-30" & treat.vect$duration>365,na.rm=TRUE)
+#4878 have durations longer than a year 
+
+summary(as.numeric(as.character(treat.vect$duration[as.Date(treat.vect$ACTIVITY_START)>"2020-10-01" &
+	as.Date(treat.vect$ACTIVITY_END)<"2024-09-30"])))
+

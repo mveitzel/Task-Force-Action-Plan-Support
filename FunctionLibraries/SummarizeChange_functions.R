@@ -383,11 +383,18 @@ filter.treatments<-function(treat.prp.vect,pol.targ,start.yr,end.yr="present"){
     }
 
   if(end.yr!="present"){
-      trtmnts<-trt.subs.vect[format(as.Date(trt.subs.vect$ACTIVITY_START),"%Y-%m-%d")>=start.yr &
-           format(as.Date(trt.subs.vect$ACTIVITY_END),"%Y-%m-%d")<=end.yr ,]
+  		#most exclusive criteria - starts after the initial date and ends before the final date
+  		trtmnts<-trt.subs.vect[format(as.Date(trt.subs.vect$ACTIVITY_START),"%Y-%m-%d")>start.yr &
+           format(as.Date(trt.subs.vect$ACTIVITY_END),"%Y-%m-%d")<end.yr ,]
+  		#most inclusive criteria - ends after the initial date, and starts before the final date (maybe should be 'or')
+#      trtmnts<-trt.subs.vect[format(as.Date(trt.subs.vect$ACTIVITY_START),"%Y-%m-%d")<end.yr &
+#           format(as.Date(trt.subs.vect$ACTIVITY_END),"%Y-%m-%d")>start.yr ,]
       print(paste("Subsetted between ",start.yr," and ",end.yr,sep=""))
     }else{
-      trtmnts<-trt.subs.vect[format(as.Date(trt.subs.vect$ACTIVITY_START),"%Y-%m-%d")>=start.yr,]
+    	#most exclusive criteria - starts after the initial date
+      trtmnts<-trt.subs.vect[format(as.Date(trt.subs.vect$ACTIVITY_START),"%Y-%m-%d")>start.yr,]
+  		#most inclusive criteria - ends after the initial date
+ #     trtmnts<-trt.subs.vect[format(as.Date(trt.subs.vect$ACTIVITY_END),"%Y-%m-%d")>start.yr,]
       print(paste("Treatments subsetted starting at ",start.yr," through present",sep=""))
     }
   return(trtmnts)
@@ -396,9 +403,12 @@ filter.treatments<-function(treat.prp.vect,pol.targ,start.yr,end.yr="present"){
 
 filter.fires<-function(fire.vect,start.yr,end.yr){
   	print("Starting filter.fires")
-
-    fire.filt.vect<-fire.vect[format(as.Date(fire.vect$ALARM_DATE),"%Y-%m-%d")>=start.yr &
-       format(as.Date(fire.vect$CONT_DATE),"%Y-%m-%d")<=end.yr ,]
+  	#most exclusive criteria - fire starts after the initial date and ends before the final date
+    fire.filt.vect<-fire.vect[format(as.Date(fire.vect$ALARM_DATE),"%Y-%m-%d")>start.yr &
+    		format(as.Date(fire.vect$CONT_DATE),"%Y-%m-%d")<end.yr ,]
+  	#most inclusive criteria - fire ends after the initial date, and starts before the final date (maybe should be 'or')
+#    fire.filt.vect<-fire.vect[format(as.Date(fire.vect$ALARM_DATE),"%Y-%m-%d")<end.yr &
+#       format(as.Date(fire.vect$CONT_DATE),"%Y-%m-%d")>start.yr ,]
     print(paste("Fires subsetted between ",start.yr," and ",end.yr,sep=""))
   return(fire.filt.vect)
 }
