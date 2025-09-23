@@ -45,7 +45,9 @@ end.y<-paste(end.year,"-10-01",sep="")
 #			"DroughtVulnerability", 
 #			"Shrub-GrassRatio")
 
-metrics<-c( "GrassProportion")
+#metrics<-c( "GrassProportion")
+
+metrics<-c( "DroughtVulnerability")
 
 
 #these should match the metrics and are for making sure
@@ -58,7 +60,10 @@ metrics<-c( "GrassProportion")
 #			"ForestHealth",
 #			"ShrublandHealth")
 
-policy.target<-c("ShrublandHealth")
+#policy.target<-c("ShrublandHealth")
+
+policy.target<-c("ForestHealth")
+
 
 ############ END GLOBAL PARAMETERS #################
 
@@ -84,19 +89,27 @@ if(calculate.metrics){
 
 
  #loop through all california, and the four regions
- boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""),
-                   paste(loc.scripts,"ReferenceFiles/Region_SouthernCA.shp",sep=""),
-                   paste(loc.scripts,"ReferenceFiles/Region_Sierra.shp",sep=""),
-                   paste(loc.scripts,"ReferenceFiles/Region_NorthernCA.shp",sep=""),
-                   paste(loc.scripts,"ReferenceFiles/Region_CentralCoast.shp",sep=""))
- boundary.name<-c("CA","South","Sierra","North","Central")
+ # boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""),
+ #                   paste(loc.scripts,"ReferenceFiles/Region_SouthernCA.shp",sep=""),
+ #                   paste(loc.scripts,"ReferenceFiles/Region_Sierra.shp",sep=""),
+ #                   paste(loc.scripts,"ReferenceFiles/Region_NorthernCA.shp",sep=""),
+ #                   paste(loc.scripts,"ReferenceFiles/Region_CentralCoast.shp",sep=""))
+ # boundary.name<-c("CA","South","Sierra","North","Central")
+
+ boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""))
+# boundary.name<-c("CA","South","Sierra","North","Central")
+
+ boundary.name<-c("CA")
+
+# nice.boundary.name<-c(
+# 				  "All of California",
+# 				  "Southern California",
+# 				  "Sierra Nevada Region",
+# 				  "Northern California",
+# 				  "Central Coast Region")
 
 nice.boundary.name<-c(
-				  "All of California",
-				  "Southern California",
-				  "Sierra Nevada Region",
-				  "Northern California",
-				  "Central Coast Region")
+				  "All of California")
 
 # vect.shape<-c(paste(loc.scripts,"ReferenceFiles/HUC12.shp",sep=""))
 # vect.name<-c("HUC12")
@@ -302,15 +315,31 @@ timer.end<-Sys.time()
 time.total<-timer.end-timer.start
 print(time.total)
 
-		global.ca<-read.csv(paste("GlobalThresholdCalcOutput_",diffname,"_",boundary.name[1],"_",datetime,".csv",sep=""))
-		global.sc<-read.csv(paste("GlobalThresholdCalcOutput_",diffname,"_",boundary.name[2],"_",datetime,".csv",sep=""))
-		global.sn<-read.csv(paste("GlobalThresholdCalcOutput_",diffname,"_",boundary.name[3],"_",datetime,".csv",sep=""))
-		global.nc<-read.csv(paste("GlobalThresholdCalcOutput_",diffname,"_",boundary.name[4],"_",datetime,".csv",sep=""))
-		global.cc<-read.csv(paste("GlobalThresholdCalcOutput_",diffname,"_",boundary.name[5],"_",datetime,".csv",sep=""))
+		# global.ca<-read.csv(paste("GlobalThresholdCalcOutput_",diffname,"_",boundary.name[1],"_",datetime,".csv",sep=""))
+		# global.sc<-read.csv(paste("GlobalThresholdCalcOutput_",diffname,"_",boundary.name[2],"_",datetime,".csv",sep=""))
+		# global.sn<-read.csv(paste("GlobalThresholdCalcOutput_",diffname,"_",boundary.name[3],"_",datetime,".csv",sep=""))
+		# global.nc<-read.csv(paste("GlobalThresholdCalcOutput_",diffname,"_",boundary.name[4],"_",datetime,".csv",sep=""))
+		# global.cc<-read.csv(paste("GlobalThresholdCalcOutput_",diffname,"_",boundary.name[5],"_",datetime,".csv",sep=""))
 
-		all.global.results<-rbind(global.ca,global.sc,global.sn,global.nc,global.cc)
-		print(all.global.results)
+		# all.global.results<-rbind(global.ca,global.sc,global.sn,global.nc,global.cc)
+		# print(all.global.results)
 
+#compiling all the efficacy results into one csv in order to manually do nice table formatting in a spreadsheet program
+
+efficacy.list<-read.csv("EfficacyResults/EfficacyOutputs.csv")
+
+efficacy.results<-list()
+
+for(i in 1:nrow(efficacy.list))
+	efficacy.results[[i]]<-read.csv(paste("EfficacyResults/",efficacy.list[i,],sep=""))
+
+efficacy.df<-do.call(rbind,efficacy.results)
+efficacy.df$method<-factor(efficacy.df$method)
+efficacy.df$metric<-factor(efficacy.df$metric)
+efficacy.df$boundary<-factor(efficacy.df$boundary)
+efficacy.df$subset<-factor(efficacy.df$subset)
+
+write.csv(efficacy.df,"EfficacyResults/AllEfficacyOutputs.csv")
 
 #################### DATA VISUALIZATIONS ###################
 
