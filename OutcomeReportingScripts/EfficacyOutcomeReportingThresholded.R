@@ -325,7 +325,7 @@ print(time.total)
 		# print(all.global.results)
 
 #compiling all the efficacy results into one csv in order to manually do nice table formatting in a spreadsheet program
-
+#manually created EfficacyOutputs.csv with "ls GlobalThr*2025Sept*csv > EfficacyOutputs.csv"
 efficacy.list<-read.csv("EfficacyResults/EfficacyOutputs.csv")
 
 efficacy.results<-list()
