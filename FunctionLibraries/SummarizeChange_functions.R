@@ -451,7 +451,7 @@ raster.math.proportion.calc<-function(pri.rast,pri.name,trt.rast,pol.name,bdry.n
 #name of the priority layershrub.whp.rast
 #doesn't return anything but writes to the file.
 #if there's no mask, use 'none' for the mask name and leave the last argument blank.
-rasterize.mask.calculate.proportions<-function(ct,pr.rast,m.name,pol.t,b.name,ref.rast,msk.name="none",msk.rast=NULL){
+rasterize.mask.calculate.proportions<-function(ct,pr.rast,m.name,pol.t,b.name,b.shape,ref.rast,msk.name="none",msk.rast=NULL){
     print("Starting rasterize.mask.calculate.proportions")
     #read in the appropriate pre-filtered, pre-aggregated vector file
     agg.treat.vect<-vect(paste(loc.data,"IntermediateFiles/AggregatedVectors/Treatments_",
@@ -483,7 +483,11 @@ rasterize.mask.calculate.proportions<-function(ct,pr.rast,m.name,pol.t,b.name,re
     ct<-ct+1
     
     print(paste("Starting raster math calculation of priority proportions in ",msk.name,sep=""))
-    rast.math.time<-system.time(rastmath.total.result<-raster.math.proportion.calc(pr.rast, m.name,msk.rast,pol.t , b.name))
+    #clip the mask for the region (treatments have already had this done in preprocessing)
+    bound<-vect(b.shape)
+    bound.proj<-check.crs.match(ref.rast,bound)
+    msk.rast.clip<-mask(msk.rast,bound.proj)
+    rast.math.time<-system.time(rastmath.total.result<-raster.math.proportion.calc(pr.rast, m.name,msk.rast.clip,pol.t , b.name))
     print(paste("Time to do raster math for ",msk.name,": ",round(rast.math.time[[1]]/60)," minute(s)", sep=""))
     print(rastmath.total.result)
     targeted.effort.results[ct,]<-c(b.name,pol.t,m.name,msk.name,"TotalArea",rastmath.total.result)
