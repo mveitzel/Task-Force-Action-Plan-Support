@@ -160,3 +160,9 @@ sum(as.Date(treat.vect$ACTIVITY_START)>"2020-10-01" &
 summary(as.numeric(as.character(treat.vect$duration[as.Date(treat.vect$ACTIVITY_START)>"2020-10-01" &
 	as.Date(treat.vect$ACTIVITY_END)<"2024-09-30"])))
 
+
+#			library(spatialEco)
+#			zonal.treat.sf<-sf_dissolve(zonal.treat.intersect,zsum.name)
+#			zonal.treat.sf<-aggregate(zonal.treat.intersect,by=zonal.treat.intersect[,zsum.name],do_union=TRUE)
+
+
