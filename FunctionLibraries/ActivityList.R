@@ -49,5 +49,7 @@
 	  	"PRESCRB_HERBIVORY","PRUNING","ROAD_CLEAR","SEEDBED_PREP","SITE_PREP",
 	  	"SLASH_DISPOSAL","TBD","TREE_PLNTING","WETLAND_RESTOR","YARDING","BROADCAST_BURN")
 	  )
+	#chain crushing should be in nonCanopy but we don't know whether that geometry is safe
+	#biomass removal is not included because we're not sure whether it would affect canopy or not
 
 
