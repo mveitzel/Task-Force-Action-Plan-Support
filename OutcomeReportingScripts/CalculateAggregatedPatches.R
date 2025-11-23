@@ -28,7 +28,7 @@ calculate.areas<-FALSE
 # zsum.shape<-c(paste(loc.scripts,"ReferenceFiles/HUC12.shp",sep=""))
 # zsum.name<-c("HUC12")
 
-patch.shape<-c(paste(loc.data,"ITS_2025Aug16_Data/appended.gdb",sep=""),
+patch.shape<-c(paste(loc.data,"ITS_2025_V2Nov14_Data/appended.gdb",sep=""),
 			   paste(loc.data,"FireFootprints/fire24_1.gdb",sep=""))
 patch.layer<-c("appended_poly",
 				"firep24_1")

@@ -76,12 +76,25 @@ timer.start<-Sys.time()
 	fl.before.rast<-before.proj.rast*0.0328084
 	fl.before.rast[fl.before.rast<8]<-0
 	fl.before.rast[fl.before.rast >= 8 ]<-1
-	print("Flame Length thresholded: before")
+	print("Flame Length above 8 ft thresholded: before")
   
+  #beneficial fire is flame length below 4 ft
+	bf.before.rast<-before.proj.rast*0.0328084
+	bf.before.rast[bf.before.rast<=4]<-1
+	bf.before.rast[bf.before.rast > 4 ]<-0
+	print("Flame Length below 4 ft thresholded: before")
+  
+
 	fl.after.rast<-after.proj.rast*0.0328084
 	fl.after.rast[fl.after.rast<8]<-0
 	fl.after.rast[fl.after.rast >= 8 ]<-1
-	print("Flame Length thresholded: after")
+	print("Flame Length above 8 ft thresholded: after")
+
+	bf.after.rast<-after.proj.rast*0.0328084
+	bf.after.rast[bf.after.rast<=4]<-1
+	bf.after.rast[bf.after.rast > 4 ]<-0
+	print("Flame Length below 4 ft thresholded: after")
+
  
 	#	mask for roads
 	road.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/RoadBuffer_CECSproj.tif",sep=""))
@@ -111,14 +124,29 @@ timer.start<-Sys.time()
 	land.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/FRAP24_Landscape_CECS.tif",sep=""))
 	land.aft.masked.rast<-fl.after.rast*land.cecs.rast
 	land.bef.masked.rast<-fl.before.rast*land.cecs.rast
-	print("Raster masked for Landscape")
+	print("Raster masked for Landscape - 8 ft")
 
 	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[2],"_",start.year,".tif",sep=""))
-	writeRaster(land.bef.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[2],"_",start.year,".tif",sep=""),overwrite=TRUE)
+	writeRaster(land.bef.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",
+		metrics[2],"_",start.year,".tif",sep=""),overwrite=TRUE)
 	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[2],"_",end.year,".tif",sep=""))
-	writeRaster(land.aft.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[2],"_",end.year,".tif",sep=""),overwrite=TRUE)
+	writeRaster(land.aft.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",
+		metrics[2],"_",end.year,".tif",sep=""),overwrite=TRUE)
 
  
+	land.aft.masked.rast<-bf.after.rast*land.cecs.rast
+	land.bef.masked.rast<-bf.before.rast*land.cecs.rast
+	print("Raster masked for Landscape- 4 ft")
+
+
+	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[7],"_",start.year,".tif",sep=""))
+	writeRaster(land.bef.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",
+		metrics[7],"_",start.year,".tif",sep=""),overwrite=TRUE)
+	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[7],"_",end.year,".tif",sep=""))
+	writeRaster(land.aft.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",
+		metrics[7],"_",end.year,".tif",sep=""),overwrite=TRUE)
+
+
     #mask for WUI
 	wui.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/FRAP24_WUIOnly_CECS.tif",sep=""))
 	wui.aft.masked.rast<-fl.after.rast*wui.cecs.rast

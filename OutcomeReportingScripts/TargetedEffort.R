@@ -4,7 +4,7 @@
 
 timer.start<-Sys.time()
 
-datestamp<-"2025Sep28"
+datestamp<-"2025Nov14"
 
 #scripts and important reference layers are in the github repo
 loc.scripts<-"D:/GitRepos/BattlesLabRepos/Task-Force-Action-Plan-Support/"
@@ -517,7 +517,8 @@ print(time.total)
 
 #all.targeted.effort<-read.csv("TargetedEffortResults/TargetedEffortResults_2025Aug20_AllRegions.csv")
 #all.targeted.effort<-read.csv("TargetedEffortResults_2025Sep15_forVis.csv")
-all.targeted.effort<-read.csv("TargetedEffortResults_2025Sep28_forVis.csv")
+#all.targeted.effort<-read.csv("TargetedEffortResults_2025Sep28_forVis.csv")
+all.targeted.effort<-read.csv("TargetedEffortResults_2025Nov14_forVis.csv")
 
 metrics<-levels(factor(all.targeted.effort$Metric))
 
@@ -595,7 +596,7 @@ nice.metric.name<-c(
           theme(legend.position="bottom",axis.text.x = element_blank(),axis.title.x= element_blank(),axis.ticks.x=element_blank())+
         labs(title = plot.title, fill="", y = "Proportion of Priority Areas")+
       scale_fill_manual(values=c("#E9E5C3","#5A3B00"))#+
-    pltnm.b<-paste("TargetedEffortResults/RelativeProportion_bar_", metric.name,".png",sep="")
+    pltnm.b<-paste("TargetedEffortResults/RelativeProportion_bar_", metric.name,"_",datestamp,".png",sep="")
       ggsave(pltnm.b, units="in", width=6,height=3)
 
   }

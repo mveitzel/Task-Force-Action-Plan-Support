@@ -27,7 +27,7 @@ whp.rast <- rast(paste(loc.data,"PriorityLayers/whp_classified_20240906.tif",sep
 ############### GLOBAL PARAMETERS ###################
 
 #date stamp of this set of results - appended to all outputs to avoid overwriting older versions
-datetime<-"2025Sept25_thresholded"
+datetime<-"2025Nov17_thresholdedmasked"
 
 #ending year of water year
 
@@ -44,7 +44,8 @@ metrics<-c( "FlameLengthWUI",
 			"FlameLengthRoads",
 			"DroughtVulnerability", 
 #			"Shrub-GrassRatio")
-			"GrassProportion")
+			"GrassProportion",
+			"BeneficialFireLandscape")
 
 #metrics<-c( "GrassProportion")
 
@@ -59,7 +60,8 @@ policy.target<-c("WildlandFireRisk",
 			"WildlandFireRisk",
 			"WildlandFireRisk",
 			"ForestHealth",
-			"ShrublandHealth")
+			"ShrublandHealth",
+			"WildlandFireRisk")
 
 wui.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/FRAP24_WUIOnly_CECS.tif",sep=""))
 wui.cecs.rast[is.na(wui.cecs.rast)]<-0
@@ -74,7 +76,14 @@ road.buff.cecs.rast[is.na(road.buff.cecs.rast)]<-0
 tran.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/TransmissionLineBuffer_CECSproj.tif",sep=""))
 tran.buff.cecs.rast[is.na(tran.buff.cecs.rast)]<-0
 
-spat.rast<-list(wui.cecs.rast,land.cecs.rast,tran.buff.cecs.rast,road.buff.cecs.rast,forest.cecs.rast,shrub.cecs.rast)
+spat.rast<-list(
+				wui.cecs.rast,
+				land.cecs.rast,
+				tran.buff.cecs.rast,
+				road.buff.cecs.rast,
+				forest.cecs.rast,
+				shrub.cecs.rast,
+				land.cecs.rast)
 
 #policy.target<-c("ShrublandHealth")
 
@@ -148,39 +157,58 @@ if(aggregate.vectors){
 library("exactextractr")
 library("sf")
 
-# fire.areas<-data.frame(Region=character(),SpatialMask=character(),Area_ac=numeric(),stringsAsFactors=FALSE)
-# treatment.areas<-data.frame(Region=character(),SpatialMask=character(),metric=character(),Area_ac=numeric(),stringsAsFactors=FALSE)
+###-------------------------------------------
+### this section is to calculate areas of all treatments, statewide, only filtered by policy target/type of treatment
 
-# count<-1
+# policy.target<-c("WildlandFireRisk",
+# 			"ForestHealth",
+# 			"ShrublandHealth",
+# 			"Habitat",
+# 			"Water")
 
-# #calculate areas of fires and treatments (for st_area, documentation says it uses units of the CRS if it's projected)
-# for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each region
-# 	print(paste("Start ", boundary.name[k]," loop"))
+# metrics<-c( "FlameLengthLandscape",
+# 			"DroughtVulnerability", 
+# 			"GrassProportion",
+# 			"CriticalHabitat",
+# 			"DebrisFlow")
 
-# 	agg.fire.sf<-st_read(paste(loc.data,"IntermediateFiles/AggregatedVectors/Fires_",
-# 				boundary.name[k],"_",start.year,"_",end.year,".shp",sep=""))
-# 	agg.fire.proj.sf<-st_transform(agg.fire.sf, st_crs(cecs.rast))
 
-# 	fire.areas[k,]<-c(boundary.name[k],st_area(agg.fire.proj.sf)*0.000247105 )
+# # fire.areas<-data.frame(Region=character(),SpatialMask=character(),Area_ac=numeric(),stringsAsFactors=FALSE)
+#  treatment.areas<-data.frame(Region=character(),metric=character(),Area_ac=numeric(),stringsAsFactors=FALSE)
 
-# 	for(i in 1:length(metrics)){
-# 		#choose the correct metric
-# 		metric.name<-metrics[i]
-# 		print(metric.name)
+#  count<-1
+#  k=1
 
-# 			agg.treat.sf<-st_read(paste(loc.data,"IntermediateFiles/AggregatedVectors/Treatments_",
-# 						boundary.name[k],"_",policy.target[i],"_",start.year,"_",end.year,".shp",sep=""))
-# 			agg.treat.proj.sf<-st_transform(agg.treat.sf, st_crs(cecs.rast))
+# # #calculate areas of fires and treatments (for st_area, documentation says it uses units of the CRS if it's projected)
+# # for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each region
+#  	print(paste("Start ", boundary.name[k]," loop"))
 
-# 		treatment.areas[count,]<-c(boundary.name[k],metric.name,st_area(agg.treat.proj.sf)*0.000247105)
-# 		count<-count+1
+# # 	agg.fire.sf<-st_read(paste(loc.data,"IntermediateFiles/AggregatedVectors/Fires_",
+# # 				boundary.name[k],"_",start.year,"_",end.year,".shp",sep=""))
+# # 	agg.fire.proj.sf<-st_transform(agg.fire.sf, st_crs(cecs.rast))
 
-# 		}
+# # 	fire.areas[k,]<-c(boundary.name[k],st_area(agg.fire.proj.sf)*0.000247105 )
 
-# 	}
+#  	for(i in 1:length(metrics)){
+#  		#choose the correct metric
+#  		metric.name<-metrics[i]
+#  		print(metric.name)
 
-# write.csv(fire.areas,"FireAreasByRegion_exclusive.csv")
-# write.csv(treatment.areas,"TreatmentAreasByRegionMetric_exclusive.csv")
+#  			agg.treat.sf<-st_read(paste(loc.data,"IntermediateFiles/AggregatedVectors/Treatments_",
+#       			boundary.name[k],"_",policy.target[i],"_",start.year,"-present.shp",sep=""))
+#  			agg.treat.proj.sf<-st_transform(agg.treat.sf, st_crs(cecs.rast))
+
+#  		treatment.areas[count,]<-c(boundary.name[k],metric.name,st_area(agg.treat.proj.sf)*0.000247105)
+#  		count<-count+1
+
+#  		}
+
+# # 	}
+
+# # write.csv(fire.areas,"FireAreasByRegion_exclusive.csv")
+#  write.csv(treatment.areas,"TreatmentAreasByRegionMetric_TargetedEffort.csv")
+###-------------------------------------------
+
 
 for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each region
 	print(paste("Start ", boundary.name[k]," loop"))
@@ -210,7 +238,7 @@ for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each
 		metric.name<-metrics[i]
 		print(metric.name)
 
-		#read in the appropriate raster(s)
+		#read in the appropriate raster(s) (already masked for appropriate geographical subsets)
 		print(paste("Reading: ",loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metric.name,"_",start.year,".tif",sep=""))
 		bef.thr.rast<-rast(paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metric.name,"_",start.year,".tif",sep=""))
 		print(paste("Reading: ",loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metric.name,"_",end.year,".tif",sep=""))
@@ -341,7 +369,7 @@ print(time.total)
 
 #compiling all the efficacy results into one csv in order to manually do nice table formatting in a spreadsheet program
 #manually created EfficacyOutputs.csv with "ls GlobalThr*2025Sept*csv > EfficacyOutputs.csv"
-efficacy.list<-read.csv("EfficacyResults/EfficacyOutputsSept25.csv",header=FALSE)
+efficacy.list<-read.csv("EfficacyResults/EfficacyOutputsNov17masked.csv",header=FALSE)
 
 efficacy.results<-list()
 
@@ -361,14 +389,15 @@ write.csv(efficacy.df,"EfficacyResults/AllEfficacyOutputs.csv")
 
 timer.start<-Sys.time()
 
-datetimevis<-"2025Sept25_thresholded"
+datetimevis<-datetime
 
 nice.metric.name<-c("Likely High Severity Fire\nin WUI",
 					"Likely High Severity Fire\nAcross Landscape",
 					"Likely High Severity Fire\nin Utility Corridors",
 					"Likely High Severity Fire\nin Road Corridors",
 					"Imminent Forest Mortality",
-					"Grass-dominated Shrublands")
+					"Grass-dominated Shrublands",
+					"Potentially Beneficial Fire\nAcross Landscape")
 
 require(tidyterra)
 require(tidyr)
@@ -404,7 +433,7 @@ for(k in 1:length(boundary.name)){
 	      labs(title = plot.title,x = element_blank(), y = "Difference in Proportion 2020-2024")+
 		  scale_fill_manual(values=c("#E9E5C3","#9C8F57","#9F2214"))#+
 		  #geom_text(aes(label=before.rnd), vjust=-0.5, color="black", size=3.5)
-		pltnm.b<-paste("EfficacyResults/AbsDiff_bar_", metric.name,"_",boundary.name[k],".png",sep="")
+		pltnm.b<-paste("EfficacyResults/AbsDiff_bar_", metric.name,"_",boundary.name[k],"_",datetime,".png",sep="")
 	  	ggsave(pltnm.b, units="in", width=4,height=3)
 
 	  	# #this is just making maps and histograms for us to sort of take a closer look as needed
@@ -463,7 +492,7 @@ for(i in 1:length(metrics)){
       labs(title = plot.title, fill = "", y = "Difference in Proportion 2020-2024")+
 	  scale_fill_manual(values=c("#E9E5C3","#9C8F57","#9F2214"))#+
 	  #geom_text(aes(label=before.rnd), vjust=-0.5, color="black", size=3.5)
-	pltnm.b<-paste("EfficacyResults/AbsDiff_bar_", metric.name,".png",sep="")
+	pltnm.b<-paste("EfficacyResults/AbsDiff_bar_", metric.name,"_",datetime,".png",sep="")
   	ggsave(pltnm.b, units="in", width=6,height=3)
 
 }
