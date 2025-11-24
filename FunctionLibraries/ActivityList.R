@@ -36,19 +36,20 @@
 	"Water"=list(metric="Acres treated with high potential debris flow",activities=
 	  c("EROSION_CNTRL", "BROADCAST_BURN", "PILE_BURN", "THIN_MECH", "THIN_MAN", "TREE_FELL", "MASTICATION", "BIOMASS_REMOVAL", "WETLAND_RESTOR")),
 	"Air"=list(metric="Acres treated in watersheds feeding into hydropower & reservoirs",activities=
-	  c("EROSION_CNTRL", "BROADCAST_BURN", "PILE_BURN", "THIN_MECH", "THIN_MAN", "TREE_FELL", "MASTICATION", "BIOMASS_REMOVAL", "WETLAND_RESTOR", "ECO_HAB_RESTORATION"))
-	  )
+	  c("EROSION_CNTRL", "BROADCAST_BURN", "PILE_BURN", "THIN_MECH", "THIN_MAN", "TREE_FELL", "MASTICATION", "BIOMASS_REMOVAL", "WETLAND_RESTOR", "ECO_HAB_RESTORATION")
+	  ),
 
 	"Canopy"=list(metric="Acres treated that could affect canopy",activities=
 	  c("CLEARCUT","THIN_MAN","THIN_MECH","TREE_FELL","VARIABLE_RETEN_HARVEST")
-	  )
+	  ),
 	"NonCanopy"=list(metric="Acres treated that are likely not to affect canopy",activities=
 	  c("CHIPPING","DISCING","DOZER_LINE","ECO_HAB_RESTORATION","EROSION_CONTROL",
 	  	"HABITAT_REVEG","HANDLINE","HERBICIDE_APP","INV_PLANT_REMOVAL","LOP_AND_SCAT",
 	  	"MASTICATION","MOWING","NOT_DEFINED","PEST_CNTRL","PILE_BURN","PILING",
 	  	"PRESCRB_HERBIVORY","PRUNING","ROAD_CLEAR","SEEDBED_PREP","SITE_PREP",
 	  	"SLASH_DISPOSAL","TBD","TREE_PLNTING","WETLAND_RESTOR","YARDING","BROADCAST_BURN")
-	  )
+      )
+	)
 	#chain crushing should be in nonCanopy but we don't know whether that geometry is safe
 	#biomass removal is not included because we're not sure whether it would affect canopy or not
 

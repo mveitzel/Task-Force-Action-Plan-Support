@@ -285,6 +285,18 @@ writeRaster(tran.buff.cecs.proj.rast,paste(loc.data,"WUIVegetationClassification
 writeRaster(tran.buff.cecs.rast,paste(loc.data,"WUIVegetationClassifications/TransmissionLineBuffer_CECSproj.tif",sep=""),overwrite=TRUE)
 
 
+#1000 foot buffer but function expects meters (CECS CRS)
+tran.buff.cecs.vect<-buffer(tran.cecs.vect,width=1000*0.3048)
+tran.buff.cecs.simp.vect<-aggregate(tran.buff.cecs.vect)
+tran.buff.cecs.proj.vect<-check.crs.match(cecs.rast,tran.buff.cecs.simp.vect)
+writeVector(tran.buff.cecs.proj.vect,paste(loc.data,"WUIVegetationClassifications/TransmissionLinesBuffer1000_CECSproj.shp",sep=""),overwrite=TRUE)
+
+tran.buff.cecs.proj.rast<-rasterize(tran.buff.cecs.proj.vect,cecs.rast)
+writeRaster(tran.buff.cecs.proj.rast,paste(loc.data,"WUIVegetationClassifications/TransmissionLineBuffer1000_CECSproj.tif",sep=""),overwrite=TRUE)
+  #transmission lines run past the state boundary too
+  tran.buff.cecs.rast<-mask(tran.buff.cecs.proj.rast,ca.cecs.vect)
+writeRaster(tran.buff.cecs.rast,paste(loc.data,"WUIVegetationClassifications/TransmissionLineBuffer1000_CECSproj.tif",sep=""),overwrite=TRUE)
+
 # #---------------- do roads and utilities for WHP projection----------#
 
 SDGE.whp.vect<-check.crs.match(whp.rast,SDGE.vect)
@@ -405,6 +417,57 @@ writeRaster(tran.buff.whp.proj.rast,paste(loc.data,"WUIVegetationClassifications
   #transmission lines run past the state boundary too
   tran.buff.whp.rast<-mask(tran.buff.whp.proj.rast,ca.whp.vect)
 writeRaster(tran.buff.whp.rast,paste(loc.data,"WUIVegetationClassifications/TransmissionLineBuffer_WHPproj.tif",sep=""),overwrite=TRUE)
+
+tran.buff.whp.vect<-buffer(tran.whp.vect,width=1000*0.3048)
+tran.buff.whp.simp.vect<-aggregate(tran.buff.whp.vect)
+tran.buff.whp.proj.vect<-check.crs.match(whp.rast,tran.buff.whp.simp.vect)
+writeVector(tran.buff.whp.proj.vect,paste(loc.data,"WUIVegetationClassifications/TransmissionLineBuffer1000_WHPproj.shp",sep=""),overwrite=TRUE)
+tran.buff.whp.proj.rast<-rasterize(tran.buff.whp.proj.vect,whp.rast)
+writeRaster(tran.buff.whp.proj.rast,paste(loc.data,"WUIVegetationClassifications/TransmissionLineBuffer1000_WHPproj.tif",sep=""),overwrite=TRUE)
+  #transmission lines run past the state boundary too
+  tran.buff.whp.rast<-mask(tran.buff.whp.proj.rast,ca.whp.vect)
+writeRaster(tran.buff.whp.rast,paste(loc.data,"WUIVegetationClassifications/TransmissionLineBuffer1000_WHPproj.tif",sep=""),overwrite=TRUE)
+
+###--------------------- NON-FIRE MASK -----------------------###
+
+#this is only for efficacy. so it will be the time-limited vector file, for the whole state
+start.year<-2020
+end.year<-2024
+
+fire.footprint.vect<-vect(paste(loc.data,"IntermediateFiles/AggregatedVectors/Fires_CA_",start.year,"_",end.year,".shp",sep=""))
+fire.footprint.vect<-check.crs.match(cecs.rast,fire.footprint.vect)
+fire.footprint.rast<-rasterize(fire.footprint.vect,cecs.rast)
+writeRaster(fire.footprint.rast,paste(loc.data,"WUIVegetationClassifications/FireFootprints_2020-2024_CECSproj.tif",sep=""),overwrite=TRUE)
+
+nofire.footprint.rast<-fire.footprint.rast
+nofire.footprint.rast[is.na(nofire.footprint.rast)]<-0
+nofire.footprint.rast[nofire.footprint.rast==1]<-NA
+nofire.footprint.rast[nofire.footprint.rast==0]<-1
+writeRaster(nofire.footprint.rast,paste(loc.data,"WUIVegetationClassifications/NonFireFootprints_2020-2024_CECSproj.tif",sep=""),overwrite=TRUE)
+
+
+###--------------------- CANOPY DISTURBANCE MASK -----------------------###
+
+#read in all of the CECS layers for forest disturbance
+#These are calendar year, where the effects layers (flame length, drought vulnerability) are water years
+#
+
+years<-2021:2024
+
+disturbance.layers<- paste(loc.data,"CECS_Data/CECS_CAWide_Veg_TreeDist_",years,"_V250418.tif",sep="")
+
+#disturb.rasts<-list()
+disturb.accumulated.rast<-cecs.rast
+values(disturb.accumulated.rast)<-0
+
+#note that it takes the raster band name from the reference layer
+for(i in 1:length(disturbance.layers)){
+  disturb.rast<-rast(disturbance.layers[i])
+  disturb.accumulated.rast<-disturb.accumulated.rast+disturb.rast
+}
+
+
+
 
 ############################################################
 

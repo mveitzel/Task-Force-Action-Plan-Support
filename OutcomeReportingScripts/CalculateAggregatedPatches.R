@@ -18,12 +18,16 @@
  boundary.name<-c("CA","Sierra","North","South","Central")
 
 
-policy.target<-c("WildlandFireRisk","ShrublandHealth","ForestHealth","Habitat","Water")
+#policy.target<-c("WildlandFireRisk","ShrublandHealth","ForestHealth","Habitat","Water")
 #note that all the Fire Risk policy targets use the same list of activities regardless of the location
 # i.e. utilities, roads, landscape, wildland, wui.  So will filter treatments for this once.
 
+#only for canopy/noncanopy
+policy.target<-c("Canopy", "NonCanopy")
+
+
 #enable this if you want to make a csv of the relative areas of each policy target in each boundary shape
-calculate.areas<-FALSE
+calculate.areas<-TRUE
 
 # zsum.shape<-c(paste(loc.scripts,"ReferenceFiles/HUC12.shp",sep=""))
 # zsum.name<-c("HUC12")
@@ -107,7 +111,7 @@ for(i in 1:length(boundary.name)){
 			boundary.name[i],"_",policy.target[k],"_",start.year,"-present.shp",sep=""),overwrite=TRUE)
 
 		#for efficacy
-		if(policy.target[k] %in% c("WildlandFireRisk","ShrublandHealth","ForestHealth")){
+		if(policy.target[k] %in% c("WildlandFireRisk","ShrublandHealth","ForestHealth","Canopy","NonCanopy")){
 
 			#recalculate for the earlier end time to match CECS water year
 			#"Regions/HUC12" is the display name for how patches are being aggregated, and "Region/huc12" is the column name 
