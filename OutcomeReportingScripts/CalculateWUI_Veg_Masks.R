@@ -466,7 +466,14 @@ for(i in 1:length(disturbance.layers)){
   disturb.accumulated.rast<-disturb.accumulated.rast+disturb.rast
 }
 
+#just going to assume that 0 means no change.  Not sure what the negatives mean,
+# but let's count them as not disturbed since we aren't sure what they mean.
 
+disturb.mask.rast<-disturb.accumulated.rast
+disturb.mask.rast[disturb.mask.rast<=0]<-NA
+disturb.mask.rast[disturb.mask.rast>0]<-1
+
+writeRaster(disturb.mask.rast,paste(loc.data,"WUIVegetationClassifications/ForestDisturbances_2021-2024_CECSproj.tif",sep=""),overwrite=TRUE)
 
 
 ############################################################

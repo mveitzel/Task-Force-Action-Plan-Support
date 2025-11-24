@@ -158,6 +158,41 @@ timer.start<-Sys.time()
 	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[1],"_",end.year,".tif",sep=""))
 	writeRaster(wui.aft.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[1],"_",end.year,".tif",sep=""),overwrite=TRUE)
 
+#mask for forest
+
+	forest.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_FOREST_CECS.tif",sep=""))
+	forest.aft.masked.rast<-fl.after.rast*forest.cecs.rast
+	forest.bef.masked.rast<-fl.before.rast*forest.cecs.rast
+	print("Raster masked for forest")
+
+	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_Forest_",metrics[2],"_",start.year,".tif",sep=""))
+	writeRaster(forest.bef.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_Forest_",metrics[2],"_",start.year,".tif",sep=""),overwrite=TRUE)
+	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_Forest_",metrics[2],"_",end.year,".tif",sep=""))
+	writeRaster(forest.aft.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_Forest_",metrics[2],"_",end.year,".tif",sep=""),overwrite=TRUE)
+
+#mask for forest + not-fire
+
+	nofire.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/NonFireFootprints_2020-2024_CECSproj.tif",sep=""))
+	forest.nofire.aft.masked.rast<-forest.aft.masked.rast*nofire.cecs.rast
+	forest.nofire.bef.masked.rast<-forest.bef.masked.rast*nofire.cecs.rast
+	print("Raster masked for no-fire")
+
+	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_Forest_Nofire_",metrics[2],"_",start.year,".tif",sep=""))
+	writeRaster(forest.nofire.bef.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_Forest_Nofire_",metrics[2],"_",start.year,".tif",sep=""),overwrite=TRUE)
+	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_Forest_Nofire_",metrics[2],"_",end.year,".tif",sep=""))
+	writeRaster(forest.nofire.aft.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_Forest_Nofire_",metrics[2],"_",end.year,".tif",sep=""),overwrite=TRUE)
+
+#mask for forest + not-fire + disturbed
+
+	disturbed.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/ForestDisturbances_2021-2024_CECSproj.tif",sep=""))
+	forest.nofire.dist.aft.masked.rast<-forest.nofire.aft.masked.rast*disturbed.cecs.rast
+	forest.nofire.dist.bef.masked.rast<-forest.nofire.bef.masked.rast*disturbed.cecs.rast
+	print("Raster masked for disturbances")
+
+	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_Forest_Nofire_Disturbance_",metrics[2],"_",start.year,".tif",sep=""))
+	writeRaster(forest.nofire.dist.bef.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_Forest_Nofire_Disturbance_",metrics[2],"_",start.year,".tif",sep=""),overwrite=TRUE)
+	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_Forest_Nofire_Disturbance_",metrics[2],"_",end.year,".tif",sep=""))
+	writeRaster(forest.nofire.dist.aft.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_Forest_Nofire_Disturbance_",metrics[2],"_",end.year,".tif",sep=""),overwrite=TRUE)
 
 timer.end<-Sys.time()
 
