@@ -193,6 +193,39 @@ efficacy.df$absdiff<-efficacy.df$after-efficacy.df$before
 
 write.csv(efficacy.df,"EfficacyResults/AllEfficacyOutputsTestTrEffects.csv")
 
+global.result<-efficacy.df[efficacy.df$subset=="Treatments",]
+
+nice.metric.name<-c(
+					"Wildland Fire Risk\nAll Forest in CA",
+					"Canopy Treatments Only\nAll Forest in CA",
+					"Wildland Fire Risk\n CA Forest with no Fire",
+					"Canopy Treatments Only\nCA Forest with no Fire",
+					"Wildland Fire Risk\nCA Forest no fire only disturbed",
+					"Canopy Treatments Only\nCA Forest no fire only disturbed"
+					)
+
+		#this is your main result for the efficacy modeling
+#		plot.title<-paste("Change in Proportion of\n",nice.metric.name[i], sep="")
+		bar.plt<-ggplot(data=global.result, aes(x=metric,fill=metric,y=absdiff)) +
+		  geom_bar(stat="identity")+
+#		  theme(legend.position="none")+
+		  facet_grid(.~TreatType)+
+	      labs(title = "Flame length change",x = element_blank(), y = "Difference in Proportion 2020-2024")#+
+#		  scale_fill_manual(values=c("#E9E5C3","#9C8F57","#9F2214"))#+
+		  #geom_text(aes(label=before.rnd), vjust=-0.5, color="black", size=3.5)
+		pltnm.b<-paste("EfficacyResults/AbsDiff_bar_TestTrEffect.png",sep="")
+	  	ggsave(pltnm.b, units="in", width=8,height=3)
 
 
+		#this is your main result for the efficacy modeling
+#		plot.title<-paste("Change in Proportion of\n",nice.metric.name[i], sep="")
+		bar.plt<-ggplot(data=global.result, aes(x=metric,fill=metric,y=percdiff)) +
+		  geom_bar(stat="identity")+
+#		  theme(legend.position="none")+
+		  facet_grid(.~TreatType)+
+	      labs(title = "Flame length change",x = element_blank(), y = "Relative Percent difference 2020-2024")#+
+#		  scale_fill_manual(values=c("#E9E5C3","#9C8F57","#9F2214"))#+
+		  #geom_text(aes(label=before.rnd), vjust=-0.5, color="black", size=3.5)
+		pltnm.b<-paste("EfficacyResults/PerDiff_bar_TestTrEffect.png",sep="")
+	  	ggsave(pltnm.b, units="in", width=8,height=3)
 

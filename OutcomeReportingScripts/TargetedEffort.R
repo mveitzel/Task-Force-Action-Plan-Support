@@ -79,8 +79,10 @@ wood.whp.rast<-crop(wood.whp.rast,whp.rast)
 
 
 #read in the road and transmission line buffers
-tran.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/TransmissionLineBuffer_CECSproj.tif",sep=""))
-tran.buff.whp.rast<-rast(paste(loc.data,"WUIVegetationClassifications/TransmissionLineBuffer_WHPproj.tif",sep=""))
+#tran.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/TransmissionLineBuffer_CECSproj.tif",sep=""))
+#tran.buff.whp.rast<-rast(paste(loc.data,"WUIVegetationClassifications/TransmissionLineBuffer_WHPproj.tif",sep=""))
+tran.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/TransmissionLineBuffer1000_CECSproj.tif",sep=""))
+tran.buff.whp.rast<-rast(paste(loc.data,"WUIVegetationClassifications/TransmissionLineBuffer1000_WHPproj.tif",sep=""))
 #note that these are just for calculating the shrub priority layer
 road.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/RoadBuffer_CECSproj.tif",sep=""))
 road.buff.whp.rast<-rast(paste(loc.data,"WUIVegetationClassifications/RoadBuffer_WHPproj.tif",sep=""))

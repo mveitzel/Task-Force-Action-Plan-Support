@@ -109,15 +109,18 @@ timer.start<-Sys.time()
 
 
 	#	mask for utilities
-	tran.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/TransmissionLineBuffer_CECSproj.tif",sep=""))
+#	tran.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/TransmissionLineBuffer_CECSproj.tif",sep=""))
+	tran.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/TransmissionLineBuffer1000_CECSproj.tif",sep=""))
 	tran.aft.masked.rast<-fl.after.rast*tran.buff.cecs.rast
 	tran.bef.masked.rast<-fl.before.rast*tran.buff.cecs.rast
 	print("Raster masked for Utilities")
 
 	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[3],"_",start.year,".tif",sep=""))
-	writeRaster(tran.bef.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[3],"_",start.year,".tif",sep=""),overwrite=TRUE)
+#	writeRaster(tran.bef.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[3],"_",start.year,".tif",sep=""),overwrite=TRUE)
+	writeRaster(tran.bef.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[3],"1000_",start.year,".tif",sep=""),overwrite=TRUE)
 	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[3],"_",end.year,".tif",sep=""))
-	writeRaster(tran.aft.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[3],"_",end.year,".tif",sep=""),overwrite=TRUE)
+#	writeRaster(tran.aft.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[3],"_",end.year,".tif",sep=""),overwrite=TRUE)
+	writeRaster(tran.aft.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[3],"1000_",end.year,".tif",sep=""),overwrite=TRUE)
 
 
     # 'mask' for whole landscape
