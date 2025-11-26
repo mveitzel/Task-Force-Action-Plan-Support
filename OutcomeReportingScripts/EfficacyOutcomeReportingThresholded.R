@@ -27,7 +27,7 @@ whp.rast <- rast(paste(loc.data,"PriorityLayers/whp_classified_20240906.tif",sep
 ############### GLOBAL PARAMETERS ###################
 
 #date stamp of this set of results - appended to all outputs to avoid overwriting older versions
-datetime<-"2025Nov17_thresholdedmasked"
+datetime<-"2025Nov26_nfireydist"
 
 #ending year of water year
 
@@ -47,6 +47,10 @@ metrics<-c( "FlameLengthWUI",
 			"GrassProportion",
 			"BeneficialFireLandscape")
 
+#metrics<-c( 
+#			"FlameLengthUtilities")
+
+
 #metrics<-c( "GrassProportion")
 
 #metrics<-c( "DroughtVulnerability")
@@ -63,6 +67,8 @@ policy.target<-c("WildlandFireRisk",
 			"ShrublandHealth",
 			"WildlandFireRisk")
 
+#policy.target<-c("WildlandFireRisk")
+
 wui.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/FRAP24_WUIOnly_CECS.tif",sep=""))
 wui.cecs.rast[is.na(wui.cecs.rast)]<-0
 land.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/FRAP24_Landscape_CECS.tif",sep=""))
@@ -73,7 +79,8 @@ shrub.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS
 shrub.cecs.rast[is.na(shrub.cecs.rast)]<-0
 road.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/RoadBuffer_CECSproj.tif",sep=""))
 road.buff.cecs.rast[is.na(road.buff.cecs.rast)]<-0
-tran.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/TransmissionLineBuffer_CECSproj.tif",sep=""))
+#tran.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/TransmissionLineBuffer_CECSproj.tif",sep=""))
+tran.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/TransmissionLineBuffer1000_CECSproj.tif",sep=""))
 tran.buff.cecs.rast[is.na(tran.buff.cecs.rast)]<-0
 
 spat.rast<-list(
@@ -84,6 +91,10 @@ spat.rast<-list(
 				forest.cecs.rast,
 				shrub.cecs.rast,
 				land.cecs.rast)
+
+#spat.rast<-list(
+#				tran.buff.cecs.rast)
+
 
 #policy.target<-c("ShrublandHealth")
 
@@ -209,6 +220,12 @@ library("sf")
 #  write.csv(treatment.areas,"TreatmentAreasByRegionMetric_TargetedEffort.csv")
 ###-------------------------------------------
 
+#nofire, only disturbances - only forest
+
+nofire.rast<-rast(paste(loc.data,"WUIVegetationClassifications/ForestDisturbances_2021-2024_CECSproj.tif",sep=""))
+yesdist.rast<-rast(paste(loc.data,"WUIVegetationClassifications/NonFireFootprints_2020-2024_CECSproj.tif",sep=""))
+
+nofire.yesdist.rast<-nofire.rast*yesdist.rast
 
 for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each region
 	print(paste("Start ", boundary.name[k]," loop"))
@@ -243,6 +260,10 @@ for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each
 		bef.thr.rast<-rast(paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metric.name,"_",start.year,".tif",sep=""))
 		print(paste("Reading: ",loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metric.name,"_",end.year,".tif",sep=""))
 		aft.thr.rast<-rast(paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metric.name,"_",end.year,".tif",sep=""))
+
+		#using a forest mask with only remote-sensing-detected disturbances, and no fire
+		bef.thr.rast<-bef.thr.rast*nofire.yesdist.rast
+		aft.thr.rast<-aft.thr.rast*nofire.yesdist.rast
 
 		#TODO: instead of reading in the masks and filling in 0s for NAs, could just take one of these rasters
 		# and make any non-na pixel a 1, and any NA pixel a 0, and it would be the same and also tighter

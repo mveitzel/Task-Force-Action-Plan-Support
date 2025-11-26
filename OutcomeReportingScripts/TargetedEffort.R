@@ -4,7 +4,7 @@
 
 timer.start<-Sys.time()
 
-datestamp<-"2025Nov14"
+datestamp<-"2025Nov25"
 
 #scripts and important reference layers are in the github repo
 loc.scripts<-"D:/GitRepos/BattlesLabRepos/Task-Force-Action-Plan-Support/"
@@ -243,12 +243,8 @@ if(conditions.mask.areas){
 # PREP BOUNDARY LAYERS (Statewide and Task Force Regions)        ###
 ####################################################################
 
-# boundary.shape<-c(
-#                   paste(loc.scripts,"ReferenceFiles/Region_Sierra.shp",sep=""),
-#                   paste(loc.scripts,"ReferenceFiles/Region_NorthernCA.shp",sep=""),
-#                   paste(loc.scripts,"ReferenceFiles/Region_CentralCoast.shp",sep=""))
-# boundary.name<-c("Sierra","North","Central")
-
+ boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/Region_NorthernCA.shp",sep=""))
+ boundary.name<-c("North")
 
 # #loop through the four regions
 #  boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/Region_SouthernCA.shp",sep=""),
@@ -257,13 +253,13 @@ if(conditions.mask.areas){
 #                    paste(loc.scripts,"ReferenceFiles/Region_CentralCoast.shp",sep=""))
 #  boundary.name<-c("South","Sierra","North","Central")
 
-#loop through all california, and the four regions
-boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""),
-                  paste(loc.scripts,"ReferenceFiles/Region_Sierra.shp",sep=""),
-                  paste(loc.scripts,"ReferenceFiles/Region_NorthernCA.shp",sep=""),
-                  paste(loc.scripts,"ReferenceFiles/Region_SouthernCA.shp",sep=""),
-                  paste(loc.scripts,"ReferenceFiles/Region_CentralCoast.shp",sep=""))
-boundary.name<-c("CA","Sierra","North","South","Central")
+##loop through all california, and the four regions
+#boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""),
+#                  paste(loc.scripts,"ReferenceFiles/Region_Sierra.shp",sep=""),
+#                  paste(loc.scripts,"ReferenceFiles/Region_NorthernCA.shp",sep=""),
+#                  paste(loc.scripts,"ReferenceFiles/Region_SouthernCA.shp",sep=""),
+#                  paste(loc.scripts,"ReferenceFiles/Region_CentralCoast.shp",sep=""))
+#boundary.name<-c("CA","Sierra","North","South","Central")
 
 #boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""))
 #boundary.name<-c("CA")
@@ -520,7 +516,7 @@ print(time.total)
 #all.targeted.effort<-read.csv("TargetedEffortResults/TargetedEffortResults_2025Aug20_AllRegions.csv")
 #all.targeted.effort<-read.csv("TargetedEffortResults_2025Sep15_forVis.csv")
 #all.targeted.effort<-read.csv("TargetedEffortResults_2025Sep28_forVis.csv")
-all.targeted.effort<-read.csv("TargetedEffortResults_2025Nov14_forVis.csv")
+all.targeted.effort<-read.csv("TargetedEffortResults_2025Nov26_forVis.csv")
 
 metrics<-levels(factor(all.targeted.effort$Metric))
 

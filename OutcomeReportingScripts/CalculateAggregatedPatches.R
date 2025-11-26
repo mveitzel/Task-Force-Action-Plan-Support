@@ -9,21 +9,26 @@
 
 #use WHP CRS for this, they're all vectors and can be crs checked before running analyses
 
-#loop through all california, and the four regions
- boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""),
-                   paste(loc.scripts,"ReferenceFiles/Region_Sierra.shp",sep=""),
-                   paste(loc.scripts,"ReferenceFiles/Region_NorthernCA.shp",sep=""),
-                   paste(loc.scripts,"ReferenceFiles/Region_SouthernCA.shp",sep=""),
-                   paste(loc.scripts,"ReferenceFiles/Region_CentralCoast.shp",sep=""))
- boundary.name<-c("CA","Sierra","North","South","Central")
+##loop through all california, and the four regions
+# boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""),
+#                   paste(loc.scripts,"ReferenceFiles/Region_Sierra.shp",sep=""),
+#                   paste(loc.scripts,"ReferenceFiles/Region_NorthernCA.shp",sep=""),
+#                   paste(loc.scripts,"ReferenceFiles/Region_SouthernCA.shp",sep=""),
+#                   paste(loc.scripts,"ReferenceFiles/Region_CentralCoast.shp",sep=""))
+# boundary.name<-c("CA","Sierra","North","South","Central")
 
+#loop through all california, and the four regions
+ boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/Region_NorthernCA.shp",sep=""))
+ boundary.name<-c("North")
 
 #policy.target<-c("WildlandFireRisk","ShrublandHealth","ForestHealth","Habitat","Water")
 #note that all the Fire Risk policy targets use the same list of activities regardless of the location
 # i.e. utilities, roads, landscape, wildland, wui.  So will filter treatments for this once.
 
 #only for canopy/noncanopy
-policy.target<-c("Canopy", "NonCanopy")
+#policy.target<-c("Canopy", "NonCanopy")
+
+policy.target<-c("WildlandFireRisk")
 
 
 #enable this if you want to make a csv of the relative areas of each policy target in each boundary shape
