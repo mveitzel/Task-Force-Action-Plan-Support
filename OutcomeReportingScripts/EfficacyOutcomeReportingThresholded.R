@@ -27,7 +27,7 @@ whp.rast <- rast(paste(loc.data,"PriorityLayers/whp_classified_20240906.tif",sep
 ############### GLOBAL PARAMETERS ###################
 
 #date stamp of this set of results - appended to all outputs to avoid overwriting older versions
-datetime<-"2025Nov26_nfireydist"
+datetime<-"2025Nov26_utilities1000"
 
 #ending year of water year
 
@@ -38,17 +38,17 @@ end.year<-"2024"
 start.y<-paste(start.year,"-09-30",sep="")
 end.y<-paste(end.year,"-10-01",sep="")
 
-metrics<-c( "FlameLengthWUI",
-			"FlameLengthLandscape",
-			"FlameLengthUtilities",
-			"FlameLengthRoads",
-			"DroughtVulnerability", 
-#			"Shrub-GrassRatio")
-			"GrassProportion",
-			"BeneficialFireLandscape")
+#metrics<-c( "FlameLengthWUI",
+#			"FlameLengthLandscape",
+#			"FlameLengthUtilities",
+#			"FlameLengthRoads",
+#			"DroughtVulnerability", 
+##			"Shrub-GrassRatio")
+#			"GrassProportion",
+#			"BeneficialFireLandscape")
 
-#metrics<-c( 
-#			"FlameLengthUtilities")
+metrics<-c( 
+			"FlameLengthUtilities1000")
 
 
 #metrics<-c( "GrassProportion")
@@ -56,44 +56,44 @@ metrics<-c( "FlameLengthWUI",
 #metrics<-c( "DroughtVulnerability")
 
 
-#these should match the metrics and are for making sure
-#to read in the correctly aggregated vector which was
-#filtered for the appropriate treatment types
-policy.target<-c("WildlandFireRisk",
-			"WildlandFireRisk",
-			"WildlandFireRisk",
-			"WildlandFireRisk",
-			"ForestHealth",
-			"ShrublandHealth",
-			"WildlandFireRisk")
+##these should match the metrics and are for making sure
+##to read in the correctly aggregated vector which was
+##filtered for the appropriate treatment types
+#policy.target<-c("WildlandFireRisk",
+#			"WildlandFireRisk",
+#			"WildlandFireRisk",
+#			"WildlandFireRisk",
+#			"ForestHealth",
+#			"ShrublandHealth",
+#			"WildlandFireRisk")
 
-#policy.target<-c("WildlandFireRisk")
+policy.target<-c("WildlandFireRisk")
 
-wui.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/FRAP24_WUIOnly_CECS.tif",sep=""))
-wui.cecs.rast[is.na(wui.cecs.rast)]<-0
-land.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/FRAP24_Landscape_CECS.tif",sep=""))
-land.cecs.rast[is.na(land.cecs.rast)]<-0
-forest.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_FOREST_CECS.tif",sep=""))
-forest.cecs.rast[is.na(forest.cecs.rast)]<-0
-shrub.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_SHRUB_CECS.tif",sep=""))
-shrub.cecs.rast[is.na(shrub.cecs.rast)]<-0
-road.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/RoadBuffer_CECSproj.tif",sep=""))
-road.buff.cecs.rast[is.na(road.buff.cecs.rast)]<-0
-#tran.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/TransmissionLineBuffer_CECSproj.tif",sep=""))
+# wui.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/FRAP24_WUIOnly_CECS.tif",sep=""))
+# wui.cecs.rast[is.na(wui.cecs.rast)]<-0
+# land.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/FRAP24_Landscape_CECS.tif",sep=""))
+# land.cecs.rast[is.na(land.cecs.rast)]<-0
+# forest.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_FOREST_CECS.tif",sep=""))
+# forest.cecs.rast[is.na(forest.cecs.rast)]<-0
+# shrub.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_SHRUB_CECS.tif",sep=""))
+# shrub.cecs.rast[is.na(shrub.cecs.rast)]<-0
+# road.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/RoadBuffer_CECSproj.tif",sep=""))
+# road.buff.cecs.rast[is.na(road.buff.cecs.rast)]<-0
+# #tran.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/TransmissionLineBuffer_CECSproj.tif",sep=""))
 tran.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/TransmissionLineBuffer1000_CECSproj.tif",sep=""))
 tran.buff.cecs.rast[is.na(tran.buff.cecs.rast)]<-0
 
-spat.rast<-list(
-				wui.cecs.rast,
-				land.cecs.rast,
-				tran.buff.cecs.rast,
-				road.buff.cecs.rast,
-				forest.cecs.rast,
-				shrub.cecs.rast,
-				land.cecs.rast)
-
 #spat.rast<-list(
-#				tran.buff.cecs.rast)
+#				wui.cecs.rast,
+#				land.cecs.rast,
+#				tran.buff.cecs.rast,
+#				road.buff.cecs.rast,
+#				forest.cecs.rast,
+#				shrub.cecs.rast,
+#				land.cecs.rast)
+
+spat.rast<-list(
+				tran.buff.cecs.rast)
 
 
 #policy.target<-c("ShrublandHealth")
@@ -261,9 +261,9 @@ for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each
 		print(paste("Reading: ",loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metric.name,"_",end.year,".tif",sep=""))
 		aft.thr.rast<-rast(paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metric.name,"_",end.year,".tif",sep=""))
 
-		#using a forest mask with only remote-sensing-detected disturbances, and no fire
-		bef.thr.rast<-bef.thr.rast*nofire.yesdist.rast
-		aft.thr.rast<-aft.thr.rast*nofire.yesdist.rast
+#		#using a forest mask with only remote-sensing-detected disturbances, and no fire
+#		bef.thr.rast<-bef.thr.rast*nofire.yesdist.rast
+#		aft.thr.rast<-aft.thr.rast*nofire.yesdist.rast
 
 		#TODO: instead of reading in the masks and filling in 0s for NAs, could just take one of these rasters
 		# and make any non-na pixel a 1, and any NA pixel a 0, and it would be the same and also tighter
@@ -390,7 +390,8 @@ print(time.total)
 
 #compiling all the efficacy results into one csv in order to manually do nice table formatting in a spreadsheet program
 #manually created EfficacyOutputs.csv with "ls GlobalThr*2025Sept*csv > EfficacyOutputs.csv"
-efficacy.list<-read.csv("EfficacyResults/EfficacyOutputsNov17masked.csv",header=FALSE)
+#efficacy.list<-read.csv("EfficacyResults/EfficacyOutputsNov17masked.csv",header=FALSE)
+efficacy.list<-read.csv("EfficacyResults/EfficacyOutputsNov26_utilities1000.csv",header=FALSE)
 
 efficacy.results<-list()
 
@@ -404,21 +405,25 @@ efficacy.df$boundary<-factor(efficacy.df$boundary)
 efficacy.df$subset<-factor(efficacy.df$subset)
 efficacy.df$absdiff<-efficacy.df$after-efficacy.df$before
 
-write.csv(efficacy.df,"EfficacyResults/AllEfficacyOutputs.csv")
+#write.csv(efficacy.df,"EfficacyResults/AllEfficacyOutputsForest_NfireYdist.csv")
 
 #################### DATA VISUALIZATIONS ###################
 
 timer.start<-Sys.time()
 
-datetimevis<-datetime
+datetimevis<-"2025Nov26_utilities1000"
 
-nice.metric.name<-c("Likely High Severity Fire\nin WUI",
-					"Likely High Severity Fire\nAcross Landscape",
-					"Likely High Severity Fire\nin Utility Corridors",
-					"Likely High Severity Fire\nin Road Corridors",
-					"Imminent Forest Mortality",
-					"Grass-dominated Shrublands",
-					"Potentially Beneficial Fire\nAcross Landscape")
+#nice.metric.name<-c("Likely High Severity Fire\nin WUI",
+#					"Likely High Severity Fire\nAcross Landscape",
+#					"Likely High Severity Fire\nin Utility Corridors",
+#					"Likely High Severity Fire\nin Road Corridors",
+#					"Imminent Forest Mortality",
+#					"Grass-dominated Shrublands",
+#					"Potentially Beneficial Fire\nAcross Landscape")
+
+
+nice.metric.name<-c("Likely High Severity Fire\nin Utility Corridors")
+
 
 require(tidyterra)
 require(tidyr)
