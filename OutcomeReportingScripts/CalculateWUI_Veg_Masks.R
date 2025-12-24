@@ -446,7 +446,7 @@ nofire.footprint.rast[nofire.footprint.rast==0]<-1
 writeRaster(nofire.footprint.rast,paste(loc.data,"WUIVegetationClassifications/NonFireFootprints_2020-2024_CECSproj.tif",sep=""),overwrite=TRUE)
 
 
-###--------------------- CANOPY DISTURBANCE MASK -----------------------###
+###--------------------- CANOPY DISTURBANCE MASK - FOREST -----------------------###
 
 #read in all of the CECS layers for forest disturbance
 #These are calendar year, where the effects layers (flame length, drought vulnerability) are water years
@@ -475,6 +475,35 @@ disturb.mask.rast[disturb.mask.rast>0]<-1
 
 writeRaster(disturb.mask.rast,paste(loc.data,"WUIVegetationClassifications/ForestDisturbances_2021-2024_CECSproj.tif",sep=""),overwrite=TRUE)
 
+
+###--------------------- SHRUB DISTURBANCE MASK -----------------------###
+
+#read in all of the CECS layers for shrub disturbance
+#These are calendar year, where the effects layers (flame length, drought vulnerability) are water years
+#
+
+years<-2021:2024
+
+disturbance.layers<- paste(loc.data,"CECS_Data/CECS_CAWide_Veg_ShrubDist_",years,"_V250418.tif",sep="")
+
+#disturb.rasts<-list()
+disturb.accumulated.rast<-cecs.rast
+values(disturb.accumulated.rast)<-0
+
+#note that it takes the raster band name from the reference layer
+for(i in 1:length(disturbance.layers)){
+  disturb.rast<-rast(disturbance.layers[i])
+  disturb.accumulated.rast<-disturb.accumulated.rast+disturb.rast
+}
+
+#just going to assume that 0 means no change.  Not sure what the negatives mean,
+# but let's count them as not disturbed since we aren't sure what they mean.
+
+disturb.mask.rast<-disturb.accumulated.rast
+disturb.mask.rast[disturb.mask.rast<=0]<-NA
+disturb.mask.rast[disturb.mask.rast>0]<-1
+
+writeRaster(disturb.mask.rast,paste(loc.data,"WUIVegetationClassifications/ShrubDisturbances_2021-2024_CECSproj.tif",sep=""),overwrite=TRUE)
 
 ############################################################
 

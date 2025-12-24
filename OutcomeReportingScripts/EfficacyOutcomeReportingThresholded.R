@@ -1,7 +1,5 @@
 #EfficacyOutcomeReportingThresholded.R
 
-#SummarizeChange.R
-
 timer.start<-Sys.time()
 
 #scripts and important reference layers are in the github repo
@@ -27,7 +25,7 @@ whp.rast <- rast(paste(loc.data,"PriorityLayers/whp_classified_20240906.tif",sep
 ############### GLOBAL PARAMETERS ###################
 
 #date stamp of this set of results - appended to all outputs to avoid overwriting older versions
-datetime<-"2025Nov26_utilities1000"
+datetime<-"2025Dec24_NoFire"
 
 #ending year of water year
 
@@ -57,6 +55,7 @@ policy.target<-c("WildlandFireRisk",
 			"ShrublandHealth",
 			"WildlandFireRisk")
 
+#these are for calculating the areas associated with each metric
  wui.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/FRAP24_WUIOnly_CECS.tif",sep=""))
  wui.cecs.rast[is.na(wui.cecs.rast)]<-0
  land.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/FRAP24_Landscape_CECS.tif",sep=""))
@@ -70,14 +69,15 @@ policy.target<-c("WildlandFireRisk",
  tran.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/TransmissionLineBuffer1000_CECSproj.tif",sep=""))
  tran.buff.cecs.rast[is.na(tran.buff.cecs.rast)]<-0
 
+#note that for flame length, only forest is really appropriate
 spat.rast<-list(
-				wui.cecs.rast,
-				land.cecs.rast,
-				tran.buff.cecs.rast,
-				road.buff.cecs.rast,
+				wui.cecs.rast*forest.cecs.rast,
+				land.cecs.rast*forest.cecs.rast,
+				tran.buff.cecs.rast*forest.cecs.rast,
+				road.buff.cecs.rast*forest.cecs.rast,
 				forest.cecs.rast,
 				shrub.cecs.rast,
-				land.cecs.rast)
+				land.cecs.rast*forest.cecs.rast)
 
 
 ############ END GLOBAL PARAMETERS #################
@@ -111,9 +111,7 @@ if(calculate.metrics){
                    paste(loc.scripts,"ReferenceFiles/Region_CentralCoast.shp",sep=""))
  boundary.name<-c("CA","South","Sierra","North","Central")
 
-# boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""))
-# boundary.name<-c("CA")
-
+# For plots and print statements
  nice.boundary.name<-c(
  				  "All of California",
  				  "Southern California",
@@ -121,11 +119,6 @@ if(calculate.metrics){
  				  "Northern California",
  				  "Central Coast Region")
 
-#nice.boundary.name<-c(
-#				  "All of California")
-
-# vect.shape<-c(paste(loc.scripts,"ReferenceFiles/HUC12.shp",sep=""))
-# vect.name<-c("HUC12")
 
 ######################################
 ##         PREP VECTORS            ###
@@ -198,26 +191,25 @@ library("sf")
 #  write.csv(treatment.areas,"TreatmentAreasByRegionMetric_TargetedEffort.csv")
 ###-------------------------------------------
 
+#creating masks that remove the fire footprint from treatments
+#and a mask that is only forest disturbances
+#and a mask that is only shrubland disturbances
+
+yesdist.f.rast<-rast(paste(loc.data,"WUIVegetationClassifications/ForestDisturbances_2021-2024_CECSproj.tif",sep=""))
+yesdist.s.rast<-rast(paste(loc.data,"WUIVegetationClassifications/ShrubDisturbances_2021-2024_CECSproj.tif",sep=""))
+
+nofire.rast<-rast(paste(loc.data,"WUIVegetationClassifications/NonFireFootprints_2020-2024_CECSproj.tif",sep=""))
+
 #nofire, only disturbances - only forest
-
-nofire.rast<-rast(paste(loc.data,"WUIVegetationClassifications/ForestDisturbances_2021-2024_CECSproj.tif",sep=""))
-yesdist.rast<-rast(paste(loc.data,"WUIVegetationClassifications/NonFireFootprints_2020-2024_CECSproj.tif",sep=""))
-
-nofire.yesdist.rast<-nofire.rast*yesdist.rast
+nofire.yesdist.f.rast<-nofire.rast*yesdist.f.rast
+#nofire, only disturbances - only shrub
+nofire.yesdist.s.rast<-nofire.rast*yesdist.s.rast
 
 for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each region
 	print(paste("Start ", boundary.name[k]," loop"))
 
 	boundary.sf<-st_read(boundary.shape[k])
 	prepped.boundary.sf<-st_transform(boundary.sf, st_crs(cecs.rast))
-
-#	zonal.summary.area.sf<-st_read(vect.shape)
-#	zonal.summary.proj.sf<-st_transform(zonal.summary.area.sf, st_crs(cecs.rast))
-#	prepped.zonal.summary.sf<-st_intersection(zonal.summary.proj.sf,prepped.boundary.sf)
-
-	# agg.fire.huc.sf<-st_read(paste(loc.data,"IntermediateFiles/AggregatedVectors/Fires_",
-	# 		boundary.name[k],"_",start.year,"_",end.year,"_HUC12.shp",sep=""))
-	# agg.fire.huc.proj.sf<-st_transform(agg.fire.huc.sf, st_crs(cecs.rast))
 
 	agg.fire.sf<-st_read(paste(loc.data,"IntermediateFiles/AggregatedVectors/Fires_",
 				boundary.name[k],"_",start.year,"_",end.year,".shp",sep=""))
@@ -239,7 +231,11 @@ for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each
 		print(paste("Reading: ",loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metric.name,"_",end.year,".tif",sep=""))
 		aft.thr.rast<-rast(paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metric.name,"_",end.year,".tif",sep=""))
 
-		if()
+	#make sure to omit the fire footprints
+		bef.thr.rast<-bef.thr.rast*nofire.rast
+		aft.thr.rast<-aft.thr.rast*nofire.rast
+
+#		TODO: add in a conditional here where we can restrict to only disturbed areas
 #		#using a forest mask with no fire
 #		bef.thr.rast<-bef.thr.rast*nofire.yesdist.rast
 #		aft.thr.rast<-aft.thr.rast*nofire.yesdist.rast
@@ -311,14 +307,8 @@ timer.end<-Sys.time()
 time.total<-timer.end-timer.start
 print(time.total)
 
-		# global.ca<-read.csv(paste("GlobalThresholdCalcOutput_",diffname,"_",boundary.name[1],"_",datetime,".csv",sep=""))
-		# global.sc<-read.csv(paste("GlobalThresholdCalcOutput_",diffname,"_",boundary.name[2],"_",datetime,".csv",sep=""))
-		# global.sn<-read.csv(paste("GlobalThresholdCalcOutput_",diffname,"_",boundary.name[3],"_",datetime,".csv",sep=""))
-		# global.nc<-read.csv(paste("GlobalThresholdCalcOutput_",diffname,"_",boundary.name[4],"_",datetime,".csv",sep=""))
-		# global.cc<-read.csv(paste("GlobalThresholdCalcOutput_",diffname,"_",boundary.name[5],"_",datetime,".csv",sep=""))
 
-		# all.global.results<-rbind(global.ca,global.sc,global.sn,global.nc,global.cc)
-		# print(all.global.results)
+
 
 #compiling all the efficacy results into one csv in order to manually do nice table formatting in a spreadsheet program
 #manually created EfficacyOutputs.csv with "ls GlobalThr*2025Sept*csv > EfficacyOutputs.csv"
