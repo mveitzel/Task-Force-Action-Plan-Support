@@ -38,69 +38,47 @@ end.year<-"2024"
 start.y<-paste(start.year,"-09-30",sep="")
 end.y<-paste(end.year,"-10-01",sep="")
 
-#metrics<-c( "FlameLengthWUI",
-#			"FlameLengthLandscape",
-#			"FlameLengthUtilities",
-#			"FlameLengthRoads",
-#			"DroughtVulnerability", 
-##			"Shrub-GrassRatio")
-#			"GrassProportion",
-#			"BeneficialFireLandscape")
+metrics<-c( "FlameLengthWUI",
+			"FlameLengthLandscape",
+			"FlameLengthUtilities1000",
+			"FlameLengthRoads",
+			"DroughtVulnerability", 
+			"GrassProportion",
+			"BeneficialFireLandscape")
 
-metrics<-c( 
-			"FlameLengthUtilities1000")
+#these should match the metrics and are for making sure
+#to read in the correctly aggregated vector which was
+#filtered for the appropriate treatment types
+policy.target<-c("WildlandFireRisk",
+			"WildlandFireRisk",
+			"WildlandFireRisk",
+			"WildlandFireRisk",
+			"ForestHealth",
+			"ShrublandHealth",
+			"WildlandFireRisk")
 
-
-#metrics<-c( "GrassProportion")
-
-#metrics<-c( "DroughtVulnerability")
-
-
-##these should match the metrics and are for making sure
-##to read in the correctly aggregated vector which was
-##filtered for the appropriate treatment types
-#policy.target<-c("WildlandFireRisk",
-#			"WildlandFireRisk",
-#			"WildlandFireRisk",
-#			"WildlandFireRisk",
-#			"ForestHealth",
-#			"ShrublandHealth",
-#			"WildlandFireRisk")
-
-policy.target<-c("WildlandFireRisk")
-
-# wui.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/FRAP24_WUIOnly_CECS.tif",sep=""))
-# wui.cecs.rast[is.na(wui.cecs.rast)]<-0
-# land.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/FRAP24_Landscape_CECS.tif",sep=""))
-# land.cecs.rast[is.na(land.cecs.rast)]<-0
-# forest.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_FOREST_CECS.tif",sep=""))
-# forest.cecs.rast[is.na(forest.cecs.rast)]<-0
-# shrub.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_SHRUB_CECS.tif",sep=""))
-# shrub.cecs.rast[is.na(shrub.cecs.rast)]<-0
-# road.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/RoadBuffer_CECSproj.tif",sep=""))
-# road.buff.cecs.rast[is.na(road.buff.cecs.rast)]<-0
-# #tran.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/TransmissionLineBuffer_CECSproj.tif",sep=""))
-tran.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/TransmissionLineBuffer1000_CECSproj.tif",sep=""))
-tran.buff.cecs.rast[is.na(tran.buff.cecs.rast)]<-0
-
-#spat.rast<-list(
-#				wui.cecs.rast,
-#				land.cecs.rast,
-#				tran.buff.cecs.rast,
-#				road.buff.cecs.rast,
-#				forest.cecs.rast,
-#				shrub.cecs.rast,
-#				land.cecs.rast)
+ wui.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/FRAP24_WUIOnly_CECS.tif",sep=""))
+ wui.cecs.rast[is.na(wui.cecs.rast)]<-0
+ land.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/FRAP24_Landscape_CECS.tif",sep=""))
+ land.cecs.rast[is.na(land.cecs.rast)]<-0
+ forest.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_FOREST_CECS.tif",sep=""))
+ forest.cecs.rast[is.na(forest.cecs.rast)]<-0
+ shrub.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_SHRUB_CECS.tif",sep=""))
+ shrub.cecs.rast[is.na(shrub.cecs.rast)]<-0
+ road.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/RoadBuffer_CECSproj.tif",sep=""))
+ road.buff.cecs.rast[is.na(road.buff.cecs.rast)]<-0
+ tran.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/TransmissionLineBuffer1000_CECSproj.tif",sep=""))
+ tran.buff.cecs.rast[is.na(tran.buff.cecs.rast)]<-0
 
 spat.rast<-list(
-				tran.buff.cecs.rast)
+				wui.cecs.rast,
+				land.cecs.rast,
+				tran.buff.cecs.rast,
+				road.buff.cecs.rast,
+				forest.cecs.rast,
+				shrub.cecs.rast,
+				land.cecs.rast)
 
-
-#policy.target<-c("ShrublandHealth")
-
-#policy.target<-c("ForestHealth")
-
-#spat.rast<-list(forest.cecs.rast)
 
 ############ END GLOBAL PARAMETERS #################
 
@@ -261,6 +239,11 @@ for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each
 		print(paste("Reading: ",loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metric.name,"_",end.year,".tif",sep=""))
 		aft.thr.rast<-rast(paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metric.name,"_",end.year,".tif",sep=""))
 
+		if()
+#		#using a forest mask with no fire
+#		bef.thr.rast<-bef.thr.rast*nofire.yesdist.rast
+#		aft.thr.rast<-aft.thr.rast*nofire.yesdist.rast
+
 #		#using a forest mask with only remote-sensing-detected disturbances, and no fire
 #		bef.thr.rast<-bef.thr.rast*nofire.yesdist.rast
 #		aft.thr.rast<-aft.thr.rast*nofire.yesdist.rast
@@ -317,57 +300,6 @@ for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each
 			print(paste("Writing to GlobalThresholdCalcOutput_",diffname,"_",boundary.name[k],"_",datetime,".csv",sep=""))
 			write.table(all.global.results.df,paste("EfficacyResults/GlobalThresholdCalcOutput_",diffname,"_",boundary.name[k],"_",datetime,".csv",sep=""),
 				sep = ",",quote = FALSE, col.names = TRUE, row.names = FALSE,na="NA") 
-
-
-			# #huc-level results to look at
-
-			# #have to read in the vector using sf instead of terra
-			# agg.treat.huc.sf<-st_read(paste(loc.data,"IntermediateFiles/AggregatedVectors/Treatments_",
-			# 			boundary.name[k],"_",policy.target[i],"_",start.year,"_",end.year,"_HUC12.shp",sep=""))
-			# agg.treat.huc.proj.sf<-st_transform(agg.treat.huc.sf, st_crs(cecs.rast))
-
-			# diffname<-paste(metric.name,start.year,end.year,sep="_")
-
-			# print(paste("Starting huc-level proportion calcs for ",metric.name," in ",boundary.name[k],sep=""))
-			#  all.zonal.results<-rbind(
-			# cbind(
-			# 	method=rep("Zonal",nrow(prepped.zonal.summary.sf)),
-			#  	metric=rep(metric.name,nrow(prepped.zonal.summary.sf)),
-			#  	boundary=rep(boundary.name[k],nrow(prepped.zonal.summary.sf)),
-			#  	subset=rep("WholeArea",nrow(prepped.zonal.summary.sf)),
-			#  	shapeID=prepped.zonal.summary.sf[,"huc12"],
-			# 	before=exact_extract(bef.thr.rast,prepped.zonal.summary.sf,fun="mean"),
-			# 	after=exact_extract(aft.thr.rast,prepped.zonal.summary.sf,fun="mean")),
-			# cbind(
-			# 	method=rep("Zonal",nrow(agg.fire.huc.proj.sf)),
-			#  	metric=rep(metric.name,nrow(agg.fire.huc.proj.sf)),
-			#  	boundary=rep(boundary.name[k],nrow(agg.fire.huc.proj.sf)),
-			#  	subset=rep("Fire",nrow(agg.fire.huc.proj.sf)),
-			#  	shapeID=agg.fire.huc.proj.sf[,"huc12"],
-			# 	before=exact_extract(bef.thr.rast,agg.fire.huc.proj.sf,fun="mean"),
-			# 	after=exact_extract(aft.thr.rast,agg.fire.huc.proj.sf,fun="mean")),
-			# cbind(
-			# 	method=rep("Zonal",nrow(agg.treat.huc.proj.sf)),
-			#  	metric=rep(metric.name,nrow(agg.treat.huc.proj.sf)),
-			#  	boundary=rep(boundary.name[k],nrow(agg.treat.huc.proj.sf)),
-			#  	subset=rep("Treatments",nrow(agg.treat.huc.proj.sf)),
-			#  	shapeID=agg.treat.huc.proj.sf[,"huc12"],
-			# 	before=exact_extract(bef.thr.rast,agg.treat.huc.proj.sf,fun="mean"),
-			# 	after=exact_extract(aft.thr.rast,agg.treat.huc.proj.sf,fun="mean"))
-			# )
-
-			#  all.zonal.results$before[all.zonal.results$before==0]<-NA
-			# all.zonal.results$percdiff<-(all.zonal.results$after-all.zonal.results$before)/all.zonal.results$before
-
-			# all.zonal.results.df<-as.data.frame(all.zonal.results)
-
- 			#  print(paste("Writing to ZonalThresholdCalcOutput_",diffname,"_",boundary.name[k],"_",datetime,".csv",sep=""))
-			#  write.table(as.data.frame(all.zonal.results.df),paste("ZonalThresholdCalcOutput_",diffname,"_",boundary.name[k],"_",datetime,".csv",sep=""),
-			#  	sep = ",",quote = FALSE, col.names = TRUE, row.names = FALSE,na="NA")
-
-			#  print(paste("Writing to ZonalThresholdCalcOutput_",diffname,"_",boundary.name[k],"_",datetime,".shp",sep=""))
-			#  st_write(all.zonal.results, paste("EfficacyResults/ZonalThresholdCalcOutput_",diffname,"_",boundary.name[k],"_",datetime,".shp",sep=""))
-
 
 	}
 
