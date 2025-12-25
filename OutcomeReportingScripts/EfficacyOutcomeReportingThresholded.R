@@ -41,7 +41,8 @@ metrics<-c( "FlameLengthWUI",
 			"FlameLengthUtilities1000",
 			"FlameLengthRoads",
 			"DroughtVulnerability", 
-			"GrassProportion",
+			"GrassProportion-Roads",
+			"GrassProportion-NonRoads",
 			"BeneficialFireLandscape")
 
 #these should match the metrics and are for making sure
@@ -52,6 +53,7 @@ policy.target<-c("WildlandFireRisk",
 			"WildlandFireRisk",
 			"WildlandFireRisk",
 			"ForestHealth",
+			"ShrublandHealth",
 			"ShrublandHealth",
 			"WildlandFireRisk")
 
@@ -66,6 +68,19 @@ policy.target<-c("WildlandFireRisk",
  shrub.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_SHRUB_CECS.tif",sep=""))
  shrub.cecs.rast[is.na(shrub.cecs.rast)]<-0
  road.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/RoadBuffer_CECSproj.tif",sep=""))
+ 
+ #flip it so nonroads are zero, then 1, and roads are NA
+ nonroad.buff.cecs.rast<-road.buff.cecs.rast
+ nonroad.buff.cecs.rast[is.na(nonroad.buff.cecs.rast)]<-0
+ nonroad.buff.cecs.rast[nonroad.buff.cecs.rast==1]<-NA
+ nonroad.buff.cecs.rast[nonroad.buff.cecs.rast==0]<-1
+ 
+ #keep one with NA for roads, 1 for nonroads
+ nonroad.buff.cecs.rast.na<-nonroad.buff.cecs.rast
+
+ #this one is zero for roads, 1 for nonroads
+ nonroad.buff.cecs.rast[is.na(nonroad.buff.cecs.rast)]<-0
+
  road.buff.cecs.rast[is.na(road.buff.cecs.rast)]<-0
  tran.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/TransmissionLineBuffer1000_CECSproj.tif",sep=""))
  tran.buff.cecs.rast[is.na(tran.buff.cecs.rast)]<-0
@@ -77,7 +92,8 @@ spat.rast<-list(
 				tran.buff.cecs.rast*forest.cecs.rast,
 				road.buff.cecs.rast*forest.cecs.rast,
 				forest.cecs.rast,
-				shrub.cecs.rast,
+				shrub.cecs.rast*road.buff.cecs.rast,
+				shrub.cecs.rast*nonroad.buff.cecs.rast,
 				land.cecs.rast*forest.cecs.rast)
 
 
