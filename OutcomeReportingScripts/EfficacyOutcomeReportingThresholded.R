@@ -25,7 +25,7 @@ whp.rast <- rast(paste(loc.data,"PriorityLayers/whp_classified_20240906.tif",sep
 ############### GLOBAL PARAMETERS ###################
 
 #date stamp of this set of results - appended to all outputs to avoid overwriting older versions
-datetime<-"2025Dec25_ForestOnly"
+datetime<-"2025Dec25_NoFire"
 
 #ending year of water year
 
@@ -239,8 +239,8 @@ for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each
 
 
 	#make sure to omit the fire footprints
-#		bef.thr.rast<-bef.thr.rast*nofire.rast
-#		aft.thr.rast<-aft.thr.rast*nofire.rast
+		bef.thr.rast<-bef.thr.rast*nofire.rast
+		aft.thr.rast<-aft.thr.rast*nofire.rast
 
 
 #		TODO: add in a conditional here where we can restrict to only disturbed areas
@@ -316,7 +316,7 @@ time.total<-timer.end-timer.start
 print(time.total)
 
 
-datetimevis<-"2025Dec25_ForestOnly"
+datetimevis<-"2025Dec25_NoFire"
 
 
 #compiling all the efficacy results into one csv in order to manually do nice table formatting in a spreadsheet program
