@@ -25,7 +25,7 @@ whp.rast <- rast(paste(loc.data,"PriorityLayers/whp_classified_20240906.tif",sep
 ############### GLOBAL PARAMETERS ###################
 
 #date stamp of this set of results - appended to all outputs to avoid overwriting older versions
-datetime<-"2025Dec24_NoFire"
+datetime<-"2025Dec25_ForestOnly"
 
 #ending year of water year
 
@@ -61,6 +61,7 @@ policy.target<-c("WildlandFireRisk",
  land.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/FRAP24_Landscape_CECS.tif",sep=""))
  land.cecs.rast[is.na(land.cecs.rast)]<-0
  forest.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_FOREST_CECS.tif",sep=""))
+ forest.cecs.rast.na<-forest.cecs.rast
  forest.cecs.rast[is.na(forest.cecs.rast)]<-0
  shrub.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_SHRUB_CECS.tif",sep=""))
  shrub.cecs.rast[is.na(shrub.cecs.rast)]<-0
@@ -192,13 +193,12 @@ library("sf")
 ###-------------------------------------------
 
 #creating masks that remove the fire footprint from treatments
+nofire.rast<-rast(paste(loc.data,"WUIVegetationClassifications/NonFireFootprints_2020-2024_CECSproj.tif",sep=""))
 #and a mask that is only forest disturbances
-#and a mask that is only shrubland disturbances
-
 yesdist.f.rast<-rast(paste(loc.data,"WUIVegetationClassifications/ForestDisturbances_2021-2024_CECSproj.tif",sep=""))
+#and a mask that is only shrubland disturbances
 yesdist.s.rast<-rast(paste(loc.data,"WUIVegetationClassifications/ShrubDisturbances_2021-2024_CECSproj.tif",sep=""))
 
-nofire.rast<-rast(paste(loc.data,"WUIVegetationClassifications/NonFireFootprints_2020-2024_CECSproj.tif",sep=""))
 
 #nofire, only disturbances - only forest
 nofire.yesdist.f.rast<-nofire.rast*yesdist.f.rast
@@ -231,9 +231,17 @@ for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each
 		print(paste("Reading: ",loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metric.name,"_",end.year,".tif",sep=""))
 		aft.thr.rast<-rast(paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metric.name,"_",end.year,".tif",sep=""))
 
+	#just do forest only for wildland fire risk = flame length
+		if(policy.target[i]=="WildlandFireRisk"){
+			bef.thr.rast<-bef.thr.rast*forest.cecs.rast.na
+			aft.thr.rast<-aft.thr.rast*forest.cecs.rast.na
+		}
+
+
 	#make sure to omit the fire footprints
-		bef.thr.rast<-bef.thr.rast*nofire.rast
-		aft.thr.rast<-aft.thr.rast*nofire.rast
+#		bef.thr.rast<-bef.thr.rast*nofire.rast
+#		aft.thr.rast<-aft.thr.rast*nofire.rast
+
 
 #		TODO: add in a conditional here where we can restrict to only disturbed areas
 #		#using a forest mask with no fire
@@ -308,12 +316,13 @@ time.total<-timer.end-timer.start
 print(time.total)
 
 
+datetimevis<-"2025Dec25_ForestOnly"
 
 
 #compiling all the efficacy results into one csv in order to manually do nice table formatting in a spreadsheet program
 #manually created EfficacyOutputs.csv with "ls GlobalThr*2025Sept*csv > EfficacyOutputs.csv"
 #efficacy.list<-read.csv("EfficacyResults/EfficacyOutputsNov17masked.csv",header=FALSE)
-efficacy.list<-read.csv("EfficacyResults/EfficacyOutputsNov26_utilities1000.csv",header=FALSE)
+efficacy.list<-read.csv(paste("EfficacyResults/EfficacyOutputFiles_",datetimevis,".csv",sep=""),header=FALSE)
 
 efficacy.results<-list()
 
@@ -327,24 +336,19 @@ efficacy.df$boundary<-factor(efficacy.df$boundary)
 efficacy.df$subset<-factor(efficacy.df$subset)
 efficacy.df$absdiff<-efficacy.df$after-efficacy.df$before
 
-#write.csv(efficacy.df,"EfficacyResults/AllEfficacyOutputsForest_NfireYdist.csv")
+write.csv(efficacy.df,paste("EfficacyResults/AllEfficacyOutputs_",datetimevis,".csv",sep=""))
 
 #################### DATA VISUALIZATIONS ###################
 
 timer.start<-Sys.time()
 
-datetimevis<-"2025Nov26_utilities1000"
-
-#nice.metric.name<-c("Likely High Severity Fire\nin WUI",
-#					"Likely High Severity Fire\nAcross Landscape",
-#					"Likely High Severity Fire\nin Utility Corridors",
-#					"Likely High Severity Fire\nin Road Corridors",
-#					"Imminent Forest Mortality",
-#					"Grass-dominated Shrublands",
-#					"Potentially Beneficial Fire\nAcross Landscape")
-
-
-nice.metric.name<-c("Likely High Severity Fire\nin Utility Corridors")
+nice.metric.name<-c("Likely High Severity Fire\nin WUI",
+					"Likely High Severity Fire\nAcross Landscape",
+					"Likely High Severity Fire\nin Utility Corridors",
+					"Likely High Severity Fire\nin Road Corridors",
+					"Imminent Forest Mortality",
+					"Grass-dominated Shrublands",
+					"Potentially Beneficial Fire\nAcross Landscape")
 
 
 require(tidyterra)
@@ -353,67 +357,40 @@ require(tidyr)
 ca.vect<-vect(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""))
 ca.cecs.vect<-check.crs.match(cecs.rast,ca.vect)
 
-for(k in 1:length(boundary.name)){
+# for(k in 1:length(boundary.name)){
 
-	for(i in 1:length(metrics)){
-		#choose the correct metric
-		metric.name<-metrics[i]
-		print(metric.name)
+# 	for(i in 1:length(metrics)){
+# 		#choose the correct metric
+# 		metric.name<-metrics[i]
+# 		print(metric.name)
 
-		diffname<-paste(metric.name,start.year,end.year,sep="_")
+# 		diffname<-paste(metric.name,start.year,end.year,sep="_")
 
-		global.result<-read.csv(paste("EfficacyResults/GlobalThresholdCalcOutput_",diffname,"_",boundary.name[k],"_",datetimevis,".csv",sep=""))
+# 		global.result<-read.csv(paste("EfficacyResults/GlobalThresholdCalcOutput_",diffname,"_",boundary.name[k],"_",datetimevis,".csv",sep=""))
 
-		global.result$subset[global.result$subset=="WholeArea"]<-"Region"
-		global.result$subset[global.result$subset=="Fires"]<-"Fire\nFootprint"
-		global.result$subset[global.result$subset=="Treatments"]<-"Treated\nAreas"
-		global.result$subset<-factor(global.result$subset,c("Region","Treated\nAreas","Fire\nFootprint"))
+# 		global.result$subset[global.result$subset=="WholeArea"]<-"Region"
+# 		global.result$subset[global.result$subset=="Fires"]<-"Fire\nFootprint"
+# 		global.result$subset[global.result$subset=="Treatments"]<-"Treated\nAreas"
+# 		global.result$subset<-factor(global.result$subset,c("Region","Treated\nAreas","Fire\nFootprint"))
 
-		global.result$percent<-100*global.result$percdiff
-		global.result$before.rnd<-paste("Initial\nProportion:\n",round(global.result$before,2))
-		global.result$absdiff<-global.result$after-global.result$before
+# 		global.result$percent<-100*global.result$percdiff
+# 		global.result$before.rnd<-paste("Initial\nProportion:\n",round(global.result$before,2))
+# 		global.result$absdiff<-global.result$after-global.result$before
 
-		#this is your main result for the efficacy modeling
-		plot.title<-paste("Change in Proportion of\n",nice.metric.name[i], "\n(",nice.boundary.name[k],")", sep="")
-		bar.plt<-ggplot(data=global.result, aes(x=subset,fill=subset,y=absdiff)) +
-		  geom_bar(stat="identity")+
-		  theme(legend.position="none")+
-	      labs(title = plot.title,x = element_blank(), y = "Difference in Proportion 2020-2024")+
-		  scale_fill_manual(values=c("#E9E5C3","#9C8F57","#9F2214"))#+
-		  #geom_text(aes(label=before.rnd), vjust=-0.5, color="black", size=3.5)
-		pltnm.b<-paste("EfficacyResults/AbsDiff_bar_", metric.name,"_",boundary.name[k],"_",datetime,".png",sep="")
-	  	ggsave(pltnm.b, units="in", width=4,height=3)
+# 		#this is your main result for the efficacy modeling
+# 		plot.title<-paste("Change in Proportion of\n",nice.metric.name[i], "\n(",nice.boundary.name[k],")", sep="")
+# 		bar.plt<-ggplot(data=global.result, aes(x=subset,fill=subset,y=absdiff)) +
+# 		  geom_bar(stat="identity")+
+# 		  theme(legend.position="none")+
+# 	      labs(title = plot.title,x = element_blank(), y = "Difference in Proportion 2020-2024")+
+# 		  scale_fill_manual(values=c("#E9E5C3","#9C8F57","#9F2214"))#+
+# 		  #geom_text(aes(label=before.rnd), vjust=-0.5, color="black", size=3.5)
+# 		pltnm.b<-paste("EfficacyResults/AbsDiff_bar_", metric.name,"_",boundary.name[k],"_",datetime,".png",sep="")
+# 	  	ggsave(pltnm.b, units="in", width=4,height=3)
 
-	  	# #this is just making maps and histograms for us to sort of take a closer look as needed
-		# all.zonal.results.vect<-vect(paste("ZonalThresholdCalcOutput_",diffname,"_",boundary.name[k],"_",datetimevis,".shp",sep=""))
+# 	}
 
-		# legend.title<-"Percent Difference"
-		# plot.title<-paste(legend.title, " in ", metric.name, " (",boundary.name[k],")", sep="")
-
-	    # ggplt <- ggplot()+
-	    #    geom_spatvector(data=ca.cecs.vect, lwd=1)+
-	    #    geom_spatvector(data=all.zonal.results.vect,aes(fill=percdff),lwd = 0,col=NA)+
-	    #          scale_fill_viridis_c(na.value = "white") +
-	    #    theme(text=element_text(size=12, family="Century Gothic"))+
-	    #    theme (legend.text = element_text(size =12))+
-	    #    theme (legend.title = element_text (size = 14))+
-	    #    labs(title = plot.title, fill=legend.title)+
-	    #    theme_void()
-	   	# pltnm<-paste("EfficacyResults/PercentDiff_Map_", metric.name,"_",boundary.name[k],".png",sep="")
-	 	# ggsave(pltnm)
-
-
-		# hist.plt<-ggplot(data=all.zonal.results.vect, aes(x=percdff)) +
-		#   geom_histogram()+
-		#   facet_grid(subset~.)
-	    #   labs(title = plot.title)+
-		#   scale_fill_viridis_d(end = 0.8, begin = 0.2, direction=-1, option = "viridis")#+
-		# pltnm.h<-paste("EfficacyResults/PercentDiff_hist_", metric.name,"_",boundary.name[k],".png",sep="")
-		# ggsave(pltnm.h)
-
-	}
-
-}
+# }
 
 
 diffname<-paste(metric.name,start.year,end.year,sep="_")
@@ -445,6 +422,26 @@ for(i in 1:length(metrics)){
 
 }
 
+
+
+for(i in 1:length(metrics)){
+	#choose the correct metric
+	metric.name<-metrics[i]
+	print(metric.name)
+
+	#this is your main result for the efficacy modeling
+	plot.title<-paste("Change in Proportion of ",nice.metric.name[i], sep="")
+	bar.plt<-ggplot(data=efficacy.df[efficacy.df$metric==metric.name,], aes(x=subset,fill=subset,y=percdiff)) +
+	  geom_bar(stat="identity")+
+	  facet_grid(.~boundary)+
+	  theme(legend.position="bottom",axis.text.x = element_blank(),axis.title.x= element_blank(),axis.ticks.x=element_blank())+
+      labs(title = plot.title, fill = "", y = "Difference in Proportion 2020-2024")+
+	  scale_fill_manual(values=c("#E9E5C3","#9C8F57","#9F2214"))#+
+	  #geom_text(aes(label=before.rnd), vjust=-0.5, color="black", size=3.5)
+	pltnm.b<-paste("EfficacyResults/PercDiff_bar_", metric.name,"_",datetime,".png",sep="")
+  	ggsave(pltnm.b, units="in", width=6,height=3)
+
+}
 
 
 
