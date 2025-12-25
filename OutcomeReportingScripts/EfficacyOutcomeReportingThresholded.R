@@ -25,7 +25,7 @@ whp.rast <- rast(paste(loc.data,"PriorityLayers/whp_classified_20240906.tif",sep
 ############### GLOBAL PARAMETERS ###################
 
 #date stamp of this set of results - appended to all outputs to avoid overwriting older versions
-datetime<-"2025Dec25_NoFire"
+datetime<-"2025Dec25_ShrubSplit"
 
 #ending year of water year
 
@@ -66,6 +66,7 @@ policy.target<-c("WildlandFireRisk",
  forest.cecs.rast.na<-forest.cecs.rast
  forest.cecs.rast[is.na(forest.cecs.rast)]<-0
  shrub.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_SHRUB_CECS.tif",sep=""))
+ shrub.cecs.rast.na<-shrub.cecs.rast
  shrub.cecs.rast[is.na(shrub.cecs.rast)]<-0
  road.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/RoadBuffer_CECSproj.tif",sep=""))
  
@@ -210,16 +211,16 @@ library("sf")
 
 #creating masks that remove the fire footprint from treatments
 nofire.rast<-rast(paste(loc.data,"WUIVegetationClassifications/NonFireFootprints_2020-2024_CECSproj.tif",sep=""))
-#and a mask that is only forest disturbances
+#and a mask that is only forest disturbances (but not masked for only forest)
 yesdist.f.rast<-rast(paste(loc.data,"WUIVegetationClassifications/ForestDisturbances_2021-2024_CECSproj.tif",sep=""))
-#and a mask that is only shrubland disturbances
+#and a mask that is only shrubland disturbances (but not masked for only shrub)
 yesdist.s.rast<-rast(paste(loc.data,"WUIVegetationClassifications/ShrubDisturbances_2021-2024_CECSproj.tif",sep=""))
 
 
 #nofire, only disturbances - only forest
-nofire.yesdist.f.rast<-nofire.rast*yesdist.f.rast
+nofire.yesdist.f.rast<-nofire.rast*yesdist.f.rast*forest.cecs.rast.na
 #nofire, only disturbances - only shrub
-nofire.yesdist.s.rast<-nofire.rast*yesdist.s.rast
+nofire.yesdist.s.rast<-nofire.rast*yesdist.s.rast*shrub.cecs.rast.na
 
 for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each region
 	print(paste("Start ", boundary.name[k]," loop"))
@@ -247,29 +248,29 @@ for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each
 		print(paste("Reading: ",loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metric.name,"_",end.year,".tif",sep=""))
 		aft.thr.rast<-rast(paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metric.name,"_",end.year,".tif",sep=""))
 
-	#just do forest only for wildland fire risk = flame length
-		if(policy.target[i]=="WildlandFireRisk"){
-			bef.thr.rast<-bef.thr.rast*forest.cecs.rast.na
-			aft.thr.rast<-aft.thr.rast*forest.cecs.rast.na
+		#if we want to only include disturbances seen in CECS remote sensing data
+		#then multiply by the no-fire, only disturbance layer (already also masked by ecosystem type)
+		if(disturbed.only==TRUE){
+			if(policy.target[i]%in%(c("WildlandFireRisk","ForestHealth")){
+				bef.thr.rast<-bef.thr.rast*nofire.yesdist.f.rast
+				aft.thr.rast<-aft.thr.rast*nofire.yesdist.f.rast
+			}
+			else if (policy.target[i]=="ShrublandHealth"){
+				bef.thr.rast<-bef.thr.rast*nofire.yesdist.s.rast
+				aft.thr.rast<-aft.thr.rast*nofire.yesdist.s.rast
+			}
+		#If you are only going to remove the fire footprints and restrict to ecosystem type
+		}else if (disturbed.only==FALSE){
+			#just do forest only for wildland fire risk = flame length
+			if(policy.target[i]=="WildlandFireRisk"){
+				bef.thr.rast<-bef.thr.rast*forest.cecs.rast.na
+				aft.thr.rast<-aft.thr.rast*forest.cecs.rast.na
+			}
+			#make sure to omit the fire footprints
+			bef.thr.rast<-bef.thr.rast*nofire.rast
+			aft.thr.rast<-aft.thr.rast*nofire.rast
 		}
 
-
-	#make sure to omit the fire footprints
-		bef.thr.rast<-bef.thr.rast*nofire.rast
-		aft.thr.rast<-aft.thr.rast*nofire.rast
-
-
-#		TODO: add in a conditional here where we can restrict to only disturbed areas
-#		#using a forest mask with no fire
-#		bef.thr.rast<-bef.thr.rast*nofire.yesdist.rast
-#		aft.thr.rast<-aft.thr.rast*nofire.yesdist.rast
-
-#		#using a forest mask with only remote-sensing-detected disturbances, and no fire
-#		bef.thr.rast<-bef.thr.rast*nofire.yesdist.rast
-#		aft.thr.rast<-aft.thr.rast*nofire.yesdist.rast
-
-		#TODO: instead of reading in the masks and filling in 0s for NAs, could just take one of these rasters
-		# and make any non-na pixel a 1, and any NA pixel a 0, and it would be the same and also tighter
 
 		#read in vector files for summarizing/clipping
 
@@ -332,7 +333,7 @@ time.total<-timer.end-timer.start
 print(time.total)
 
 
-datetimevis<-"2025Dec25_NoFire"
+datetimevis<-"2025Dec25_ShrubSplit"
 
 
 #compiling all the efficacy results into one csv in order to manually do nice table formatting in a spreadsheet program
