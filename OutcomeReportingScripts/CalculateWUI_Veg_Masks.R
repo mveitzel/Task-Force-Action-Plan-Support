@@ -428,6 +428,26 @@ writeRaster(tran.buff.whp.proj.rast,paste(loc.data,"WUIVegetationClassifications
   tran.buff.whp.rast<-mask(tran.buff.whp.proj.rast,ca.whp.vect)
 writeRaster(tran.buff.whp.rast,paste(loc.data,"WUIVegetationClassifications/TransmissionLineBuffer1000_WHPproj.tif",sep=""),overwrite=TRUE)
 
+
+###--------------------- FOREST+UTILITIES, FOREST+ROADS, FOREST+WUI -----------------------###
+
+ forest.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_FOREST_CECS.tif",sep=""))
+ road.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/RoadBuffer_CECSproj.tif",sep=""))
+ tran.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/TransmissionLineBuffer1000_CECSproj.tif",sep=""))
+ wui.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/FRAP24_WUIOnly_CECS.tif",sep=""))
+
+forestroad.cecs.rast<- road.buff.cecs.rast*forest.cecs.rast
+forestroad.cecs.rast[forestroad.cecs.rast==0]<-NA
+foresttran.cecs.rast<- tran.buff.cecs.rast*forest.cecs.rast
+foresttran.cecs.rast[foresttran.cecs.rast==0]<-NA
+forestwui.cecs.rast<- wui.cecs.rast*forest.cecs.rast
+forestwui.cecs.rast[forestwui.cecs.rast==0]<-NA
+
+writeRaster(forestroad.cecs.rast,paste(loc.data,"WUIVegetationClassifications/Forest_Road_CECSproj.tif",sep=""),overwrite=TRUE)
+writeRaster(foresttran.cecs.rast,paste(loc.data,"WUIVegetationClassifications/Forest_Utilities_CECSproj.tif",sep=""),overwrite=TRUE)
+writeRaster(forestwui.cecs.rast,paste(loc.data,"WUIVegetationClassifications/Forest_WUI_CECSproj.tif",sep=""),overwrite=TRUE)
+
+
 ###--------------------- NON-FIRE MASK -----------------------###
 
 #this is only for efficacy. so it will be the time-limited vector file, for the whole state
@@ -504,6 +524,39 @@ disturb.mask.rast[disturb.mask.rast<=0]<-NA
 disturb.mask.rast[disturb.mask.rast>0]<-1
 
 writeRaster(disturb.mask.rast,paste(loc.data,"WUIVegetationClassifications/ShrubDisturbances_2021-2024_CECSproj.tif",sep=""),overwrite=TRUE)
+
+######################################################
+### making a 'nonroad' mask for shrub calculations
+
+ road.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/RoadBuffer_CECSproj.tif",sep=""))
+
+ #flip it so nonroads are zero, then 1, and roads are NA
+ nonroad.buff.cecs.rast<-road.buff.cecs.rast
+ nonroad.buff.cecs.rast[is.na(nonroad.buff.cecs.rast)]<-0
+ nonroad.buff.cecs.rast[nonroad.buff.cecs.rast==1]<-NA
+ nonroad.buff.cecs.rast[nonroad.buff.cecs.rast==0]<-1
+ 
+ #keep one with NA for roads, 1 for nonroads
+ nonroad.buff.cecs.rast.na<-nonroad.buff.cecs.rast
+writeRaster(nonroad.buff.cecs.rast.na,paste(loc.data,"WUIVegetationClassifications/NonRoads_CECSproj.tif",sep=""),overwrite=TRUE)
+
+ #this one is zero for roads, 1 for nonroads
+ nonroad.buff.cecs.rast[is.na(nonroad.buff.cecs.rast)]<-0
+writeRaster(nonroad.buff.cecs.rast,paste(loc.data,"WUIVegetationClassifications/NonRoads_Filled_CECSproj.tif",sep=""),overwrite=TRUE)
+
+# Combo shrub-road
+ shrub.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_SHRUB_CECS.tif",sep=""))
+shrub.road.rast<-road.buff.cecs.rast*shrub.cecs.rast
+shrub.road.rast[shrub.road.rast==0]<-NA
+writeRaster(shrub.road.rast,paste(loc.data,"WUIVegetationClassifications/Shrub_Road_CECSproj.tif",sep=""),overwrite=TRUE)
+
+#combo shrub-no road
+shrub.nonroad.rast<-nonroad.buff.cecs.rast*shrub.cecs.rast
+shrub.nonroad.rast[shrub.nonroad.rast==0]<-NA
+writeRaster(shrub.nonroad.rast,paste(loc.data,"WUIVegetationClassifications/Shrub_NonRoad_CECSproj.tif",sep=""),overwrite=TRUE)
+
+
+
 
 ############################################################
 

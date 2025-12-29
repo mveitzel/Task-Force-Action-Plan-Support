@@ -25,7 +25,7 @@ whp.rast <- rast(paste(loc.data,"PriorityLayers/whp_classified_20240906.tif",sep
 ############### GLOBAL PARAMETERS ###################
 
 #date stamp of this set of results - appended to all outputs to avoid overwriting older versions
-datetime<-"2025Dec25_ShrubSplit"
+datetime<-"2025Dec26_NoFire"
 
 #ending year of water year
 
@@ -69,20 +69,9 @@ policy.target<-c("WildlandFireRisk",
  shrub.cecs.rast.na<-shrub.cecs.rast
  shrub.cecs.rast[is.na(shrub.cecs.rast)]<-0
  road.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/RoadBuffer_CECSproj.tif",sep=""))
- 
- #flip it so nonroads are zero, then 1, and roads are NA
- nonroad.buff.cecs.rast<-road.buff.cecs.rast
- nonroad.buff.cecs.rast[is.na(nonroad.buff.cecs.rast)]<-0
- nonroad.buff.cecs.rast[nonroad.buff.cecs.rast==1]<-NA
- nonroad.buff.cecs.rast[nonroad.buff.cecs.rast==0]<-1
- 
- #keep one with NA for roads, 1 for nonroads
- nonroad.buff.cecs.rast.na<-nonroad.buff.cecs.rast
-
- #this one is zero for roads, 1 for nonroads
- nonroad.buff.cecs.rast[is.na(nonroad.buff.cecs.rast)]<-0
-
  road.buff.cecs.rast[is.na(road.buff.cecs.rast)]<-0
+ nonroad.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/NonRoads_CECSproj.tif",sep=""))
+ nonroad.buff.cecs.rast[is.na(nonroad.buff.cecs.rast)]<-0
  tran.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/TransmissionLineBuffer1000_CECSproj.tif",sep=""))
  tran.buff.cecs.rast[is.na(tran.buff.cecs.rast)]<-0
 
@@ -93,6 +82,7 @@ spat.rast<-list(
 				tran.buff.cecs.rast*forest.cecs.rast,
 				road.buff.cecs.rast*forest.cecs.rast,
 				forest.cecs.rast,
+				shrub.cecs.rast,
 				shrub.cecs.rast*road.buff.cecs.rast,
 				shrub.cecs.rast*nonroad.buff.cecs.rast,
 				land.cecs.rast*forest.cecs.rast)
@@ -209,13 +199,12 @@ library("sf")
 #  write.csv(treatment.areas,"TreatmentAreasByRegionMetric_TargetedEffort.csv")
 ###-------------------------------------------
 
-#creating masks that remove the fire footprint from treatments
+#mask that remove the fire footprint from treatments
 nofire.rast<-rast(paste(loc.data,"WUIVegetationClassifications/NonFireFootprints_2020-2024_CECSproj.tif",sep=""))
-#and a mask that is only forest disturbances (but not masked for only forest)
+#mask that is only forest disturbances (but not masked for only forest)
 yesdist.f.rast<-rast(paste(loc.data,"WUIVegetationClassifications/ForestDisturbances_2021-2024_CECSproj.tif",sep=""))
-#and a mask that is only shrubland disturbances (but not masked for only shrub)
+#mask that is only shrubland disturbances (but not masked for only shrub)
 yesdist.s.rast<-rast(paste(loc.data,"WUIVegetationClassifications/ShrubDisturbances_2021-2024_CECSproj.tif",sep=""))
-
 
 #nofire, only disturbances - only forest
 nofire.yesdist.f.rast<-nofire.rast*yesdist.f.rast*forest.cecs.rast.na
@@ -248,28 +237,34 @@ for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each
 		print(paste("Reading: ",loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metric.name,"_",end.year,".tif",sep=""))
 		aft.thr.rast<-rast(paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metric.name,"_",end.year,".tif",sep=""))
 
-		#if we want to only include disturbances seen in CECS remote sensing data
-		#then multiply by the no-fire, only disturbance layer (already also masked by ecosystem type)
-		if(disturbed.only==TRUE){
-			if(policy.target[i]%in%(c("WildlandFireRisk","ForestHealth")){
-				bef.thr.rast<-bef.thr.rast*nofire.yesdist.f.rast
-				aft.thr.rast<-aft.thr.rast*nofire.yesdist.f.rast
-			}
-			else if (policy.target[i]=="ShrublandHealth"){
-				bef.thr.rast<-bef.thr.rast*nofire.yesdist.s.rast
-				aft.thr.rast<-aft.thr.rast*nofire.yesdist.s.rast
-			}
-		#If you are only going to remove the fire footprints and restrict to ecosystem type
-		}else if (disturbed.only==FALSE){
-			#just do forest only for wildland fire risk = flame length
-			if(policy.target[i]=="WildlandFireRisk"){
-				bef.thr.rast<-bef.thr.rast*forest.cecs.rast.na
-				aft.thr.rast<-aft.thr.rast*forest.cecs.rast.na
-			}
-			#make sure to omit the fire footprints
-			bef.thr.rast<-bef.thr.rast*nofire.rast
-			aft.thr.rast<-aft.thr.rast*nofire.rast
-		}
+		disturbed.only<-FALSE
+
+		if(policy.target[i]=="WildlandFireRisk"){
+			bef.thr.rast<-bef.thr.rast*forest.cecs.rast.na
+			aft.thr.rast<-aft.thr.rast*forest.cecs.rast.na
+		}	
+
+		# #if we want to only include disturbances seen in CECS remote sensing data
+		# #then multiply by the no-fire, only disturbance layer (already also masked by ecosystem type)
+		# if(disturbed.only==TRUE){
+		# 	if(policy.target[i] %in% (c("WildlandFireRisk","ForestHealth")){
+		# 		bef.thr.rast.tr<-bef.thr.rast*nofire.yesdist.f.rast
+		# 		aft.thr.rast.tr<-aft.thr.rast*nofire.yesdist.f.rast
+		# 	}
+		# 	else if (policy.target[i]=="ShrublandHealth"){
+		# 		bef.thr.rast.tr<-bef.thr.rast*nofire.yesdist.s.rast
+		# 		aft.thr.rast.tr<-aft.thr.rast*nofire.yesdist.s.rast
+		# 	}
+		# #If you are only going to remove the fire footprints
+		# }else if (disturbed.only==FALSE){
+		# 	#just do forest only for wildland fire risk = flame length
+		# 	#make sure to omit the fire footprints but only for treatment calcs
+		# 	bef.thr.rast.tr<-bef.thr.rast*nofire.rast
+		# 	aft.thr.rast.tr<-aft.thr.rast*nofire.rast
+		# }
+
+		 	bef.thr.rast.tr<-bef.thr.rast*nofire.rast
+		 	aft.thr.rast.tr<-aft.thr.rast*nofire.rast
 
 
 		#read in vector files for summarizing/clipping
@@ -299,8 +294,8 @@ for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each
 				boundary=boundary.name[k],
 				area_ac=st_area(agg.treat.proj.sf)*0.000247105*exact_extract(spat.rast[[i]],agg.treat.proj.sf,fun="mean"),
 				subset="Treatments",
-				before=exact_extract(bef.thr.rast,agg.treat.proj.sf,fun="mean"),
-				after=exact_extract(aft.thr.rast,agg.treat.proj.sf,fun="mean")
+				before=exact_extract(bef.thr.rast.tr,agg.treat.proj.sf,fun="mean"),
+				after=exact_extract(aft.thr.rast.tr,agg.treat.proj.sf,fun="mean")
 				),
 				cbind(
 				method="Global",
@@ -333,7 +328,7 @@ time.total<-timer.end-timer.start
 print(time.total)
 
 
-datetimevis<-"2025Dec25_ShrubSplit"
+datetimevis<-"2025Dec26_NoFire"
 
 
 #compiling all the efficacy results into one csv in order to manually do nice table formatting in a spreadsheet program
