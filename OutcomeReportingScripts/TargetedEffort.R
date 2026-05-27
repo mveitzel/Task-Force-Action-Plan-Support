@@ -163,10 +163,6 @@ if(plots){
   plot(wood.whp.rast, main="CALFIRE WHR Woodland",col="#5A3B00")
   polys(ca.whp.vect,border="#5A3B00")
   dev.off()
-#  png("MaskImages/Wildland.png",width=5.5,height=6, units="in",res=150)
-#  plot(wild.whp.rast, main="Wildland: CALFIRE 'Influence & Other' + CECS 'Other'",col="#5A3B00")
-#  polys(ca.whp.vect,border="#5A3B00")
-#  dev.off()
   png("MaskImages/Landscape.png",width=5.5,height=6, units="in",res=150)
   plot(land.whp.rast, main="Landscape: NOT agriculture, urban, and water",col="#5A3B00")
   polys(ca.whp.vect,border="#5A3B00")
@@ -243,30 +239,14 @@ if(conditions.mask.areas){
 # PREP BOUNDARY LAYERS (Statewide and Task Force Regions)        ###
 ####################################################################
 
- boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/Region_NorthernCA.shp",sep=""))
- boundary.name<-c("North")
-
-# #loop through the four regions
-#  boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/Region_SouthernCA.shp",sep=""),
-#                    paste(loc.scripts,"ReferenceFiles/Region_Sierra.shp",sep=""),
-#                    paste(loc.scripts,"ReferenceFiles/Region_NorthernCA.shp",sep=""),
-#                    paste(loc.scripts,"ReferenceFiles/Region_CentralCoast.shp",sep=""))
-#  boundary.name<-c("South","Sierra","North","Central")
-
-##loop through all california, and the four regions
-#boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""),
-#                  paste(loc.scripts,"ReferenceFiles/Region_Sierra.shp",sep=""),
-#                  paste(loc.scripts,"ReferenceFiles/Region_NorthernCA.shp",sep=""),
-#                  paste(loc.scripts,"ReferenceFiles/Region_SouthernCA.shp",sep=""),
-#                  paste(loc.scripts,"ReferenceFiles/Region_CentralCoast.shp",sep=""))
-#boundary.name<-c("CA","Sierra","North","South","Central")
-
-#boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""))
-#boundary.name<-c("CA")
-
-#boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/Region_SouthernCA.shp",sep=""))
-#boundary.name<-c("South")
-
+ 
+#loop through all california, and the four regions
+boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""),
+                 paste(loc.scripts,"ReferenceFiles/Region_Sierra.shp",sep=""),
+                 paste(loc.scripts,"ReferenceFiles/Region_NorthernCA.shp",sep=""),
+                 paste(loc.scripts,"ReferenceFiles/Region_SouthernCA.shp",sep=""),
+                 paste(loc.scripts,"ReferenceFiles/Region_CentralCoast.shp",sep=""))
+boundary.name<-c("CA","Sierra","North","South","Central")
 
 #these will be necessary for if you need to recalculate the polygons
 #and for file naming conventions
@@ -500,8 +480,6 @@ for(i in 1:length(boundary.name)){
     rast.calcs.time<-system.time(count<-rasterize.mask.calculate.proportions(1,p.rast,metric.name,policy.target,boundary.name[i],boundary.shape[i],r.rast,mask.name,m.rast))
     print(paste("Total time to do raster math for ",policy.target," using ",metric.name," in ",mask.name,": ",round(rast.calcs.time[[1]]/60)," minute(s)", sep=""))
     print(count)
-    #---------------- acres of fuel breaks -------------------------#
-      ### Manually, aspatially calculate
 
 }
 
@@ -513,9 +491,6 @@ print(time.total)
 
 #data vis
 
-#all.targeted.effort<-read.csv("TargetedEffortResults/TargetedEffortResults_2025Aug20_AllRegions.csv")
-#all.targeted.effort<-read.csv("TargetedEffortResults_2025Sep15_forVis.csv")
-#all.targeted.effort<-read.csv("TargetedEffortResults_2025Sep28_forVis.csv")
 all.targeted.effort<-read.csv("TargetedEffortResults_2025Nov26_forVis.csv")
 
 metrics<-levels(factor(all.targeted.effort$Metric))
@@ -528,33 +503,6 @@ nice.boundary.name<-c(
           "Northern California",
           "Sierra Nevada Region",
           "Southern California")
-
-
-
-# for(k in 1:length(regions)){
-
-#   for(i in 1:length(metrics)){
-#     #choose the correct metric
-#     metric.name<-metrics[i]
-#     print(metric.name)
-
-#    all.targeted.effort$AreaType[all.targeted.effort$AreaType=="TotalArea"]<-"Background\nProportion"
-#    all.targeted.effort$AreaType[all.targeted.effort$AreaType=="Treatments"]<-"Proportion\n in Treatments"
-
-#    targeted.effort.sub<-all.targeted.effort[all.targeted.effort$Metric==metrics[i] & all.targeted.effort$Boundary==regions[k],]
-
-#     plot.title<-paste("Proportion of Priority Areas\n(",metric.name,")\nin ",nice.boundary.name[k], sep="")
-#     bar.plt<-ggplot(data=targeted.effort.sub, aes(x=AreaType,fill=AreaType,y=ProportionOfTreatments)) +
-#       geom_bar(stat="identity")+
-#       theme(legend.position="none")+
-#         labs(title = plot.title,x = element_blank(), y = "Proportion of Priority Areas")+
-#       scale_fill_manual(values=c("#E9E5C3","#5A3B00"))#+
-#     pltnm.b<-paste("TargetedEffortResults/RelativeProportion_bar_", metric.name,"_",regions[k],"_",datetimevis,".png",sep="")
-#       ggsave(pltnm.b, units="in", width=4,height=3)
-
-#   }
-
-# }
 
 nice.metric.name<-c(
                       "Critical Habitat", 
