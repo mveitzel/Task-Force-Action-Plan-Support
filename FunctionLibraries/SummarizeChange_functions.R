@@ -32,11 +32,6 @@ library('terra')
 # boundary.shape is the filename, boundary.code is the 2-3 character code, and 
 # boundary.name is the human-readable name for the boundary we're cropping to
 
-#ZONAL SUMMARY UNIT -- the unit we will do zonal averages or other summaries for
-#Filename for whatever your summary unit is
-#e.g. zonal.summary.shape is the filename, zonal.summary.name is human readable,
-# and zonal.summary.code is a short 2-3 character code for filenames and column headers
-
 #PATCH -- this refers to areas that are not extensive/don't cover the whole area
 #most commonly this is outcome reporting referring to fire footprints or treatment areas
 
@@ -53,38 +48,6 @@ library('terra')
 	}
 
 
-# #Parse SIG filenames to read in FVS rasters
-# parse.SIG.fvs.filenames<-function(filenames){
-#   filenames.df<-data.frame(scenario=character(),
-#                            year=character(),
-#                            metric=character(),
-#                            filename=character(),stringsAsFactors=FALSE)
-#   for(i in 1:nrow(filenames)){
-#     filenames.df[i,]<-c(
-#       paste("S_",sub(".*scenario_(\\d{1}).*", "\\1", filenames[i,],perl=TRUE),sep=""),
-#       sub(".*year_(\\d{4}).*", "\\1", filenames[i,],perl=TRUE),
-#       sub(".*year_\\d{4}_([^_]+)_.*", "\\1", filenames[i,],perl=TRUE),
-#       filenames[i,])
-#   }
-#   return(filenames.df)
-# }
-
-# #Parse SIG filenames to read in FIRE RESULTS rasters
-# parse.SIG.fireresults.filenames<-function(filenames){
-#   filenames.df<-data.frame(scenario=character(),
-#                            year=character(),
-#                            metric=character(),
-#                            filename=character(),stringsAsFactors=FALSE)
-#   for(i in 1:nrow(filenames)){
-#     filenames.df[i,]<-c(
-#       paste("S_",sub(".*scenario_(\\d{1}).*", "\\1", filenames[i,],perl=TRUE),sep=""),
-#       sub(".*(\\d{4}).*", "\\1", filenames[i,],perl=TRUE),
-#       sub(".*\\d{4}_([^_]+)_.*", "\\1", filenames[i,],perl=TRUE),
-#       filenames[i,])
-#   }
-#   return(filenames.df)
-# }
-
 	#just a little function that combines the file system string
 	#with the filename (raster.file is the filename, raster.name is
 	#the human readable name for the print statement) and calls rast
@@ -92,47 +55,6 @@ library('terra')
 			print(paste("Reading in ", raster.name," at ",loc,raster.file,sep=""))
 	  	raster1.rast<-rast(paste(loc,raster.file,sep=""))
 	}
-
-# #use the conversion factor (multiplicative) -- some CECS and other
-# #metrics are in different units than are typically reported
-# #or are multiplied by a factor of 100 or 1000 in order to be
-# #stored as integers.  Look up the documentation to check what 
-# #the conversion should be
-# #expects a single raster, 'rast.name' is the user-readable raster (or metric) name, rast.rast 
-# #is the actual raster object
-# #if you specify NA for the conversion factor, then the function just
-# #returns the original raster
-# multiply.conversion.factor<-function(rast.name, rast.rast,conv.fact){
-# 	if(!is.na(conv.fact)){
-# 		print(paste("Converting raster, multiplying (",rast.name,") ", " by",conv.fact),sep="")
-# 		conv.rast<-rast.rast*conv.fact
-# 	} else {
-# 		print("No conversion factor specified.")
-# 		conv.rast<-rast.rast
-# 	}
-# 	return(conv.rast)
-# }
-
-# #function to diff two rasters - for scenario modeling, 'raster1' is a base
-# #case and 'raster2' is one of the scenarios; or 'raster1' is an earlier time 
-# #step and 'raster2' is a later time step.  For outcome reporting, 'raster1' is
-# #before treatments, and 'raster2' is after treatments.
-# #'raster1.name' is the human readable name, and 'raster1.rast' is the actual raster object
-# #'metric' needs to match the 'diffname' metric name, and is used in the print statement
-# diff.rasters<-function(raster1.name,raster1.rast,raster2.name,raster2.rast,metric){
-
-# 	#this function expects a single pair of rasters to calculate a difference between
-# 	#set the layer name 
-# 	dffname<-paste(metric,raster1.name,raster2.name,sep="_")
-
-# 	#calculate the difference
-# 	print(paste("Subtracting ",raster1.name," from ",raster2.name," for ",metric," (",raster2.name," minus ",raster1.name,")"),sep="")
-# 	delta<-raster2.rast-raster1.rast
-# 	names(delta)<-dffname
-
-# 	return(delta)
-# }
-
 
 	#returns second layer (dat.comp) projected to dat.ref (first argument)'s Coordinate Reference System
 	#if CRS matches, just passes through original second layer (dat.comp)
@@ -154,64 +76,6 @@ library('terra')
 		return(dat.comp)
 	}
 
-# #these may get deprecated if we go with boxplots in general
-# #but leaving function here just in case we need it
-# #Make the histogram plots
-# plot.results<-function(dt.dff,ttlestrng,xlbl,metnm,af.yr,bf.yr,sum.area,sumIDnm,lnd.clss,dttme,reg){
-# 	dt.dff.shp<-dt.dff
-# 	dt.dff<-as.data.frame(dt.dff)
-	
-# 	ttlestrng<-paste(reg,"\n",metnm, " ",af.yr,"-",bf.yr," for ",sum.area," \nwithin each ",sumIDnm,
-# 		"\n",lnd.clss," (mean ",round(mean(dt.dff[,"diff"],na.rm=TRUE),2), ")", sep="")		
-	
-# 	print(ttlestrng)
-# 	plt<-ggplot(dt.dff,aes(x=dt.dff[,"diff"]))+
-# 		geom_histogram()+
-# 		geom_vline(xintercept = 0)+
-# 		geom_vline(xintercept = mean(dt.dff[,"diff"],na.rm=TRUE), color = "blue", linewidth=1.5)+
-# 		ggtitle(ttlestrng)+
-# 		theme(text=element_text(size=10))+
-# 		xlab(xlbl)
-# 	plt
-# 	hstnm<-paste(reg,"diff",sumIDnm,lnd.clss,dttme,sum.area,".png",sep="_")
-# 	ggsave(hstnm, units="in", width=4,height=2)
-
-# 	#----- Make a map version of the whole area zonal calcs ------#
-# 	if(sum.area=="SummaryUnit" && lnd.clss=="AllEcosystems"){
-# 		png(paste(reg,"diff",sumIDnm,lnd.clss,dttme,"map.png",sep="_"),width=5.5,height=6, units="in",res=150)
-# 		plot(dt.dff.shp,"diff",map.pal("viridis",10),main=ttlestrng)
-# 		dev.off()
-# 	}
-# }
-
-# #TODO*** I think I made this one too complicated so might not be helpful
-# #This function assumes you'll use a vector or raster
-# #to subset or mask out parts of your input raster
-# #two steps to make sure the extent of the raster is the 
-# #extent of the subset mask, and then do the mask
-# #to assign NAs to the parts outside the vector
-# #or to the NAs in the raster outside the area of interest
-# #the function also checks CRS compatibility and crops the mask to the boundary
-# #if mask and mask.name are NA, then this just crops and masks the raster to the boundary
-# #(used for the global summary)
-# subset.raster<-function(input.rast,name.rast,mask,mask.name,boundary.vect,boundary.name){
-# 	print("Starting subset.raster")
-# 	if(!is.na(mask)){
-# 		#this assumes the mask is a raster, because "near" doesn't apply to vectors
-# 		mask.proj<-check.crs.match(boundary.vect,mask,"near")
-# 		mask<-crop(mask.proj,boundary.vect)
-# 		print(paste("CRS checked for ",mask.name," and cropped to ",boundary.name,sep =""))
-# 		}else{
-# 			print(paste("No mask specified; using ",boundary.name,sep=""))
-# 			mask<-boundary.vect
-# 			mask.name<-boundary.name
-# 		}
-# 	cropped.rast<-crop(input.rast, mask)
-# 	masked.rast<-mask(cropped.rast,mask)
-# 	print(paste("Subsetted/masked ",name.rast," to include only ",mask.name, sep=""))
-# 	return(masked.rast)
-# }
-	
 
 	read.and.prepare.boundary.vector<-function(bdry.shape,bdry.name,ref.rast){
 		print("Starting read.and.prepare.boundary.vector")
@@ -222,28 +86,6 @@ library('terra')
 	 	return(boundary.vect.proj)
 	}
 
-# #this function just reads in a vector file and checks CRS
-# read.vector.and.check.crs<-function(bdr.vect,vect.shape,vect.name){
-#   print("Starting read.vector.and.check.crs")
-# 	new.vect<-vect(vect.shape)
-#   print(paste(vect.name," read in and processed.",sep=""))
-#   #returns layers with the second projected to first argument's CRS
-#   vect.proj<-check.crs.match(bdr.vect,new.vect,"near")
-#  	return(vect.proj)
-# }
-
-# #This function both crops by the boundary vector and also recalculates areas
-# #because you will always want to have the correct area after doing a vector operation
-# crop.vector.by.boundary.and.recalc.area<-function(bdr.vect, bdr.name,vect.vect,vect.name){
-#  #crop using boundary
-#   print("Starting crop.vector.by.boundary.and.recalc.area")
-# 	cropped.vect<-crop(vect.vect,bdr.vect)
-#   print(paste(vect.name," cropped to ",bdr.name,sep=""))
-#   #explicitly calculate the area of the cropped vector
-#   cropped.vect$post_crop_area_ha<-expanse(cropped.vect,unit="ha")
-#   print(paste(vect.name," Areas recalculated",sep=""))
-#   return(cropped.vect)
-# }
 
 
 	#if you don't specify a reference layer, it won't do the projection
@@ -276,47 +118,6 @@ library('terra')
 	}
 
 
-# #This version does zonal calculations for raster pixels that fall within the specified
-# #summary unit.  this only requires a single raster and outputs a single SpatVector with zonal results
-# #calculating 'mean' is hard-coded in
-# zonal.calculations<-function(rster.rast,zonal.sum.name,zonal.sum.vect){
-#   print("Starting zonal.calculations")
-#   summaryzonal.time<- system.time(zonal.calcs.vect<-zonal(rster.rast,zonal.sum.vect,fun="mean",as.polygons=TRUE,na.rm=TRUE) )
-#   print(paste("Zonal stats calculated for ",names(rster.rast), " using ", zonal.sum.name, sep=""))
-#   print(paste("Time to calculate zonal: ",round(summaryzonal.time[[1]]/60)," minute(s)", sep=""))
- 
-#   return(zonal.calcs.vect)
-# }
-
-# #calculating 'mean' is hard-coded in
-# global.calculations<-function(rst.rast,rst.name,bound.vect,bound.name,dffnm){
-# 	print("Starting global.calculations")
-# 	sub.rast<-subset.raster(rst.rast,rst.name,NA,NA,bound.vect,bound.name)
-# 	summaryglobal.time<-system.time(global.avg<-as.numeric(global(sub.rast,"mean",na.rm=TRUE)))
-# 	print(paste("global stats calculated for ",names(rst.rast), " using ", bound.name, sep=""))
-#   print(paste("Time to calculate global: ",round(summaryglobal.time[[1]]/60)," minute(s)", sep=""))
-# 	global.sum.vect<-bound.vect
-# 	global.sum.vect[,dffnm]<-global.avg
-# 	return(global.sum.vect)
-# }
-
-
-# #for the function that does the raster summary, have a method=global and method=zonal with an if statement
-# #rast.name is a metric name
-# summarize.pixels.in.area.of.interest<-function(rast.rast,rast.name,vect.vect,vect.name,method,dffnm){
-# 	if(method=="zonal"){
-# 			print(method)
-# 			#call zonal summary
-# 			result<-zonal.calculations(rast.rast,vect.name,vect.vect)
-# 		}else if(method=="global"){
-# 			print(method)
-# 			#call global summary, vect.vect/name is expected to be the boundary name
-# 			result<-global.calculations(rast.rast,rast.name,vect.vect,vect.name, dffnm)
-# 		}
-# 	return(result)
-# }
-
-
 	#this function filters patches for e.g. treatment types and date ranges
 	# and choose appropriate column headers for it
 	filter.treatments<-function(treat.prp.vect,pol.targ,start.yr,end.yr="present"){
@@ -336,6 +137,8 @@ library('terra')
 		      trt.subs.vect<-treat.prp.vect
 	    }
 
+	    #leaving the commented out parts if someone wants to use different criteria 
+	    # for treatments and fires with durations overlapping the start and end year
 	  if(end.yr!="present"){
 	  		#most exclusive criteria - starts after the initial date and ends before the final date
 	  		trtmnts<-trt.subs.vect[format(as.Date(trt.subs.vect$ACTIVITY_START),"%Y-%m-%d")>start.yr &
@@ -382,22 +185,6 @@ library('terra')
 	  print(paste("Raster math calc complete for ",pri.name," for policy objective ",pol.name," within ",bdry.nm,sep=""))
 	  return(c(priority,total,priority/total))
 	}
-
-#     crosstab.calc<-function(pri.rast,pri.name,trt.rast,pol.name,bdry.nm){
-#       names(pri.rast)<-pri.name
-#       print(names(pri.rast))
-#       crosstab.time<- system.time(crosstab.result<-crosstab(c(pri.rast,trt.rast)) )
-#       print(paste("Crosstab calc complete for ",pri.name," for policy objective ",pol.name," within ",bdry.nm,sep=""))
-#       print(paste("Time to calculate crosstab: ",round(crosstab.time[[1]]/60)," minute(s)", sep=""))
-#       result<-as.data.frame(crosstab.result)
-#       #convert from 30-m pixels to acres 
-#       result$area<-result$Freq*30*30*0.000247105
-# #      print(result)
-#       prop.pri<-result$area[result[,pri.name]==1]/sum(result$area)
-#       #print(c(result$area[result[,pri.name]==1],sum(result$area),prop.pri))
-#       return(c(result$area[result[,pri.name]==1],sum(result$area),prop.pri))
-#     }
-
 
 
 	#function to do this, takes policy target and metric name and boundary name to construct vector file name,
