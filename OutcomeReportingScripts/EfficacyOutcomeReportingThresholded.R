@@ -25,7 +25,7 @@ whp.rast <- rast(paste(loc.data,"PriorityLayers/whp_classified_20240906.tif",sep
 ############### GLOBAL PARAMETERS ###################
 
 #date stamp of this set of results - appended to all outputs to avoid overwriting older versions
-datetime<-"2025Dec29_NoFire"
+datetime<-"2025Dec29"
 
 #ending year of water year
 
@@ -141,58 +141,6 @@ if(aggregate.vectors){
 
 library("exactextractr")
 library("sf")
-
-###-------------------------------------------
-### this section is to calculate areas of all treatments, statewide, only filtered by policy target/type of treatment
-
-# policy.target<-c("WildlandFireRisk",
-# 			"ForestHealth",
-# 			"ShrublandHealth",
-# 			"Habitat",
-# 			"Water")
-
-# metrics<-c( "FlameLengthLandscape",
-# 			"DroughtVulnerability", 
-# 			"GrassProportion",
-# 			"CriticalHabitat",
-# 			"DebrisFlow")
-
-
-# # fire.areas<-data.frame(Region=character(),SpatialMask=character(),Area_ac=numeric(),stringsAsFactors=FALSE)
-#  treatment.areas<-data.frame(Region=character(),metric=character(),Area_ac=numeric(),stringsAsFactors=FALSE)
-
-#  count<-1
-#  k=1
-
-# # #calculate areas of fires and treatments (for st_area, documentation says it uses units of the CRS if it's projected)
-# # for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each region
-#  	print(paste("Start ", boundary.name[k]," loop"))
-
-# # 	agg.fire.sf<-st_read(paste(loc.data,"IntermediateFiles/AggregatedVectors/Fires_",
-# # 				boundary.name[k],"_",start.year,"_",end.year,".shp",sep=""))
-# # 	agg.fire.proj.sf<-st_transform(agg.fire.sf, st_crs(cecs.rast))
-
-# # 	fire.areas[k,]<-c(boundary.name[k],st_area(agg.fire.proj.sf)*0.000247105 )
-
-#  	for(i in 1:length(metrics)){
-#  		#choose the correct metric
-#  		metric.name<-metrics[i]
-#  		print(metric.name)
-
-#  			agg.treat.sf<-st_read(paste(loc.data,"IntermediateFiles/AggregatedVectors/Treatments_",
-#       			boundary.name[k],"_",policy.target[i],"_",start.year,"-present.shp",sep=""))
-#  			agg.treat.proj.sf<-st_transform(agg.treat.sf, st_crs(cecs.rast))
-
-#  		treatment.areas[count,]<-c(boundary.name[k],metric.name,st_area(agg.treat.proj.sf)*0.000247105)
-#  		count<-count+1
-
-#  		}
-
-# # 	}
-
-# # write.csv(fire.areas,"FireAreasByRegion_exclusive.csv")
-#  write.csv(treatment.areas,"TreatmentAreasByRegionMetric_TargetedEffort.csv")
-###-------------------------------------------
 
 #mask that removes the fire footprint from treatments
 nofire.rast<-rast(paste(loc.data,"WUIVegetationClassifications/NonFireFootprints_2020-2024_CECSproj.tif",sep=""))
@@ -361,41 +309,6 @@ require(tidyr)
 
 ca.vect<-vect(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""))
 ca.cecs.vect<-check.crs.match(cecs.rast,ca.vect)
-
-# for(k in 1:length(boundary.name)){
-
-# 	for(i in 1:length(metrics)){
-# 		#choose the correct metric
-# 		metric.name<-metrics[i]
-# 		print(metric.name)
-
-# 		diffname<-paste(metric.name,start.year,end.year,sep="_")
-
-# 		global.result<-read.csv(paste("EfficacyResults/GlobalThresholdCalcOutput_",diffname,"_",boundary.name[k],"_",datetimevis,".csv",sep=""))
-
-# 		global.result$subset[global.result$subset=="WholeArea"]<-"Region"
-# 		global.result$subset[global.result$subset=="Fires"]<-"Fire\nFootprint"
-# 		global.result$subset[global.result$subset=="Treatments"]<-"Treated\nAreas"
-# 		global.result$subset<-factor(global.result$subset,c("Region","Treated\nAreas","Fire\nFootprint"))
-
-# 		global.result$percent<-100*global.result$percdiff
-# 		global.result$before.rnd<-paste("Initial\nProportion:\n",round(global.result$before,2))
-# 		global.result$absdiff<-global.result$after-global.result$before
-
-# 		#this is your main result for the efficacy modeling
-# 		plot.title<-paste("Change in Proportion of\n",nice.metric.name[i], "\n(",nice.boundary.name[k],")", sep="")
-# 		bar.plt<-ggplot(data=global.result, aes(x=subset,fill=subset,y=absdiff)) +
-# 		  geom_bar(stat="identity")+
-# 		  theme(legend.position="none")+
-# 	      labs(title = plot.title,x = element_blank(), y = "Difference in Proportion 2020-2024")+
-# 		  scale_fill_manual(values=c("#E9E5C3","#9C8F57","#9F2214"))#+
-# 		  #geom_text(aes(label=before.rnd), vjust=-0.5, color="black", size=3.5)
-# 		pltnm.b<-paste("EfficacyResults/AbsDiff_bar_", metric.name,"_",boundary.name[k],"_",datetimevis,".png",sep="")
-# 	  	ggsave(pltnm.b, units="in", width=4,height=3)
-
-# 	}
-
-# }
 
 
 diffname<-paste(metric.name,start.year,end.year,sep="_")
