@@ -90,25 +90,6 @@
 
   # #---------------- High-Risk Shrubs -------------------------#
 
-  ## Emma Underwood and Charlie Schrader suggested we not use this layer in this way
-  ## keeping code here for posterity
-  # #buffer with 1.5 miles, in line with 'wui influence' from CALFIRE logic
-  # #only in socal but reached out to Emma to see if it's been extended
-
-  # sh.rast<-rast(paste(loc.data,"PriorityLayers/SoCal_prepregen2020_202312_T2_v5.tif",sep=""))
-  # sh.proj.rast<-check.crs.match(reference.rast,sh.rast)
-  # sh.proj.vect<-as.polygons(sh.proj.rast)
-  # sh.vuln.vect<-sh.proj.vect[sh.proj.vect$SoCal_prepregen2020_202312_T2_v5==1,]
-  # #1 mile = 1609.34 meters
-  # sh.buff.vect<-buffer(sh.vuln.vect,width=1.5*1609.34)
-  # #intersect with road buffer
-
-  # sh.pri.vect<-intersect(road.buff.vect,sh.buff.vect)
-  # #then re-rasterize and add back in '0' for those not included
-  # sh.pri.rast<-rasterize(sh.pri.vect,reference.rast)
-  # sh.pri.rast[is.na(sh.pri.rast)]<-0
-  # writeRaster(sh.pri.rast,paste(loc.data,"PriorityLayers/FinalPriorityLayers/AtRiskShrubsPriority_CECSproj.tif",sep=""))
-
   #Intersect the 'shrub' mask with the 'roads' buffer and then infill with '0'
   # in fact, just rasterize it based on the shrub raster so that the extent automatically matches
   #road.whp.rast<-rasterize(road.buff.whp.vect,shrub.whp.rast)
@@ -118,15 +99,3 @@
   writeRaster(sh.pri.rast,paste(loc.data,"PriorityLayers/FinalPriorityLayers/ShrubRoadPriority_WHP.tif",sep=""),overwrite=TRUE)
 
 #####################
-
-# this was an attempt to use Dawn's method for 'cover' to fill in values
-
-# boundary.shape<-c(paste(loc.scripts,"ReferenceFiles/CA_State.shp",sep=""))
-# boundary.name<-c("CA")
-# prepped.boundary.whp.vect<-read.and.prepare.boundary.vector(boundary.shape[1],boundary.name[1],whp.rast)
-# prepped.boundary.whp.vect$CA<-0
-# CA.whp.rast<-rasterize(prepped.boundary.whp.vect,whp.rast,field="CA")
-# prepped.boundary.cecs.vect<-check.crs.match(cecs.rast,prepped.boundary.whp.vect)
-# CA.cecs.rast<-rasterize(prepped.boundary.cecs.vect,cecs.rast,field="CA")
-
-
