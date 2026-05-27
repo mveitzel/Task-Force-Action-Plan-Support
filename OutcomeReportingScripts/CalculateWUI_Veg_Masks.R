@@ -525,8 +525,27 @@ disturb.mask.rast[disturb.mask.rast>0]<-1
 
 writeRaster(disturb.mask.rast,paste(loc.data,"WUIVegetationClassifications/ShrubDisturbances_2021-2024_CECSproj.tif",sep=""),overwrite=TRUE)
 
-######################################################
-### making a 'nonroad' mask for shrub calculations
+## No Fire and also only the canopy disturbances
+
+ forest.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_FOREST_CECS.tif",sep=""))
+ shrub.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_SHRUB_CECS.tif",sep=""))
+
+#mask that removes the fire footprint from treatments
+nofire.rast<-rast(paste(loc.data,"WUIVegetationClassifications/NonFireFootprints_2020-2024_CECSproj.tif",sep=""))
+#mask that is only forest disturbances (but not masked for only forest)
+yesdist.f.rast<-rast(paste(loc.data,"WUIVegetationClassifications/ForestDisturbances_2021-2024_CECSproj.tif",sep=""))
+#mask that is only shrubland disturbances (but not masked for only shrub)
+yesdist.s.rast<-rast(paste(loc.data,"WUIVegetationClassifications/ShrubDisturbances_2021-2024_CECSproj.tif",sep=""))
+#nofire, only disturbances - only forest
+nofire.yesdist.f.rast<-nofire.rast*yesdist.f.rast*forest.cecs.rast
+writeRaster(nofire.yesdist.f.rast,paste(loc.data,"WUIVegetationClassifications/ForestDisturbanceNoFire_2021-2024_CECSproj.tif",sep=""),overwrite=TRUE)
+#nofire, only disturbances - only shrub
+nofire.yesdist.s.rast<-nofire.rast*yesdist.s.rast*shrub.cecs.rast
+writeRaster(nofire.yesdist.s.rast,paste(loc.data,"WUIVegetationClassifications/ShrubDisturbancesNoFire_2021-2024_CECSproj.tif",sep=""),overwrite=TRUE)
+
+
+
+### ---------making a 'nonroad' mask for shrub calculations
 
  road.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/RoadBuffer_CECSproj.tif",sep=""))
 

@@ -54,261 +54,261 @@ print(time.total)
 
 timer.start<-Sys.time()
 
-	vint<-"250614"
-	metric<-"Fire_FlamMap_FL"
-	xlabel<-"Average decrease in flame length (ft)"
-	#'units are 0.01 m' so divide by 100, but want ft so multiply by 3.28084
-	conversion<-(0.0328084)
+		vint<-"250614"
+		metric<-"Fire_FlamMap_FL"
+		xlabel<-"Average decrease in flame length (ft)"
+		#'units are 0.01 m' so divide by 100, but want ft so multiply by 3.28084
+		conversion<-(0.0328084)
 
-	before.yr.name<-generate.CECS.filename(metric,start.year,vint)
-	after.yr.name<-generate.CECS.filename(metric,end.year,vint)
+		before.yr.name<-generate.CECS.filename(metric,start.year,vint)
+		after.yr.name<-generate.CECS.filename(metric,end.year,vint)
 
-	before.rast<-read.in.raster(loc.data,before.yr.name,metrics[4])
-	after.rast<-read.in.raster(loc.data,after.yr.name,metrics[4])
+		before.rast<-read.in.raster(loc.data,before.yr.name,metrics[4])
+		after.rast<-read.in.raster(loc.data,after.yr.name,metrics[4])
 
-	before.proj.rast<-check.crs.match(reference.rast,before.rast)
-	after.proj.rast<-check.crs.match(reference.rast,after.rast)
+		before.proj.rast<-check.crs.match(reference.rast,before.rast)
+		after.proj.rast<-check.crs.match(reference.rast,after.rast)
 
-	print("Begin thresholding")
-	# Everyone seems to agree that flame length above 8 feet is likely to be a high-severity or hard to control fire
-	#convert from meters to feet and undo the storage multiplicative factor:
-	#"Units are FL 0.01 m" -> *3.28084/100
-	fl.before.rast<-before.proj.rast*0.0328084
-	fl.before.rast[fl.before.rast<8]<-0
-	fl.before.rast[fl.before.rast >= 8 ]<-1
-	print("Flame Length above 8 ft thresholded: before")
-  
-  #beneficial fire is flame length below 4 ft
-	bf.before.rast<-before.proj.rast*0.0328084
-	bf.before.rast[bf.before.rast<=4]<-1
-	bf.before.rast[bf.before.rast > 4 ]<-0
-	print("Flame Length below 4 ft thresholded: before")
-  
+		print("Begin thresholding")
+		# Everyone seems to agree that flame length above 8 feet is likely to be a high-severity or hard to control fire
+		#convert from meters to feet and undo the storage multiplicative factor:
+		#"Units are FL 0.01 m" -> *3.28084/100
+		fl.before.rast<-before.proj.rast*0.0328084
+		fl.before.rast[fl.before.rast<8]<-0
+		fl.before.rast[fl.before.rast >= 8 ]<-1
+		print("Flame Length above 8 ft thresholded: before")
+	  
+	  #beneficial fire is flame length below 4 ft
+		bf.before.rast<-before.proj.rast*0.0328084
+		bf.before.rast[bf.before.rast<=4]<-1
+		bf.before.rast[bf.before.rast > 4 ]<-0
+		print("Flame Length below 4 ft thresholded: before")
+	  
 
-	fl.after.rast<-after.proj.rast*0.0328084
-	fl.after.rast[fl.after.rast<8]<-0
-	fl.after.rast[fl.after.rast >= 8 ]<-1
-	print("Flame Length above 8 ft thresholded: after")
+		fl.after.rast<-after.proj.rast*0.0328084
+		fl.after.rast[fl.after.rast<8]<-0
+		fl.after.rast[fl.after.rast >= 8 ]<-1
+		print("Flame Length above 8 ft thresholded: after")
 
-	bf.after.rast<-after.proj.rast*0.0328084
-	bf.after.rast[bf.after.rast<=4]<-1
-	bf.after.rast[bf.after.rast > 4 ]<-0
-	print("Flame Length below 4 ft thresholded: after")
+		bf.after.rast<-after.proj.rast*0.0328084
+		bf.after.rast[bf.after.rast<=4]<-1
+		bf.after.rast[bf.after.rast > 4 ]<-0
+		print("Flame Length below 4 ft thresholded: after")
 
- 
-	#	mask for roads
-	road.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/RoadBuffer_CECSproj.tif",sep=""))
-	road.aft.masked.rast<-fl.after.rast*road.buff.cecs.rast
-	road.bef.masked.rast<-fl.before.rast*road.buff.cecs.rast
-	print("Raster masked for roads")
+	 
+		#	mask for roads
+		road.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/RoadBuffer_CECSproj.tif",sep=""))
+		road.aft.masked.rast<-fl.after.rast*forestroad.cecs.rast
+		road.bef.masked.rast<-fl.before.rast*forestroad.cecs.rast
+		print("Raster masked for roads")
 
-	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[4],"_",start.year,".tif",sep=""))
-	writeRaster(road.bef.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[4],"_",start.year,".tif",sep=""),overwrite=TRUE)
-	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[4],"_",end.year,".tif",sep=""))
-	writeRaster(road.aft.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[4],"_",end.year,".tif",sep=""),overwrite=TRUE)
-
-
-	#	mask for utilities
-#	tran.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/TransmissionLineBuffer_CECSproj.tif",sep=""))
-	tran.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/TransmissionLineBuffer1000_CECSproj.tif",sep=""))
-	tran.aft.masked.rast<-fl.after.rast*tran.buff.cecs.rast
-	tran.bef.masked.rast<-fl.before.rast*tran.buff.cecs.rast
-	print("Raster masked for Utilities")
-
-	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[3],"_",start.year,".tif",sep=""))
-#	writeRaster(tran.bef.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[3],"_",start.year,".tif",sep=""),overwrite=TRUE)
-	writeRaster(tran.bef.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[3],"1000_",start.year,".tif",sep=""),overwrite=TRUE)
-	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[3],"_",end.year,".tif",sep=""))
-#	writeRaster(tran.aft.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[3],"_",end.year,".tif",sep=""),overwrite=TRUE)
-	writeRaster(tran.aft.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[3],"1000_",end.year,".tif",sep=""),overwrite=TRUE)
+		print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[4],"_",start.year,".tif",sep=""))
+		writeRaster(road.bef.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[4],"_",start.year,".tif",sep=""),overwrite=TRUE)
+		print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[4],"_",end.year,".tif",sep=""))
+		writeRaster(road.aft.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[4],"_",end.year,".tif",sep=""),overwrite=TRUE)
 
 
-    # 'mask' for whole landscape
-	land.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/FRAP24_Landscape_CECS.tif",sep=""))
-	land.aft.masked.rast<-fl.after.rast*land.cecs.rast
-	land.bef.masked.rast<-fl.before.rast*land.cecs.rast
-	print("Raster masked for Landscape - 8 ft")
+		#	mask for utilities
+	#	tran.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/TransmissionLineBuffer_CECSproj.tif",sep=""))
+		tran.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/TransmissionLineBuffer1000_CECSproj.tif",sep=""))
+		tran.aft.masked.rast<-fl.after.rast*foresttran.cecs.rast
+		tran.bef.masked.rast<-fl.before.rast*foresttran.cecs.rast
+		print("Raster masked for Utilities")
 
-	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[2],"_",start.year,".tif",sep=""))
-	writeRaster(land.bef.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",
-		metrics[2],"_",start.year,".tif",sep=""),overwrite=TRUE)
-	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[2],"_",end.year,".tif",sep=""))
-	writeRaster(land.aft.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",
-		metrics[2],"_",end.year,".tif",sep=""),overwrite=TRUE)
-
- 
-	land.aft.masked.rast<-bf.after.rast*land.cecs.rast
-	land.bef.masked.rast<-bf.before.rast*land.cecs.rast
-	print("Raster masked for Landscape- 4 ft")
+		print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[3],"_",start.year,".tif",sep=""))
+	#	writeRaster(tran.bef.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[3],"_",start.year,".tif",sep=""),overwrite=TRUE)
+		writeRaster(tran.bef.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[3],"1000_",start.year,".tif",sep=""),overwrite=TRUE)
+		print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[3],"_",end.year,".tif",sep=""))
+	#	writeRaster(tran.aft.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[3],"_",end.year,".tif",sep=""),overwrite=TRUE)
+		writeRaster(tran.aft.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[3],"1000_",end.year,".tif",sep=""),overwrite=TRUE)
 
 
-	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[7],"_",start.year,".tif",sep=""))
-	writeRaster(land.bef.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",
-		metrics[7],"_",start.year,".tif",sep=""),overwrite=TRUE)
-	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[7],"_",end.year,".tif",sep=""))
-	writeRaster(land.aft.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",
-		metrics[7],"_",end.year,".tif",sep=""),overwrite=TRUE)
+	    # 'mask' for whole landscape
+		land.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/FRAP24_Landscape_CECS.tif",sep=""))
+		land.aft.masked.rast<-fl.after.rast*forest.cecs.rast
+		land.bef.masked.rast<-fl.before.rast*forest.cecs.rast
+		print("Raster masked for Landscape - 8 ft")
+
+		print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[2],"_",start.year,".tif",sep=""))
+		writeRaster(land.bef.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",
+			metrics[2],"_",start.year,".tif",sep=""),overwrite=TRUE)
+		print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[2],"_",end.year,".tif",sep=""))
+		writeRaster(land.aft.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",
+			metrics[2],"_",end.year,".tif",sep=""),overwrite=TRUE)
+
+	 
+		land.aft.masked.rast<-bf.after.rast*forest.cecs.rast
+		land.bef.masked.rast<-bf.before.rast*forest.cecs.rast
+		print("Raster masked for Landscape- 4 ft")
 
 
-    #mask for WUI
-	wui.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/FRAP24_WUIOnly_CECS.tif",sep=""))
-	wui.aft.masked.rast<-fl.after.rast*wui.cecs.rast
-	wui.bef.masked.rast<-fl.before.rast*wui.cecs.rast
-	print("Raster masked for WUI")
-
-	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[1],"_",start.year,".tif",sep=""))
-	writeRaster(wui.bef.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[1],"_",start.year,".tif",sep=""),overwrite=TRUE)
-	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[1],"_",end.year,".tif",sep=""))
-	writeRaster(wui.aft.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[1],"_",end.year,".tif",sep=""),overwrite=TRUE)
-
-#mask for forest
-
-	forest.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_FOREST_CECS.tif",sep=""))
-	forest.aft.masked.rast<-fl.after.rast*forest.cecs.rast
-	forest.bef.masked.rast<-fl.before.rast*forest.cecs.rast
-	print("Raster masked for forest")
-
-	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_Forest_",metrics[2],"_",start.year,".tif",sep=""))
-	writeRaster(forest.bef.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_Forest_",metrics[2],"_",start.year,".tif",sep=""),overwrite=TRUE)
-	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_Forest_",metrics[2],"_",end.year,".tif",sep=""))
-	writeRaster(forest.aft.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_Forest_",metrics[2],"_",end.year,".tif",sep=""),overwrite=TRUE)
-
-#mask for forest + not-fire
-
-	nofire.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/NonFireFootprints_2020-2024_CECSproj.tif",sep=""))
-	forest.nofire.aft.masked.rast<-forest.aft.masked.rast*nofire.cecs.rast
-	forest.nofire.bef.masked.rast<-forest.bef.masked.rast*nofire.cecs.rast
-	print("Raster masked for no-fire")
-
-	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_Forest_Nofire_",metrics[2],"_",start.year,".tif",sep=""))
-	writeRaster(forest.nofire.bef.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_Forest_Nofire_",metrics[2],"_",start.year,".tif",sep=""),overwrite=TRUE)
-	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_Forest_Nofire_",metrics[2],"_",end.year,".tif",sep=""))
-	writeRaster(forest.nofire.aft.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_Forest_Nofire_",metrics[2],"_",end.year,".tif",sep=""),overwrite=TRUE)
-
-#mask for forest + not-fire + disturbed
-
-	disturbed.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/ForestDisturbances_2021-2024_CECSproj.tif",sep=""))
-	forest.nofire.dist.aft.masked.rast<-forest.nofire.aft.masked.rast*disturbed.cecs.rast
-	forest.nofire.dist.bef.masked.rast<-forest.nofire.bef.masked.rast*disturbed.cecs.rast
-	print("Raster masked for disturbances")
-
-	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_Forest_Nofire_Disturbance_",metrics[2],"_",start.year,".tif",sep=""))
-	writeRaster(forest.nofire.dist.bef.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_Forest_Nofire_Disturbance_",metrics[2],"_",start.year,".tif",sep=""),overwrite=TRUE)
-	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_Forest_Nofire_Disturbance_",metrics[2],"_",end.year,".tif",sep=""))
-	writeRaster(forest.nofire.dist.aft.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_Forest_Nofire_Disturbance_",metrics[2],"_",end.year,".tif",sep=""),overwrite=TRUE)
-
-timer.end<-Sys.time()
-
-time.total<-timer.end-timer.start
-print(time.total)
+		print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[8],"_",start.year,".tif",sep=""))
+		writeRaster(land.bef.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",
+			metrics[8],"_",start.year,".tif",sep=""),overwrite=TRUE)
+		print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[8],"_",end.year,".tif",sep=""))
+		writeRaster(land.aft.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",
+			metrics[8],"_",end.year,".tif",sep=""),overwrite=TRUE)
 
 
-#---------- SHRUB-GRASS RATIO CALCS -------------------#
+	    #mask for WUI
+		wui.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/FRAP24_WUIOnly_CECS.tif",sep=""))
+		wui.aft.masked.rast<-fl.after.rast*forestwui.cecs.rast
+		wui.bef.masked.rast<-fl.before.rast*forestwui.cecs.rast
+		print("Raster masked for WUI")
 
-timer.start<-Sys.time()
+		print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[1],"_",start.year,".tif",sep=""))
+		writeRaster(wui.bef.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[1],"_",start.year,".tif",sep=""),overwrite=TRUE)
+		print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[1],"_",end.year,".tif",sep=""))
+		writeRaster(wui.aft.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[1],"_",end.year,".tif",sep=""),overwrite=TRUE)
 
-	vint<-"250418"
-	metric.shrub<-"Veg_ShrubFrac"
-	metric.grass<-"Veg_HerbFrac"
-	xlabel<-"Average decrease in Shrub-Grass Ratio"
-	conversion<-NA #the conversion factor for the individual proportions are 1/10000, but we're doing a ratio so they cancel
+# #mask for forest
 
-	#filenaming convention changed for the CONUS CECS runs
-	before.yr.shrub.name<-"CECS_Data/ShrubCover_2020_WestCoast.tif"
-	after.yr.shrub.name<-"CECS_Data/ShrubCover_2024_WestCoast.tif"
-	before.yr.grass.name<-"CECS_Data/HerbCover_2020_WestCoast.tif"
-	after.yr.grass.name<-"CECS_Data/HerbCover_2024_WestCoast.tif"
+# 	forest.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_FOREST_CECS.tif",sep=""))
+# 	forest.aft.masked.rast<-fl.after.rast*forest.cecs.rast
+# 	forest.bef.masked.rast<-fl.before.rast*forest.cecs.rast
+# 	print("Raster masked for forest")
 
-	before.shrub.west.rast<-read.in.raster(loc.data,before.yr.shrub.name,metrics[6])
-	after.shrub.west.rast<-read.in.raster(loc.data,after.yr.shrub.name,metrics[6])
-	before.grass.west.rast<-read.in.raster(loc.data,before.yr.grass.name,metrics[6])
-	after.grass.west.rast<-read.in.raster(loc.data,after.yr.grass.name,metrics[6])
+# 	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_Forest_",metrics[2],"_",start.year,".tif",sep=""))
+# 	writeRaster(forest.bef.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_Forest_",metrics[2],"_",start.year,".tif",sep=""),overwrite=TRUE)
+# 	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_Forest_",metrics[2],"_",end.year,".tif",sep=""))
+# 	writeRaster(forest.aft.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_Forest_",metrics[2],"_",end.year,".tif",sep=""),overwrite=TRUE)
 
-	#need to clip to CA
-	before.shrub.cr.rast<-crop(before.shrub.west.rast,reference.rast)
-	before.shrub.rast<-mask(before.shrub.cr.rast,reference.rast)
+# #mask for forest + not-fire
 
-	after.shrub.cr.rast<-crop(after.shrub.west.rast,reference.rast)
-	after.shrub.rast<-mask(after.shrub.cr.rast,reference.rast)
+# 	nofire.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/NonFireFootprints_2020-2024_CECSproj.tif",sep=""))
+# 	forest.nofire.aft.masked.rast<-forest.aft.masked.rast*nofire.cecs.rast
+# 	forest.nofire.bef.masked.rast<-forest.bef.masked.rast*nofire.cecs.rast
+# 	print("Raster masked for no-fire")
 
-	before.grass.cr.rast<-crop(before.grass.west.rast,reference.rast)
-	before.grass.rast<-mask(before.grass.cr.rast,reference.rast)
+# 	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_Forest_Nofire_",metrics[2],"_",start.year,".tif",sep=""))
+# 	writeRaster(forest.nofire.bef.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_Forest_Nofire_",metrics[2],"_",start.year,".tif",sep=""),overwrite=TRUE)
+# 	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_Forest_Nofire_",metrics[2],"_",end.year,".tif",sep=""))
+# 	writeRaster(forest.nofire.aft.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_Forest_Nofire_",metrics[2],"_",end.year,".tif",sep=""),overwrite=TRUE)
 
-	after.grass.cr.rast<-crop(after.grass.west.rast,reference.rast)
-	after.grass.rast<-mask(after.grass.cr.rast,reference.rast)
+# #mask for forest + not-fire + disturbed
 
-	#where the grass proportion is zero, we don't want to divide by it.
-	#but we don't want to substitute an arbitrarily small value that will mess up
-	#the mean values.  So find the minimum value that isn't zero
-	# if there's a problem with the grass data, we don't want it to mess up our
-	#calculations, but also don't want to throw out a shrub value
-	mask.before.grass.rast<-before.grass.rast
-	mask.before.grass.rast[before.grass.rast<=0]<-NA
-	bef.grass.min<-as.numeric(global(mask.before.grass.rast,"min",na.rm=TRUE))
-	#and do the same for the 'after' grass raster, though likely it's the same
-	mask.after.grass.rast<-after.grass.rast
-	mask.after.grass.rast[after.grass.rast<=0]<-NA
-	aft.grass.min<-as.numeric(global(mask.after.grass.rast,"min",na.rm=TRUE))
+# 	disturbed.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/ForestDisturbances_2021-2024_CECSproj.tif",sep=""))
+# 	forest.nofire.dist.aft.masked.rast<-forest.nofire.aft.masked.rast*disturbed.cecs.rast
+# 	forest.nofire.dist.bef.masked.rast<-forest.nofire.bef.masked.rast*disturbed.cecs.rast
+# 	print("Raster masked for disturbances")
 
-	before.grass.prepped.rast<-before.grass.rast
-	before.grass.prepped.rast[before.grass.prepped.rast==0]<-bef.grass.min
-	after.grass.prepped.rast<-after.grass.rast
-	after.grass.prepped.rast[after.grass.prepped.rast==0]<-aft.grass.min
-
-	#make the numbers that are negative into NAs though
-	before.grass.prepped.rast[before.grass.prepped.rast<0]<-NA
-	after.grass.prepped.rast[after.grass.prepped.rast<0]<-NA
-
-
-	# also there are negative values in the shrub layer, so we will replace those with NA values.
-	#If there's a problem with the shrub data, we just don't want to report on it.
-	before.shrub.prepped.rast<-before.shrub.rast
-	before.shrub.prepped.rast[before.shrub.prepped.rast<0]<-NA
-	after.shrub.prepped.rast<-after.shrub.rast
-	after.shrub.prepped.rast[after.shrub.prepped.rast<0]<-NA
-
-	# "Units are % multiplied by 100, so a tree cover value of 9000 corresponds to 90% tree cover."
-	# so as long as max values are below 10000, we're okay.  a quick 'global' check verified that.
-	#now it should be safe to divide by the grass layers
-	#and neither of them will have weird negative values
-	before.rast<-before.shrub.prepped.rast/before.grass.prepped.rast
-	after.rast<-after.shrub.prepped.rast/after.grass.prepped.rast
-
-	before.proj.rast<-check.crs.match(reference.rast,before.rast)
-	after.proj.rast<-check.crs.match(reference.rast,after.rast)
-
-
-	print("Begin thresholding")
-	# "Units are % multiplied by 100, so a tree cover value of 9000 corresponds to 90% tree cover."
-	# so as long as max values are below 10000, we're okay.  a quick 'global' check verified that.
-	# also, once we've done a ratio we don't care anymore about the multiplicative conversion factor.
-	# We just apply our threshold that we want the plot to be majority shrub, so shrub/grass is at least 1.
-	sh.before.rast<-before.proj.rast
-	sh.before.rast[sh.before.rast<=1]<-1
-	sh.before.rast[sh.before.rast > 1 ]<-0
-	print("Shrub-Grass ratio thresholded: before")
-  
-	sh.after.rast<-after.proj.rast
-	sh.after.rast[sh.after.rast<=1]<-1
-	sh.after.rast[sh.after.rast > 1 ]<-0
-	print("Shrub-Grass ratio thresholded: after")
- 
-	#	mask for shrubs
-	shrub.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_SHRUB_CECS.tif",sep=""))
-	shrub.aft.masked.rast<-sh.after.rast*shrub.cecs.rast
-	shrub.bef.masked.rast<-sh.before.rast*shrub.cecs.rast
-	print("Raster masked for shrub")
-
-	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[6],"_",start.year,".tif",sep=""))
-	writeRaster(shrub.bef.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[6],"_",start.year,".tif",sep=""),overwrite=TRUE)
-	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[6],"_",end.year,".tif",sep=""))
-	writeRaster(shrub.aft.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[6],"_",end.year,".tif",sep=""),overwrite=TRUE)
-
+# 	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_Forest_Nofire_Disturbance_",metrics[2],"_",start.year,".tif",sep=""))
+# 	writeRaster(forest.nofire.dist.bef.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_Forest_Nofire_Disturbance_",metrics[2],"_",start.year,".tif",sep=""),overwrite=TRUE)
+# 	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_Forest_Nofire_Disturbance_",metrics[2],"_",end.year,".tif",sep=""))
+# 	writeRaster(forest.nofire.dist.aft.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_Forest_Nofire_Disturbance_",metrics[2],"_",end.year,".tif",sep=""),overwrite=TRUE)
 
 timer.end<-Sys.time()
 
 time.total<-timer.end-timer.start
 print(time.total)
+
+
+# #---------- SHRUB-GRASS RATIO CALCS -------------------#
+
+# timer.start<-Sys.time()
+
+# 	vint<-"250418"
+# 	metric.shrub<-"Veg_ShrubFrac"
+# 	metric.grass<-"Veg_HerbFrac"
+# 	xlabel<-"Average decrease in Shrub-Grass Ratio"
+# 	conversion<-NA #the conversion factor for the individual proportions are 1/10000, but we're doing a ratio so they cancel
+
+# 	#filenaming convention changed for the CONUS CECS runs
+# 	before.yr.shrub.name<-"CECS_Data/ShrubCover_2020_WestCoast.tif"
+# 	after.yr.shrub.name<-"CECS_Data/ShrubCover_2024_WestCoast.tif"
+# 	before.yr.grass.name<-"CECS_Data/HerbCover_2020_WestCoast.tif"
+# 	after.yr.grass.name<-"CECS_Data/HerbCover_2024_WestCoast.tif"
+
+# 	before.shrub.west.rast<-read.in.raster(loc.data,before.yr.shrub.name,metrics[6])
+# 	after.shrub.west.rast<-read.in.raster(loc.data,after.yr.shrub.name,metrics[6])
+# 	before.grass.west.rast<-read.in.raster(loc.data,before.yr.grass.name,metrics[6])
+# 	after.grass.west.rast<-read.in.raster(loc.data,after.yr.grass.name,metrics[6])
+
+# 	#need to clip to CA
+# 	before.shrub.cr.rast<-crop(before.shrub.west.rast,reference.rast)
+# 	before.shrub.rast<-mask(before.shrub.cr.rast,reference.rast)
+
+# 	after.shrub.cr.rast<-crop(after.shrub.west.rast,reference.rast)
+# 	after.shrub.rast<-mask(after.shrub.cr.rast,reference.rast)
+
+# 	before.grass.cr.rast<-crop(before.grass.west.rast,reference.rast)
+# 	before.grass.rast<-mask(before.grass.cr.rast,reference.rast)
+
+# 	after.grass.cr.rast<-crop(after.grass.west.rast,reference.rast)
+# 	after.grass.rast<-mask(after.grass.cr.rast,reference.rast)
+
+# 	#where the grass proportion is zero, we don't want to divide by it.
+# 	#but we don't want to substitute an arbitrarily small value that will mess up
+# 	#the mean values.  So find the minimum value that isn't zero
+# 	# if there's a problem with the grass data, we don't want it to mess up our
+# 	#calculations, but also don't want to throw out a shrub value
+# 	mask.before.grass.rast<-before.grass.rast
+# 	mask.before.grass.rast[before.grass.rast<=0]<-NA
+# 	bef.grass.min<-as.numeric(global(mask.before.grass.rast,"min",na.rm=TRUE))
+# 	#and do the same for the 'after' grass raster, though likely it's the same
+# 	mask.after.grass.rast<-after.grass.rast
+# 	mask.after.grass.rast[after.grass.rast<=0]<-NA
+# 	aft.grass.min<-as.numeric(global(mask.after.grass.rast,"min",na.rm=TRUE))
+
+# 	before.grass.prepped.rast<-before.grass.rast
+# 	before.grass.prepped.rast[before.grass.prepped.rast==0]<-bef.grass.min
+# 	after.grass.prepped.rast<-after.grass.rast
+# 	after.grass.prepped.rast[after.grass.prepped.rast==0]<-aft.grass.min
+
+# 	#make the numbers that are negative into NAs though
+# 	before.grass.prepped.rast[before.grass.prepped.rast<0]<-NA
+# 	after.grass.prepped.rast[after.grass.prepped.rast<0]<-NA
+
+
+# 	# also there are negative values in the shrub layer, so we will replace those with NA values.
+# 	#If there's a problem with the shrub data, we just don't want to report on it.
+# 	before.shrub.prepped.rast<-before.shrub.rast
+# 	before.shrub.prepped.rast[before.shrub.prepped.rast<0]<-NA
+# 	after.shrub.prepped.rast<-after.shrub.rast
+# 	after.shrub.prepped.rast[after.shrub.prepped.rast<0]<-NA
+
+# 	# "Units are % multiplied by 100, so a tree cover value of 9000 corresponds to 90% tree cover."
+# 	# so as long as max values are below 10000, we're okay.  a quick 'global' check verified that.
+# 	#now it should be safe to divide by the grass layers
+# 	#and neither of them will have weird negative values
+# 	before.rast<-before.shrub.prepped.rast/before.grass.prepped.rast
+# 	after.rast<-after.shrub.prepped.rast/after.grass.prepped.rast
+
+# 	before.proj.rast<-check.crs.match(reference.rast,before.rast)
+# 	after.proj.rast<-check.crs.match(reference.rast,after.rast)
+
+
+# 	print("Begin thresholding")
+# 	# "Units are % multiplied by 100, so a tree cover value of 9000 corresponds to 90% tree cover."
+# 	# so as long as max values are below 10000, we're okay.  a quick 'global' check verified that.
+# 	# also, once we've done a ratio we don't care anymore about the multiplicative conversion factor.
+# 	# We just apply our threshold that we want the plot to be majority shrub, so shrub/grass is at least 1.
+# 	sh.before.rast<-before.proj.rast
+# 	sh.before.rast[sh.before.rast<=1]<-1
+# 	sh.before.rast[sh.before.rast > 1 ]<-0
+# 	print("Shrub-Grass ratio thresholded: before")
+  
+# 	sh.after.rast<-after.proj.rast
+# 	sh.after.rast[sh.after.rast<=1]<-1
+# 	sh.after.rast[sh.after.rast > 1 ]<-0
+# 	print("Shrub-Grass ratio thresholded: after")
+ 
+# 	#	mask for shrubs
+# 	shrub.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_SHRUB_CECS.tif",sep=""))
+# 	shrub.aft.masked.rast<-sh.after.rast*shrub.cecs.rast
+# 	shrub.bef.masked.rast<-sh.before.rast*shrub.cecs.rast
+# 	print("Raster masked for shrub")
+
+# 	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[6],"_",start.year,".tif",sep=""))
+# 	writeRaster(shrub.bef.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[6],"_",start.year,".tif",sep=""),overwrite=TRUE)
+# 	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[6],"_",end.year,".tif",sep=""))
+# 	writeRaster(shrub.aft.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[6],"_",end.year,".tif",sep=""),overwrite=TRUE)
+
+
+# timer.end<-Sys.time()
+
+# time.total<-timer.end-timer.start
+# print(time.total)
 
 
 
@@ -325,8 +325,8 @@ timer.start<-Sys.time()
 	before.yr.grass.name<-"CECS_Data/HerbCover_2020_WestCoast.tif"
 	after.yr.grass.name<-"CECS_Data/HerbCover_2024_WestCoast.tif"
 
-	before.grass.west.rast<-read.in.raster(loc.data,before.yr.grass.name,metrics[1])
-	after.grass.west.rast<-read.in.raster(loc.data,after.yr.grass.name,metrics[1])
+	before.grass.west.rast<-read.in.raster(loc.data,before.yr.grass.name,metrics[6])
+	after.grass.west.rast<-read.in.raster(loc.data,after.yr.grass.name,metrics[6])
 
 	#need to clip to CA
 	before.grass.cr.rast<-crop(before.grass.west.rast,reference.rast)
@@ -358,16 +358,42 @@ timer.start<-Sys.time()
 	sh.after.rast[sh.after.rast > 5000 ]<-0
 	print("Grass proportion thresholded: after")
  
-	#	mask for shrubs
+	# #	mask for shrubs
+	# shrub.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_SHRUB_CECS.tif",sep=""))
+	# shrub.aft.masked.rast<-sh.after.rast*shrub.cecs.rast
+	# shrub.bef.masked.rast<-sh.before.rast*shrub.cecs.rast
+	# print("Raster masked for shrub")
+
+	# print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[1],"_",start.year,".tif",sep=""))
+	# writeRaster(shrub.bef.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[1],"_",start.year,".tif",sep=""),overwrite=TRUE)
+	# print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[1],"_",end.year,".tif",sep=""))
+	# writeRaster(shrub.aft.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[1],"_",end.year,".tif",sep=""),overwrite=TRUE)
+
+
+
+
+	#	mask for shrubs - roads
 	shrub.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_SHRUB_CECS.tif",sep=""))
-	shrub.aft.masked.rast<-sh.after.rast*shrub.cecs.rast
-	shrub.bef.masked.rast<-sh.before.rast*shrub.cecs.rast
+	shrub.aft.masked.rast<-sh.after.rast*shrub.road.rast
+	shrub.bef.masked.rast<-sh.before.rast*shrub.road.rast
 	print("Raster masked for shrub")
 
-	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[1],"_",start.year,".tif",sep=""))
-	writeRaster(shrub.bef.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[1],"_",start.year,".tif",sep=""),overwrite=TRUE)
-	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[1],"_",end.year,".tif",sep=""))
-	writeRaster(shrub.aft.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[1],"_",end.year,".tif",sep=""),overwrite=TRUE)
+	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[6],"_",start.year,".tif",sep=""))
+	writeRaster(shrub.bef.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[6],"_",start.year,".tif",sep=""),overwrite=TRUE)
+	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[6],"_",end.year,".tif",sep=""))
+	writeRaster(shrub.aft.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[6],"_",end.year,".tif",sep=""),overwrite=TRUE)
+
+
+	#	mask for shrubs - nonroads
+	shrub.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_SHRUB_CECS.tif",sep=""))
+	shrub.aft.masked.rast<-sh.after.rast*shrub.nonroad.rast
+	shrub.bef.masked.rast<-sh.before.rast*shrub.nonroad.rast
+	print("Raster masked for shrub")
+
+	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[7],"_",start.year,".tif",sep=""))
+	writeRaster(shrub.bef.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[7],"_",start.year,".tif",sep=""),overwrite=TRUE)
+	print(paste("Writing IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[7],"_",end.year,".tif",sep=""))
+	writeRaster(shrub.aft.masked.rast,paste(loc.data,"IntermediateFiles/ThresholdedEfficacyLayers/Thresholded_",metrics[7],"_",end.year,".tif",sep=""),overwrite=TRUE)
 
 
 timer.end<-Sys.time()

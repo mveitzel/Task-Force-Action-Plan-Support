@@ -25,7 +25,7 @@ whp.rast <- rast(paste(loc.data,"PriorityLayers/whp_classified_20240906.tif",sep
 ############### GLOBAL PARAMETERS ###################
 
 #date stamp of this set of results - appended to all outputs to avoid overwriting older versions
-datetime<-"2025Dec26_NoFire"
+datetime<-"2025Dec29_NoFire"
 
 #ending year of water year
 
@@ -57,35 +57,30 @@ policy.target<-c("WildlandFireRisk",
 			"ShrublandHealth",
 			"WildlandFireRisk")
 
-#these are for calculating the areas associated with each metric
- wui.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/FRAP24_WUIOnly_CECS.tif",sep=""))
- wui.cecs.rast[is.na(wui.cecs.rast)]<-0
- land.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/FRAP24_Landscape_CECS.tif",sep=""))
- land.cecs.rast[is.na(land.cecs.rast)]<-0
+#these are for calculating the areas associated with each metric, landscape scale
  forest.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_FOREST_CECS.tif",sep=""))
- forest.cecs.rast.na<-forest.cecs.rast
  forest.cecs.rast[is.na(forest.cecs.rast)]<-0
- shrub.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/WHR13_RECLASS_SHRUB_CECS.tif",sep=""))
- shrub.cecs.rast.na<-shrub.cecs.rast
- shrub.cecs.rast[is.na(shrub.cecs.rast)]<-0
- road.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/RoadBuffer_CECSproj.tif",sep=""))
- road.buff.cecs.rast[is.na(road.buff.cecs.rast)]<-0
- nonroad.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/NonRoads_CECSproj.tif",sep=""))
- nonroad.buff.cecs.rast[is.na(nonroad.buff.cecs.rast)]<-0
- tran.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/TransmissionLineBuffer1000_CECSproj.tif",sep=""))
- tran.buff.cecs.rast[is.na(tran.buff.cecs.rast)]<-0
+ wui.forest.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/Forest_WUI_CECSproj.tif",sep=""))
+ wui.forest.cecs.rast[is.na(wui.forest.cecs.rast)]<-0
+ road.forest.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/Forest_Road_CECSproj.tif",sep=""))
+ road.forest.buff.cecs.rast[is.na(road.forest.buff.cecs.rast)]<-0
+ tran.forest.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/Forest_Utilities_CECSproj.tif",sep=""))
+ tran.forest.buff.cecs.rast[is.na(tran.forest.buff.cecs.rast)]<-0
+ road.shrub.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/Shrub_Road_CECSproj.tif",sep=""))
+ road.shrub.buff.cecs.rast[is.na(road.shrub.buff.cecs.rast)]<-0
+ nonroad.shrub.buff.cecs.rast<-rast(paste(loc.data,"WUIVegetationClassifications/Shrub_NonRoad_CECSproj.tif",sep=""))
+ nonroad.shrub.buff.cecs.rast[is.na(nonroad.shrub.buff.cecs.rast)]<-0
 
 #note that for flame length, only forest is really appropriate
 spat.rast<-list(
-				wui.cecs.rast*forest.cecs.rast,
-				land.cecs.rast*forest.cecs.rast,
-				tran.buff.cecs.rast*forest.cecs.rast,
-				road.buff.cecs.rast*forest.cecs.rast,
+				wui.forest.cecs.rast,
 				forest.cecs.rast,
-				shrub.cecs.rast,
-				shrub.cecs.rast*road.buff.cecs.rast,
-				shrub.cecs.rast*nonroad.buff.cecs.rast,
-				land.cecs.rast*forest.cecs.rast)
+				tran.forest.buff.cecs.rast,
+				road.forest.buff.cecs.rast,
+				forest.cecs.rast,
+				road.shrub.buff.cecs.rast,
+				nonroad.shrub.buff.cecs.rast,
+				forest.cecs.rast)
 
 
 ############ END GLOBAL PARAMETERS #################
@@ -199,7 +194,7 @@ library("sf")
 #  write.csv(treatment.areas,"TreatmentAreasByRegionMetric_TargetedEffort.csv")
 ###-------------------------------------------
 
-#mask that remove the fire footprint from treatments
+#mask that removes the fire footprint from treatments
 nofire.rast<-rast(paste(loc.data,"WUIVegetationClassifications/NonFireFootprints_2020-2024_CECSproj.tif",sep=""))
 #mask that is only forest disturbances (but not masked for only forest)
 yesdist.f.rast<-rast(paste(loc.data,"WUIVegetationClassifications/ForestDisturbances_2021-2024_CECSproj.tif",sep=""))
@@ -207,9 +202,9 @@ yesdist.f.rast<-rast(paste(loc.data,"WUIVegetationClassifications/ForestDisturba
 yesdist.s.rast<-rast(paste(loc.data,"WUIVegetationClassifications/ShrubDisturbances_2021-2024_CECSproj.tif",sep=""))
 
 #nofire, only disturbances - only forest
-nofire.yesdist.f.rast<-nofire.rast*yesdist.f.rast*forest.cecs.rast.na
+nofire.yesdist.f.rast<-rast(paste(loc.data,"WUIVegetationClassifications/ForestDisturbanceNoFire_2021-2024_CECSproj.tif",sep=""))
 #nofire, only disturbances - only shrub
-nofire.yesdist.s.rast<-nofire.rast*yesdist.s.rast*shrub.cecs.rast.na
+nofire.yesdist.s.rast<-rast(paste(loc.data,"WUIVegetationClassifications/ShrubDisturbancesNoFire_2021-2024_CECSproj.tif",sep=""))
 
 for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each region
 	print(paste("Start ", boundary.name[k]," loop"))
@@ -239,33 +234,30 @@ for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each
 
 		disturbed.only<-FALSE
 
-		if(policy.target[i]=="WildlandFireRisk"){
-			bef.thr.rast<-bef.thr.rast*forest.cecs.rast.na
-			aft.thr.rast<-aft.thr.rast*forest.cecs.rast.na
-		}	
-
-		# #if we want to only include disturbances seen in CECS remote sensing data
-		# #then multiply by the no-fire, only disturbance layer (already also masked by ecosystem type)
-		# if(disturbed.only==TRUE){
-		# 	if(policy.target[i] %in% (c("WildlandFireRisk","ForestHealth")){
-		# 		bef.thr.rast.tr<-bef.thr.rast*nofire.yesdist.f.rast
-		# 		aft.thr.rast.tr<-aft.thr.rast*nofire.yesdist.f.rast
-		# 	}
-		# 	else if (policy.target[i]=="ShrublandHealth"){
-		# 		bef.thr.rast.tr<-bef.thr.rast*nofire.yesdist.s.rast
-		# 		aft.thr.rast.tr<-aft.thr.rast*nofire.yesdist.s.rast
-		# 	}
-		# #If you are only going to remove the fire footprints
-		# }else if (disturbed.only==FALSE){
-		# 	#just do forest only for wildland fire risk = flame length
-		# 	#make sure to omit the fire footprints but only for treatment calcs
-		# 	bef.thr.rast.tr<-bef.thr.rast*nofire.rast
-		# 	aft.thr.rast.tr<-aft.thr.rast*nofire.rast
-		# }
-
-		 	bef.thr.rast.tr<-bef.thr.rast*nofire.rast
-		 	aft.thr.rast.tr<-aft.thr.rast*nofire.rast
-
+		#if we want to only include disturbances seen in CECS remote sensing data
+		#then multiply by the no-fire, only disturbance layer (already also masked by ecosystem type)
+		#also go to disturbance only for fires as well, but then don't... omit the fires.
+		if(disturbed.only==TRUE){
+		 	if(policy.target[i] %in% c("WildlandFireRisk","ForestHealth")) {
+		 		bef.thr.rast.tr<-bef.thr.rast*nofire.yesdist.f.rast
+		 		aft.thr.rast.tr<-aft.thr.rast*nofire.yesdist.f.rast
+				bef.thr.rast.fi<-bef.thr.rast*yesdist.f.rast
+				aft.thr.rast.fi<-aft.thr.rast*yesdist.f.rast
+		 	} else if (policy.target[i]=="ShrublandHealth"){
+		 		bef.thr.rast.tr<-bef.thr.rast*nofire.yesdist.s.rast
+		 		aft.thr.rast.tr<-aft.thr.rast*nofire.yesdist.s.rast
+				bef.thr.rast.fi<-bef.thr.rast*yesdist.s.rast
+				aft.thr.rast.fi<-aft.thr.rast*yesdist.s.rast
+		 	}
+		#If you are only going to remove the fire footprints
+		} else if (disturbed.only==FALSE){
+			#just do forest only for wildland fire risk = flame length
+			#make sure to omit the fire footprints but only for treatment calcs
+			bef.thr.rast.tr<-bef.thr.rast*nofire.rast
+			aft.thr.rast.tr<-aft.thr.rast*nofire.rast
+			bef.thr.rast.fi<-bef.thr.rast
+			aft.thr.rast.fi<-aft.thr.rast
+		}
 
 		#read in vector files for summarizing/clipping
 
@@ -280,31 +272,31 @@ for(k in 1:length(boundary.name)){ #loop through the extents e.g. all CA or each
 			print(paste("Starting region-level proportion calcs for ",metric.name," in ",boundary.name[k],sep=""))
 			all.global.results<-rbind(
 				cbind(
-				method="Global",
 				metric=metric.name,
 				boundary=boundary.name[k],
+#				area_ac=0.000247105*exact_extract(spat.rast[[i]],prepped.boundary.sf,fun="sum"),
 				area_ac=st_area(prepped.boundary.sf)*0.000247105*exact_extract(spat.rast[[i]],prepped.boundary.sf,fun="mean"),
 				subset="WholeArea",
 				before=exact_extract(bef.thr.rast,prepped.boundary.sf,fun="mean"),
 				after=exact_extract(aft.thr.rast,prepped.boundary.sf,fun="mean")
 				),
 				cbind(
-				method="Global",
 				metric=metric.name,
 				boundary=boundary.name[k],
-				area_ac=st_area(agg.treat.proj.sf)*0.000247105*exact_extract(spat.rast[[i]],agg.treat.proj.sf,fun="mean"),
+#				area_ac=0.000247105*exact_extract(spat.rast[[i]]*nofire.rast,agg.treat.proj.sf,fun="sum"),
+				area_ac=st_area(agg.treat.proj.sf)*0.000247105*exact_extract(spat.rast[[i]]*nofire.rast,agg.treat.proj.sf,fun="mean"),
 				subset="Treatments",
 				before=exact_extract(bef.thr.rast.tr,agg.treat.proj.sf,fun="mean"),
 				after=exact_extract(aft.thr.rast.tr,agg.treat.proj.sf,fun="mean")
 				),
 				cbind(
-				method="Global",
 				metric=metric.name,
 				boundary=boundary.name[k],
+#				area_ac=0.000247105*exact_extract(spat.rast[[i]],agg.fire.proj.sf,fun="sum"),
 				area_ac=st_area(agg.fire.proj.sf)*0.000247105*exact_extract(spat.rast[[i]],agg.fire.proj.sf,fun="mean"),
 				subset="Fires",
-				before=exact_extract(bef.thr.rast,agg.fire.proj.sf,fun="mean"),
-				after=exact_extract(aft.thr.rast,agg.fire.proj.sf,fun="mean")
+				before=exact_extract(bef.thr.rast.fi,agg.fire.proj.sf,fun="mean"),
+				after=exact_extract(aft.thr.rast.fi,agg.fire.proj.sf,fun="mean")
 				)
 			)
 
@@ -327,8 +319,9 @@ timer.end<-Sys.time()
 time.total<-timer.end-timer.start
 print(time.total)
 
+#################################
 
-datetimevis<-"2025Dec26_NoFire"
+datetimevis<-datetime
 
 
 #compiling all the efficacy results into one csv in order to manually do nice table formatting in a spreadsheet program
@@ -342,7 +335,6 @@ for(i in 1:nrow(efficacy.list))
 	efficacy.results[[i]]<-read.csv(paste("EfficacyResults/",efficacy.list[i,],sep=""))
 
 efficacy.df<-do.call(rbind,efficacy.results)
-efficacy.df$method<-factor(efficacy.df$method)
 efficacy.df$metric<-factor(efficacy.df$metric)
 efficacy.df$boundary<-factor(efficacy.df$boundary)
 efficacy.df$subset<-factor(efficacy.df$subset)
@@ -359,7 +351,8 @@ nice.metric.name<-c("Likely High Severity Fire\nin WUI",
 					"Likely High Severity Fire\nin Utility Corridors",
 					"Likely High Severity Fire\nin Road Corridors",
 					"Imminent Forest Mortality",
-					"Grass-dominated Shrublands",
+					"Grass-dominated Shrublands\nin Road Corridors",
+					"Grass-dominated Shrublands\nOutside Road Corridors",					
 					"Potentially Beneficial Fire\nAcross Landscape")
 
 
@@ -397,7 +390,7 @@ ca.cecs.vect<-check.crs.match(cecs.rast,ca.vect)
 # 	      labs(title = plot.title,x = element_blank(), y = "Difference in Proportion 2020-2024")+
 # 		  scale_fill_manual(values=c("#E9E5C3","#9C8F57","#9F2214"))#+
 # 		  #geom_text(aes(label=before.rnd), vjust=-0.5, color="black", size=3.5)
-# 		pltnm.b<-paste("EfficacyResults/AbsDiff_bar_", metric.name,"_",boundary.name[k],"_",datetime,".png",sep="")
+# 		pltnm.b<-paste("EfficacyResults/AbsDiff_bar_", metric.name,"_",boundary.name[k],"_",datetimevis,".png",sep="")
 # 	  	ggsave(pltnm.b, units="in", width=4,height=3)
 
 # 	}
@@ -429,7 +422,7 @@ for(i in 1:length(metrics)){
       labs(title = plot.title, fill = "", y = "Difference in Proportion 2020-2024")+
 	  scale_fill_manual(values=c("#E9E5C3","#9C8F57","#9F2214"))#+
 	  #geom_text(aes(label=before.rnd), vjust=-0.5, color="black", size=3.5)
-	pltnm.b<-paste("EfficacyResults/AbsDiff_bar_", metric.name,"_",datetime,".png",sep="")
+	pltnm.b<-paste("EfficacyResults/AbsDiff_bar_", metric.name,"_",datetimevis,".png",sep="")
   	ggsave(pltnm.b, units="in", width=6,height=3)
 
 }
@@ -450,7 +443,7 @@ for(i in 1:length(metrics)){
       labs(title = plot.title, fill = "", y = "Difference in Proportion 2020-2024")+
 	  scale_fill_manual(values=c("#E9E5C3","#9C8F57","#9F2214"))#+
 	  #geom_text(aes(label=before.rnd), vjust=-0.5, color="black", size=3.5)
-	pltnm.b<-paste("EfficacyResults/PercDiff_bar_", metric.name,"_",datetime,".png",sep="")
+	pltnm.b<-paste("EfficacyResults/PercDiff_bar_", metric.name,"_",datetimevis,".png",sep="")
   	ggsave(pltnm.b, units="in", width=6,height=3)
 
 }
