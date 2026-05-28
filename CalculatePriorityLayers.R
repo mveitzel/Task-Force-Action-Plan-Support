@@ -1,0 +1,101 @@
+#CalculatePriorityLayers.R
+
+  # #---------- WHP read in and process-------------------------*
+  #2024 Wildfire Hazard Potential from CALFIRE
+  whp.rast <- rast(paste(loc.data,"PriorityLayers/whp_classified_20240906.tif",sep=""))
+  whp.proj.rast<-check.crs.match(whp.rast,whp.rast) # use itself as reference
+  #High fire risk is hazard classes 4 (high) and 5 (very high), as in SIG scenario modeling
+  whp.priority.rast<-whp.rast
+  whp.priority.rast[whp.priority.rast %in% c(0,1,2,3)]<-0
+  whp.priority.rast[whp.rast %in% c(4,5)]<-1
+  whp.priority.rast[is.na(whp.priority.rast)]<-0
+  writeRaster(whp.priority.rast,paste(loc.data,"PriorityLayers/FinalPriorityLayers/WHPpriority_WHP.tif",sep=""))
+
+
+  # #---------- Drought Vulnerability read in and process---------*
+
+  # CECS drought vulnerability, in Oct 2020 before treatments started in January
+  dv.rast<-rast(paste(loc.data,"CECS_Data/CECS_CAWide_Vulner_TreeDieoff_SPI-2_2020_V250614.tif",sep=""))
+  #check CRS
+  dv.proj.rast<-check.crs.match(cecs.rast,dv.rast) #of course it's hilarious that this actually is the CECS reference rast
+  ##          Set any thresholds, add any buffers, etc
+  # the layer was vetted using the 2012-2014 drought, trees that did die then had a drought
+  # vulnerability higher than 10,000
+  # John Battles compared the distribution of drought vulnerability values to relative Stand Density Index Max values, and 
+  #found that the "Imminent Mortality" range (>= 60 rSDImax) is the top 14.5%.  So the top 14.5% of DV values correspond to
+  #a threshold of 7310
+  dv.priority.rast<-dv.proj.rast
+  dv.priority.rast[dv.proj.rast>= 7310]<-1
+  dv.priority.rast[dv.priority.rast!=1]<-0
+  dv.priority.rast[is.na(dv.priority.rast)]<-0
+  writeRaster(dv.priority.rast,paste(loc.data,"PriorityLayers/FinalPriorityLayers/DroughtVulnerabilityPriority_CECS.tif",sep=""),overwrite=TRUE)
+
+  # #---------- Flame Length read in and process---------*
+
+  # CECS flame length from FLAMMAP, in Oct 2020 before treatments started in January
+  fl.rast<-rast(paste(loc.data,"CECS_Data/CECS_CAWide_Fire_FlamMap_FL_2020_V250614.tif",sep=""))
+  #check CRS
+  fl.proj.rast<-check.crs.match(cecs.rast,fl.rast)
+  ##          Set any thresholds, add any buffers, etc
+  # Everyone seems to agree that flame length above 8 feet is likely to be a high-severity or hard to control fire
+  #convert from meters to feet and undo the storage multiplicative factor:
+  #"Units are FL 0.01 m" -> *3.28084/100
+  fl.proj.ft.rast<-fl.proj.rast*0.0328084
+  fl.priority.rast<-fl.proj.ft.rast
+  fl.priority.rast[fl.proj.ft.rast > 8 ]<-1
+  fl.priority.rast[fl.priority.rast!=1]<-0
+  fl.priority.rast[is.na(fl.priority.rast)]<-0
+  writeRaster(fl.priority.rast,paste(loc.data,"PriorityLayers/FinalPriorityLayers/FlameLengthPriority_CECS.tif",sep=""))
+
+  # #---------------- Critical Habitat -------------------------#
+
+  #from CDFW
+  #"summed up as a 1-5 ranking, in which hexagons receiving a 5 represent the 20% of areas with the highest values within a given ecoregion."
+  cr.vect<-vect(paste(loc.data,"PriorityLayers/ACE_SpeciesBiodiversity.shp",sep=""))
+  #select 4 and 5, 40% highest values, which is preliminary SB 63 reporting statement in the text
+  cr.proj.vect<-check.crs.match(whp.rast,cr.vect)
+  cr.rast<-rasterize(cr.proj.vect,whp.rast,field="SpBioRnkEc")
+  cr.pri.rast<-cr.rast
+  cr.pri.rast[cr.pri.rast %in% c(0,1,2,3)]<-0
+  cr.pri.rast[cr.rast %in% c(4,5)]<-1
+  cr.pri.rast[is.na(cr.pri.rast)]<-0
+  writeRaster(cr.pri.rast,paste(loc.data,"PriorityLayers/FinalPriorityLayers/CriticalHabitatPriority_WHP.tif",sep=""))
+
+  # #---------------- Hydropower -------------------------#
+  #layer from Han Guo and Roger Bales, the watersheds that feed powerhouses greater than or equal to 30 KW
+  hy.vect<-vect(paste(loc.data,"PriorityLayers/shapefile_watershed_all_1.shp",sep=""))
+  hy.proj.vect<-check.crs.match(whp.rast,hy.vect)
+  hy.pri.rast<-rasterize(hy.proj.vect,whp.rast)
+  hy.pri.rast[is.na(hy.pri.rast)]<-0
+  writeRaster(hy.pri.rast,paste(loc.data,"PriorityLayers/FinalPriorityLayers/HydropowerPriority_WHP.tif",sep=""))
+
+  # #---------------- Debris Flow Risk -------------------------#
+  #from California Geological Survey in Department of Conservation
+  #Combined probability of: P(F) probability of fire of 0.05 (because
+  #the annual fire probability is max ~ 10%)
+  # times
+  # P(R>T50) probability of having a storm with rainfall exceeding the 
+  #triggering threshold set equivalent to a 50% chance of debris flow occurrence
+  # = 0.05*0.5 = 0.025
+  #
+  # We have instead chosen to show the top 20% of at-risk areas, similar to the classes 4 and 5 in sensitive habitat
+  de.vect<-vect(paste(loc.data,"PriorityLayers/ca_prefire_pfdf_basins.shp",sep=""))
+  de.proj.vect<-check.crs.match(whp.rast,de.vect)
+  de.proj.rast<-rasterize(de.proj.vect,whp.rast,field="pfprgt")
+  de.pri.rast<-de.proj.rast
+  de.pri.rast[de.proj.rast>(quantile(de.proj.vect$pfprgt,probs=0.8))]<-1
+  de.pri.rast[de.pri.rast!=1]<-0
+  de.pri.rast[is.na(de.pri.rast)]<-0
+  writeRaster(de.pri.rast,paste(loc.data,"PriorityLayers/FinalPriorityLayers/DebrisFlowPriority_WHP.tif",sep=""))
+
+  # #---------------- High-Risk Shrubs -------------------------#
+
+  #Intersect the 'shrub' mask with the 'roads' buffer and then infill with '0'
+  # in fact, just rasterize it based on the shrub raster so that the extent automatically matches
+  #road.whp.rast<-rasterize(road.buff.whp.vect,shrub.whp.rast)
+  shrub.road.whp.rast<-road.buff.whp.rast*shrub.whp.rast
+  sh.pri.rast<-shrub.road.whp.rast
+  sh.pri.rast[is.na(sh.pri.rast)]<-0
+  writeRaster(sh.pri.rast,paste(loc.data,"PriorityLayers/FinalPriorityLayers/ShrubRoadPriority_WHP.tif",sep=""),overwrite=TRUE)
+
+#####################
